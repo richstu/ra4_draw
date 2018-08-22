@@ -23,9 +23,16 @@ namespace Functions{
   extern const NamedFunc min_dr_lep_jet;
   extern const NamedFunc max_dr_lep_jet;
   extern const NamedFunc nbm_moriond;
+  extern const NamedFunc ntop_loose_decor;
+  extern const NamedFunc ntop_med_decor;
+  extern const NamedFunc ntop_tight_decor;
+  extern const NamedFunc ntop_loose_nom;
+  extern const NamedFunc ntop_med_nom;
+  extern const NamedFunc ntop_tight_nom;
   extern const NamedFunc offshellw;
 
   bool IsGoodJet(const Baby &b, std::size_t ijet);
+  bool IsGoodak8Jet(const Baby &b, std::size_t ijet);
   bool IsGoodElectron(const Baby &b, std::size_t iel);
   bool IsGoodMuon(const Baby &b, std::size_t imu);
   bool IsGoodTrack(const Baby &b, std::size_t itk);

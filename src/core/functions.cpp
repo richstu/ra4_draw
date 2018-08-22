@@ -93,7 +93,7 @@ namespace Functions{
         if(minphi < 0. || thisdphi < minphi){
           minphi = thisdphi;
         }
-      }
+       }
       return minphi;
     });
 
@@ -105,6 +105,60 @@ namespace Functions{
 	//if(b.jets_csv()->at(ijet) > 0.800) nbm++;
       } // Loop over jets
       return nbm;
+    });
+
+  const NamedFunc ntop_loose_nom("ntop_loose_nom", [](const Baby &b) ->NamedFunc::ScalarType{
+      int ntop = 0;
+      for(size_t ijet = 0; ijet < b.ak8jets_pt()->size(); ++ijet){
+      	if(!IsGoodak8Jet(b,ijet)) continue;
+	if(b.ak8jets_decor_bin_top()->at(ijet) > 0.1883) ntop++;
+      } // Loop over all ak8 jets
+      return ntop;
+    });
+
+  const NamedFunc ntop_med_nom("ntop_med_nom", [](const Baby &b) ->NamedFunc::ScalarType{
+      int ntop = 0;
+      for(size_t ijet = 0; ijet < b.ak8jets_pt()->size(); ++ijet){
+	if(!IsGoodak8Jet(b,ijet)) continue;
+	if(b.ak8jets_decor_bin_top()->at(ijet) > 0.8511) ntop++;
+      } // Loop over all ak8 jets
+      return ntop;
+    });
+
+  const NamedFunc ntop_tight_nom("ntop_tight_nom", [](const Baby &b) ->NamedFunc::ScalarType{
+      int ntop = 0;
+      for(size_t ijet = 0; ijet < b.ak8jets_pt()->size(); ++ijet){
+	if(!IsGoodak8Jet(b,ijet)) continue;
+	if(b.ak8jets_decor_bin_top()->at(ijet) > 0.9377) ntop++;
+      } // Loop over all ak8 jets
+      return ntop;
+    });
+
+  const NamedFunc ntop_loose_decor("ntop_loose_decor", [](const Baby &b) ->NamedFunc::ScalarType{
+      int ntop = 0;
+      for(size_t ijet = 0; ijet < b.ak8jets_pt()->size(); ++ijet){
+      	if(!IsGoodak8Jet(b,ijet)) continue;
+	if(b.ak8jets_decor_bin_top()->at(ijet) > 0.04738 && b.ak8jets_m()->at(ijet)>105 && b.ak8jets_m()->at(ijet)<210) ntop++;
+      } // Loop over all ak8 jets
+      return ntop;
+    });
+
+  const NamedFunc ntop_med_decor("ntop_med_decor", [](const Baby &b) ->NamedFunc::ScalarType{
+      int ntop = 0;
+      for(size_t ijet = 0; ijet < b.ak8jets_pt()->size(); ++ijet){
+	if(!IsGoodak8Jet(b,ijet)) continue;
+	if(b.ak8jets_decor_bin_top()->at(ijet) > 0.4585 && b.ak8jets_m()->at(ijet)>105 && b.ak8jets_m()->at(ijet)<210) ntop++;
+      } // Loop over all ak8 jets
+      return ntop;
+    });
+
+  const NamedFunc ntop_tight_decor("ntop_tight_decor", [](const Baby &b) ->NamedFunc::ScalarType{
+      int ntop = 0;
+      for(size_t ijet = 0; ijet < b.ak8jets_pt()->size(); ++ijet){
+	if(!IsGoodak8Jet(b,ijet)) continue;
+	if(b.ak8jets_decor_bin_top()->at(ijet) > 0.6556 && b.ak8jets_m()->at(ijet)>105 && b.ak8jets_m()->at(ijet)<210) ntop++;
+      } // Loop over all ak8 jets
+      return ntop;
     });
 
   const NamedFunc max_dphi_lep_jet("max_dphi_lep_jet", [](const Baby &b) ->NamedFunc::ScalarType{
@@ -215,6 +269,12 @@ namespace Functions{
       && b.jets_pt()->at(ijet) > 30.
       && fabs(b.jets_eta()->at(ijet))<2.4
       && !b.jets_islep()->at(ijet);
+  }
+
+  bool IsGoodak8Jet(const Baby &b, size_t ijet){
+    return ijet<b.ak8jets_pt()->size()
+      && b.ak8jets_pt()->at(ijet) > 300.
+      && fabs(b.ak8jets_eta()->at(ijet))<2.4;
   }
 
   bool IsGoodElectron(const Baby &b, size_t iel){

@@ -272,7 +272,7 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   }
   
   for(size_t i = 0; i < signals_.size(); ++i){
-    if(do_zbi_) file << " | rr";
+    if(do_zbi_) file << " | rrr"; // ***EDITED LINE CHANGED rr --> rrr***
     else file << " | r";
   }
 
@@ -301,8 +301,10 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   
   for(size_t i = 0; i < signals_.size(); ++i){
     file << " & " << ToLatex(signals_.at(i)->process_->name_);
-    if(do_zbi_)
+    if(do_zbi_){
       file << " & $Z_{\\text{Bi}}$";
+      file << " & $\\text{Cowan}$"; // ***NEW LINE***
+    }
   }
 
   file << "\\\\\n";
@@ -352,6 +354,15 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
 	file << " & " << RooStats::NumberCountingUtils::BinomialExpZ(luminosity*signals_.at(i)->sumw_.at(irow),
 								     luminosity*GetYield(backgrounds_, irow),
 								     hypot(GetError(backgrounds_, irow)/GetYield(backgrounds_, irow), 0.3));
+	double sigma_b = hypot(luminosity*GetError(backgrounds_, irow), 0.3*luminosity*GetYield(backgrounds_, irow));
+	double signalYield = luminosity*signals_.at(i)->sumw_.at(irow);
+	double bkgdYield = luminosity*GetYield(backgrounds_, irow);
+	double cowan1 = log((signalYield + bkgdYield)*(bkgdYield + sigma_b*sigma_b)/(bkgdYield*bkgdYield + (signalYield + bkgdYield)*sigma_b*sigma_b));
+	cowan1 = cowan1 * (signalYield + bkgdYield);
+	double cowan2 = log(1 + sigma_b*sigma_b*signalYield/(bkgdYield*(bkgdYield + sigma_b*sigma_b)));
+	cowan2 = cowan2 * bkgdYield*bkgdYield / (sigma_b*sigma_b);
+	double cowan = sqrt(2 * (cowan1 - cowan2));
+	file << " & " <<  cowan; // ***NEW LINE***
       }
     }
   }else{
@@ -455,8 +466,10 @@ void Table::PrintFooter(ofstream &file) const{
   
   for(size_t i = 0; i < signals_.size(); ++i){
     file << " & " << ToLatex(signals_.at(i)->process_->name_);
-    if(do_zbi_)
+    if(do_zbi_){
       file << " & $Z_{\\text{Bi}}$";
+      file << " & $\\text{Cowan}$"; // ***NEW LINE***
+    }
   }
 
   file << "\\\\\n";
@@ -470,7 +483,7 @@ size_t Table::NumColumns() const{
   return 1
     + (backgrounds_.size() <= 1 ? backgrounds_.size() : backgrounds_.size()+1)
     + (datas_.size() <= 1 ? datas_.size() : datas_.size()+1)
-    + (do_zbi_ ? 2 : 1)*signals_.size();
+    + (do_zbi_ ? 3 : 1)*signals_.size(); // ***EDITED LINE CHANGED 2-->3***
 }
 
 double Table::GetYield(const vector<unique_ptr<TableColumn> > &columns,

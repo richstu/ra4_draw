@@ -183,7 +183,25 @@ void FunctionParser::ResolveVariables() const{
       // 	token = Functions::func_map.at(token.string_rep_);
       if(token.string_rep_ == "nbm_moriond"){
 	token = Functions::nbm_moriond;
-      } 
+      }
+      else if(token.string_rep_ == "ntop_loose_decor"){
+	token = Functions::ntop_loose_decor;
+      }
+      else if(token.string_rep_ == "ntop_med_decor"){
+	token = Functions::ntop_med_decor;
+      }
+      else if(token.string_rep_ == "ntop_tight_decor"){
+	token = Functions::ntop_tight_decor;
+      }
+      else if(token.string_rep_ == "ntop_loose_nom"){
+	token = Functions::ntop_loose_nom;
+      }
+      else if(token.string_rep_ == "ntop_med_nom"){
+	token = Functions::ntop_med_nom;
+      }
+      else if(token.string_rep_ == "ntop_tight_nom"){
+	token = Functions::ntop_tight_nom;
+      }
       else if(token.string_rep_ == "n_mus_bad"){
 	token = Functions::n_mus_bad;
       }

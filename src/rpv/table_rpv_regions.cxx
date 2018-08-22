@@ -23,84 +23,72 @@ using namespace PlotOptTypes;
 int main(){
   gErrorIgnoreLevel = 6000;
 
-  double lumi = 2.7;
+  double lumi = 135.0;
 
-  string mc_folder = "/net/cms29/cms29r0/cawest/skims/ht1200/";
-  string sig_folder = "/net/cms9/cms9r0/rohan/babies/2016_07_13/T1tbs/split/renorm/";
-
+  string mc_folder_old = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/"; // 2016 BG MC
+  string sig_folder_old = "/net/cms2/cms2r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/"; // 2016 Signal MC
+  string mc_folder_new = "/net/cms2/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/";
+  string sig_folder_new = "/net/cms2/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/"; // same as new BG folder
+ 
   Palette colors("txt/colors.txt", "default");
 
+  string c_ps = "pass && stitch_met";
   // Background samples
-  auto tt = Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
-    {mc_folder+"*TTJets*Lept*"},
-    "ntruleps>=1");
+  auto tt_1l = Process::MakeShared<Baby_full>("t#bar{t} #, (1l)", Process::Type::background, colors("tt_1l"),
+    {mc_folder_new+"*TTJets*SingleLept*"},
+    c_ps+"&&ntruleps>=1");
 
-  auto qcd = Process::MakeShared<Baby_full>("QCD", Process::Type::background, colors("tt_1l"),
-    {mc_folder+"*QCD_HT*",mc_folder+"*TTJets_TuneCUETP8M1_13TeV-madgraphMLM*"},
-    "ntruleps==0");
-
-  auto wjets = Process::MakeShared<Baby_full>("W+Jets", Process::Type::background, colors("tt_1l"),
-    {mc_folder+"*WJetsToLNu_HT-600ToInf_TuneCUETP8M1_13TeV-madgraphMLM-pythia8*"});
-
-  auto singlet = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("tt_1l"),
-    {mc_folder+"*ST_s-channel_4f_leptonDecays_13TeV-amcatnlo-pythia8_TuneCUETP8M1*",mc_folder+"*ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1*",
-        mc_folder+"*ST_t-channel_top_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1*", mc_folder+"*ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1*",
-        mc_folder+"*ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1*"});
-
-  auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("tt_1l"),
-    {mc_folder+"*DYJetsToLL_M-50_HT-600toInf_TuneCUETP8M1_13TeV-madgraphMLM-pythia8*",mc_folder+"*TTWJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8*",
-        mc_folder+"*TTWJetsToQQ_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8*",mc_folder+"*TTZToQQ_TuneCUETP8M1_13TeV-amcatnlo-pythia8*",
-        mc_folder+"*TTZToLLNuNu_M-10_TuneCUETP8M1_13TeV-amcatnlo-pythia8*",mc_folder+"*ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8*",
-        mc_folder+"*TTTT_TuneCUETP8M1_13TeV-amcatnlo-pythia8*",mc_folder+"*WJetsToQQ_HT-600ToInf_TuneCUETP8M1_13TeV-madgraphMLM-pythia8*",
-        mc_folder+"*ZJetsToQQ_HT600toInf_13TeV-madgraph*"});
+  auto tt_2l = Process::MakeShared<Baby_full>("t#bar{t} #, (2l)", Process::Type::background, colors("tt_1l"),
+    {mc_folder_new+"*TTJets*DiLept*"},
+    c_ps+"&&ntruleps>=1");
 
   //Signal Samples
-  auto tbs1000 = Process::MakeShared<Baby_full>("m_{glu}=1000$ GeV$", Process::Type::signal, colors("tt_1l"),
-    {sig_folder+"*RPV_mGluino-1000*"});
+  // (1800,100) and (1400,1000) for comparison to paper
+  auto T1tttt1800_100 = Process::MakeShared<Baby_full>("T1tttt (1800,100)", Process::Type::signal, colors("tt_1l"),
+    {sig_folder_old+"*T1tttt*mGluino-1800_mLSP-100_*"});
 
-  auto tbs1400 = Process::MakeShared<Baby_full>("m_{glu}=1400$ GeV$", Process::Type::signal, colors("tt_1l"),
-    {sig_folder+"*RPV_mGluino-1400*"});
+  auto T1tttt1400_1000 = Process::MakeShared<Baby_full>("T1tttt (1400,1000)", Process::Type::signal, colors("tt_1l"),
+    {sig_folder_old+"*T1tttt*mGluino-1400_mLSP-1000_*"});
 
-  vector<shared_ptr<Process> > samples = {other, singlet, wjets, qcd, tt, tbs1000, tbs1400};
+  // (1200,800), (1500,100), (2000,100) working points for new studies
+  auto T1tttt1200_800 = Process::MakeShared<Baby_full>("T1tttt (1200,800)", Process::Type::signal, colors("tt_1l"),
+    {sig_folder_new+"*T1tttt*mGluino-1200_mLSP-800_*"});
+
+  auto T1tttt1500_100 = Process::MakeShared<Baby_full>("T1tttt (1500,100)", Process::Type::signal, colors("tt_1l"),
+    {sig_folder_new+"*T1tttt*mGluino-1500_mLSP-100_*"});
+
+  auto T1tttt2000_100 = Process::MakeShared<Baby_full>("T1tttt (2000,100)", Process::Type::signal, colors("tt_1l"),
+    {sig_folder_new+"*T1tttt*mGluino-2000_mLSP-100_*"});
+  
+  vector<shared_ptr<Process> > samples = {tt_1l, tt_2l, T1tttt1200_800, T1tttt1500_100, T1tttt2000_100};
 
   PlotMaker pm;
   pm.Push<Table>("rpv_regions", vector<TableRow>{
-      //0-lepton
-      TableRow("$N_{leps}=0$, $H_{T}>1500$, $N_{b}\\geq1$"),
-        TableRow("Baseline"),
-        TableRow("$M_{J}>500$, $N_{jets}\\geq4$", "nleps==0&&ht>1500&&nbm>=1&&mj>500&&njets>=4",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("Control Regions"),
-        TableRow("$500<M_{J}\\leq800$, $4\\leq N_{jets}\\leq5$", "nleps==0&&ht>1500&&nbm>=1&&mj>500&&mj<=800&&njets>=4&&njets<=5",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$500<M_{J}\\leq800$, $6\\leq N_{jets}\\leq7$", "nleps==0&&ht>1500&&nbm>=1&&mj>500&&mj<=800&&njets>=6&&njets<=7",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$M_{J}\\geq800$, $4\\leq N_{jets}\\leq5$", "nleps==0&&ht>1500&&nbm>=1&&mj>800&&njets>=4&&njets<=5",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$M_{J}\\geq800$, $6\\leq N_{jets}\\leq7$", "nleps==0&&ht>1500&&nbm>=1&&mj>800&&njets>=6&&njets<=7",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("Signal Regions"),
-        TableRow("$500<M_{J}\\leq800$, $8\\leq N_{jets}\\leq9$", "nleps==0&&ht>1500&&nbm>=1&&mj>500&&mj<=800&&njets>=8&&njets<=9",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$500<M_{J}\\leq800$, $N_{jets}\\geq10$", "nleps==0&&ht>1500&&nbm>=1&&mj>500&&mj<=800&&njets>=10",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$M_{J}\\geq800$, $8\\leq N_{jets}\\leq9$", "nleps==0&&ht>1500&&nbm>=1&&mj>800&&njets>=8&&njets<=9",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$M_{J}>800$, $N_{jets}\\geq10$", "nleps==0&&ht>1500&&nbm>=1&&mj>800&&njets>=10",0,1,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$\\quad N_{b}=1$", "nleps==0&&ht>1500&&nbm==1&&mj>800&&njets>=10",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$\\quad N_{b}=2$", "nleps==0&&ht>1500&&nbm==2&&mj>800&&njets>=10",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$\\quad N_{b}=3$", "nleps==0&&ht>1500&&nbm==3&&mj>800&&njets>=10",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$\\quad N_{b}\\geq4$", "nleps==0&&ht>1500&&nbm>=4&&mj>800&&njets>=10",0,1,"weight*w_pu_rpv/eff_trig"),
-
-        //1-lepton
-        TableRow("$N_{leps}=1$, $H_{T}>1200$, $N_{b}\\geq1$"),
-        TableRow("Baseline"),
-        TableRow("$M_{J}>500$, $N_{jets}\\geq4$", "nleps==1&&ht>1200&&nbm>=1&&mj>500&&njets>=4",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("Control Regions"),
-        TableRow("$500<M_{J}\\leq800$, $4\\leq N_{jets}\\leq5$", "nleps==1&&ht>1200&&nbm>=1&&mj>500&&mj<=800&&njets>=4&&njets<=5",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$M_{J}\\geq800$, $4\\leq N_{jets}\\leq5$", "nleps==1&&ht>1200&&nbm>=1&&mj>800&&njets>=4&&njets<=5",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("Signal Regions"),
-        TableRow("$500<M_{J}\\leq800$, $6\\leq N_{jets}\\leq7$", "nleps==1&&ht>1200&&nbm>=1&&mj>500&&mj<=800&&njets>=6&&njets<=7",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$500<M_{J}\\leq800$, $N_{jets}\\geq8$", "nleps==1&&ht>1200&&nbm>=1&&mj>500&&mj<=800&&njets>=8",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$M_{J}\\geq800$, $6\\leq N_{jets}\\leq7$", "nleps==1&&ht>1200&&nbm>=1&&mj>800&&njets>=6&&njets<=7",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$M_{J}>800$, $N_{jets}\\geq8$", "nleps==1&&ht>1200&&nbm>=1&&mj>800&&njets>=8",0,1,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$\\quad N_{b}=1$", "nleps==1&&ht>1200&&nbm==1&&mj>800&&njets>=8",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$\\quad N_{b}=2$", "nleps==1&&ht>1200&&nbm==2&&mj>800&&njets>=8",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$\\quad N_{b}=3$", "nleps==1&&ht>1200&&nbm==3&&mj>800&&njets>=8",0,0,"weight*w_pu_rpv/eff_trig"),
-        TableRow("$\\quad N_{b}\\geq4$", "nleps==1&&ht>1200&&nbm>=4&&mj>800&&njets>=8",0,0,"weight*w_pu_rpv/eff_trig"),
-        },samples,false);
-
+      TableRow("Baseline, $m_{T}>140$ GeV, $M_{J}>400$ GeV", "mt>140&&mj14>400&&st>500&&nleps==1&&met>200&&nveto==0&&njets>=6&&nbm>=1",0,0,"weight"),
+	TableRow("Baseline, $m_{T}>140$ GeV, $M_{J}>400$ GeV, 1 T top", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>200&&nveto==0&&njets>=6&&nbm>=1",0,0,"weight"),
+	TableRow("$200 < E_{T}^{miss}\\leq 350 GeV$"),
+	TableRow("$6\\leq N_{jets}\\leq 8, N_{b}=1$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>200&&met<=350&&nveto==0&&njets>=6&&njets<=8&&nbm==1",0,0,"weight"),
+	TableRow("$N_{jets}\\geq 9, N_{b}=1$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>200&&met<=350&&nveto==0&&njets>=9&&nbm==1",0,0,"weight"),
+	TableRow("$6\\leq N_{jets}\\leq 8, N_{b}=2$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>200&&met<=350&&nveto==0&&njets>=6&&njets<=8&&nbm==2",0,0,"weight"),
+	TableRow("$N_{jets}\\geq 9, N_{b}=2$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>200&&met<=350&&nveto==0&&njets>=9&&nbm==2",0,0,"weight"),
+	TableRow("$6\\leq N_{jets}\\leq 8, N_{b}\\geq 3$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>200&&met<=350&&nveto==0&&njets>=6&&njets<=8&&nbm>=3",0,0,"weight"),
+	TableRow("$N_{jets}\\geq 9, N_{b}\\geq 3$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>200&&met<=350&&nveto==0&&njets>=9&&nbm>=3",0,0,"weight"),
+	TableRow("$350 < E_{T}^{miss}\\leq 500 GeV$"),
+	TableRow("$6\\leq N_{jets}\\leq 8, N_{b}=1$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>350&&met<=500&&nveto==0&&njets>=6&&njets<=8&&nbm==1",0,0,"weight"),
+	TableRow("$N_{jets}\\geq 9, N_{b}=1$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>350&&met<=500&&nveto==0&&njets>=9&&nbm==1",0,0,"weight"),
+	TableRow("$6\\leq N_{jets}\\leq 8, N_{b}=2$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>350&&met<=500&&nveto==0&&njets>=6&&njets<=8&&nbm==2",0,0,"weight"),
+	TableRow("$N_{jets}\\geq 9, N_{b}=2$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>350&&met<=500&&nveto==0&&njets>=9&&nbm==2",0,0,"weight"),
+	TableRow("$6\\leq N_{jets}\\leq 8, N_{b}\\geq 3$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>350&&met<=500&&nveto==0&&njets>=6&&njets<=8&&nbm>=3",0,0,"weight"),
+	TableRow("$N_{jets}\\geq 9, N_{b}\\geq 3$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>350&&met<=500&&nveto==0&&njets>=9&&nbm>=3",0,0,"weight"),
+	TableRow("$E_{T}^{miss} > 500 GeV$"),
+	TableRow("$6\\leq N_{jets}\\leq 8, N_{b}=1$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>500&&nveto==0&&njets>=6&&njets<=8&&nbm==1",0,0,"weight"),
+	TableRow("$N_{jets}\\geq 9, N_{b}=1$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>500&&nveto==0&&njets>=9&&nbm==1",0,0,"weight"),
+	TableRow("$6\\leq N_{jets}\\leq 8, N_{b}=2$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>500&&nveto==0&&njets>=6&&njets<=8&&nbm==2",0,0,"weight"),
+	TableRow("$N_{jets}\\geq 9, N_{b}=2$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>500&&nveto==0&&njets>=9&&nbm==2",0,0,"weight"),
+	TableRow("$6\\leq N_{jets}\\leq 8, N_{b}\\geq 3$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>500&&nveto==0&&njets>=6&&njets<=8&&nbm>=3",0,0,"weight"),
+	TableRow("$N_{jets}\\geq 9, N_{b}\\geq 3$", "ntop_tight_decor>=1&&mt>140&&mj14>400&&st>500&&nleps==1&&met>500&&nveto==0&&njets>=9&&nbm>=3",0,0,"weight"),
+	},samples,true);
+  
+  pm.min_print_ = true;
   pm.MakePlots(lumi);
 }
