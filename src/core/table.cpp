@@ -353,8 +353,10 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
       if(do_zbi_){
 	file << " & " << RooStats::NumberCountingUtils::BinomialExpZ(luminosity*signals_.at(i)->sumw_.at(irow),
 								     luminosity*GetYield(backgrounds_, irow),
-								     hypot(GetError(backgrounds_, irow)/GetYield(backgrounds_, irow), 0.3));
-	double sigma_b = hypot(luminosity*GetError(backgrounds_, irow), 0.3*luminosity*GetYield(backgrounds_, irow));
+								     GetError(backgrounds_, irow)/GetYield(backgrounds_, irow));
+								     //hypot(GetError(backgrounds_, irow)/GetYield(backgrounds_, irow), 0.3));
+	//double sigma_b = hypot(luminosity*GetError(backgrounds_, irow), 0.3*luminosity*GetYield(backgrounds_, irow));
+	double sigma_b = luminosity*GetError(backgrounds_, irow);
 	double signalYield = luminosity*signals_.at(i)->sumw_.at(irow);
 	double bkgdYield = luminosity*GetYield(backgrounds_, irow);
 	double cowan1 = log((signalYield + bkgdYield)*(bkgdYield + sigma_b*sigma_b)/(bkgdYield*bkgdYield + (signalYield + bkgdYield)*sigma_b*sigma_b));

@@ -147,6 +147,14 @@ int main(int argc, char *argv[]){
     corrections.emplace(mm_scen, Functions::MismeasurementCorrection(sys_wgts_file, mm_scen, central));
   }
 
+  NamedFunc ntop_loose_nom_raw("ntop_loose_nom_raw", [](const Baby &b) ->NamedFunc::ScalarType{
+      int _ntop = 0;
+      for(size_t ijet = 0; ijet < b.ak8jets_pt()->size(); ++ijet){
+        if(b.ak8jets_pt()->at(ijet)>300. && b.ak8jets_nom_raw_top()->at(ijet)>0.4) _ntop++;
+      } 
+      return _ntop;
+    });
+
   //// Capybara
 //  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
 //  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
@@ -154,9 +162,15 @@ int main(int argc, char *argv[]){
   //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_21/data/merged_database_stdnj5/");
   
   //// Bear 
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/");
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/");
+  //string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/");
+  //string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
+  //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/");
+
+
+  //// Shrew
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/");
 
   // Old 2015 data
   if(skim.Contains("2015")){
@@ -182,11 +196,13 @@ int main(int argc, char *argv[]){
   if(do_ht) baseline = baseline && "ht>500";
   else baseline = baseline && st>500;
 
+  baseline = baseline && "nak8jets>1 && ak8jets_pt[0]>300.";
+
   auto proc_t1c = Process::MakeShared<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
-    {foldersig+"*mGluino-1400_mLSP-1000_*.root"},
+    {foldersig+"*mGluino-1200_mLSP-800_*.root"},
     baseline && "stitch_met");
   auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
-    {foldersig+"*mGluino-1800_mLSP-100_*.root"},
+    {foldersig+"*mGluino-2000_mLSP-100_*.root"},
     baseline && "stitch_met");
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root"}, baseline && "stitch_met && ntruleps==1 && pass");  
