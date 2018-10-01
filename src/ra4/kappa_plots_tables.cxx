@@ -22,6 +22,7 @@
 #include "TLine.h"
 #include "TLatex.h"
 #include "TLegend.h"
+#include "TVector3.h"
 
 #include "core/utilities.hpp"
 #include "core/baby.hpp"
@@ -59,6 +60,7 @@ namespace{
   string mm_scen = "";
   float lumi=35.9;
   bool quick_test = false;
+  string mj_upper("400");
 }
 
 string GetScenario(const string &method);
@@ -95,6 +97,7 @@ const NamedFunc nbadmu("nbadmu", [](const Baby &b) -> NamedFunc::ScalarType{
     return nbad;
   });
 
+
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   GetOptions(argc, argv);
@@ -128,6 +131,88 @@ int main(int argc, char *argv[]){
     only_mc = true;
   }
 
+  const NamedFunc top_jet_mass_cut("top_jet_mass_cut", [](const Baby &b) -> NamedFunc::ScalarType{
+    int hadtop_id(0);
+    double mass(-1);
+    TVector3 hadtop(0,0,0), jet(0,0,0);
+    for(size_t imc(0); imc < b.mc_pt()->size(); imc++) { // Find which top is hadronic (opposite sign as lepton)
+      if(b.mc_id()->at(imc) == 11 || b.mc_id()->at(imc) == 13 || b.mc_id()->at(imc) == 15) hadtop_id = 6;
+      else if(b.mc_id()->at(imc) == -11 || b.mc_id()->at(imc) == -13 || b.mc_id()->at(imc) == -15) hadtop_id = -6;
+    }
+    for(size_t imc(0); imc < b.mc_pt()->size(); imc++) { // Find hadronic top
+      if(b.mc_id()->at(imc) == hadtop_id) hadtop.SetPtEtaPhi(b.mc_pt()->at(imc),b.mc_eta()->at(imc),b.mc_phi()->at(imc));
+    }
+    for(size_t ijet(0); ijet < b.ak8jets_pt()->size(); ijet++){ // Truth-match jet to hadronic top
+      jet.SetPtEtaPhi(b.ak8jets_pt()->at(ijet),b.ak8jets_eta()->at(ijet),b.ak8jets_phi()->at(ijet));
+      if(jet.DeltaR(hadtop) < 0.6) mass = b.ak8jets_m()->at(ijet);
+    }
+    if(mass > 105 && mass < 210) return 1;
+    else return 0;
+    });
+  
+  const NamedFunc top_jet_nom_score("top_jet_nom_score", [](const Baby &b) -> NamedFunc::ScalarType{
+    int hadtop_id(0);
+    double score(-1);
+    TVector3 hadtop(0,0,0), jet(0,0,0);
+    for(size_t imc(0); imc < b.mc_pt()->size(); imc++) { // Find which top is hadronic (opposite sign as lepton)
+      if(b.mc_id()->at(imc) == 11 || b.mc_id()->at(imc) == 13 || b.mc_id()->at(imc) == 15) hadtop_id = 6;
+      else if(b.mc_id()->at(imc) == -11 || b.mc_id()->at(imc) == -13 || b.mc_id()->at(imc) == -15) hadtop_id = -6;
+    }
+    for(size_t imc(0); imc < b.mc_pt()->size(); imc++) { // Find hadronic top
+      if(b.mc_id()->at(imc) == hadtop_id) hadtop.SetPtEtaPhi(b.mc_pt()->at(imc),b.mc_eta()->at(imc),b.mc_phi()->at(imc));
+    }
+    for(size_t ijet(0); ijet < b.ak8jets_pt()->size(); ijet++){ // Truth-match jet to hadronic top
+      jet.SetPtEtaPhi(b.ak8jets_pt()->at(ijet),b.ak8jets_eta()->at(ijet),b.ak8jets_phi()->at(ijet));
+      if(jet.DeltaR(hadtop) < 0.6) score = b.ak8jets_nom_bin_top()->at(ijet);
+    }
+    return score;
+    });
+  
+  const NamedFunc top_jet_decor_score("top_jet_decor_score", [](const Baby &b) -> NamedFunc::ScalarType{
+    int hadtop_id(0);
+    double score(-1);
+    TVector3 hadtop(0,0,0), jet(0,0,0);
+    for(size_t imc(0); imc < b.mc_pt()->size(); imc++) { // Find which top is hadronic (opposite sign as lepton)
+      if(b.mc_id()->at(imc) == 11 || b.mc_id()->at(imc) == 13 || b.mc_id()->at(imc) == 15) hadtop_id = 6;
+      else if(b.mc_id()->at(imc) == -11 || b.mc_id()->at(imc) == -13 || b.mc_id()->at(imc) == -15) hadtop_id = -6;
+    }
+    for(size_t imc(0); imc < b.mc_pt()->size(); imc++) { // Find hadronic top
+      if(b.mc_id()->at(imc) == hadtop_id) hadtop.SetPtEtaPhi(b.mc_pt()->at(imc),b.mc_eta()->at(imc),b.mc_phi()->at(imc));
+    }
+    for(size_t ijet(0); ijet < b.ak8jets_pt()->size(); ijet++){ // Truth-match jet to hadronic top
+      jet.SetPtEtaPhi(b.ak8jets_pt()->at(ijet),b.ak8jets_eta()->at(ijet),b.ak8jets_phi()->at(ijet));
+      if(jet.DeltaR(hadtop) < 0.6) score = b.ak8jets_decor_bin_top()->at(ijet);
+    }
+    return score;
+    });
+  
+  const NamedFunc is_300ak8("is_300ak8", [](const Baby &b) -> NamedFunc::ScalarType{
+  	bool is300(false);
+  	if(b.ak8jets_pt()->size() > 0) {
+  		for(size_t iak8(0); iak8 < b.ak8jets_pt()->size(); iak8++) {
+  			if(b.ak8jets_pt()->at(iak8) > 300) is300 = true;
+      }	}
+  	return is300;
+  	});
+  
+  const NamedFunc ak8_nLoose_nom("ak8_nLoose_nom", [](const Baby &b) -> NamedFunc::ScalarType{
+  	int pass(0);
+  	if(b.ak8jets_pt()->size() > 0) {
+  		for(size_t iak8(0); iak8 < b.ak8jets_pt()->size(); iak8++) {
+  			if(b.ak8jets_pt()->at(iak8) > 300 && b.ak8jets_nom_bin_top()->at(iak8) > 0.1883) pass++;
+  	}	}
+  	return pass;
+  	});
+  
+  const NamedFunc ak8_nLoose_decor("ak8_nLoose_decor", [](const Baby &b) -> NamedFunc::ScalarType{
+  	int pass(0);
+  	if(b.ak8jets_pt()->size() > 0) {
+  		for(size_t iak8(0); iak8 < b.ak8jets_pt()->size(); iak8++) {
+  			if(b.ak8jets_pt()->at(iak8) > 300 && b.ak8jets_decor_bin_top()->at(iak8) > 0.04738) pass++;
+  	}	}
+  	return pass;
+  	});
+  
   vector<string> scenarios = ConfigParser::GetOptSets(sys_wgts_file);
   NamedFunc w = "weight*eff_trig";
   map<string, NamedFunc> weights, corrections;
@@ -147,14 +232,6 @@ int main(int argc, char *argv[]){
     corrections.emplace(mm_scen, Functions::MismeasurementCorrection(sys_wgts_file, mm_scen, central));
   }
 
-  NamedFunc ntop_loose_nom_raw("ntop_loose_nom_raw", [](const Baby &b) ->NamedFunc::ScalarType{
-      int _ntop = 0;
-      for(size_t ijet = 0; ijet < b.ak8jets_pt()->size(); ++ijet){
-        if(b.ak8jets_pt()->at(ijet)>300. && b.ak8jets_nom_raw_top()->at(ijet)>0.4) _ntop++;
-      } 
-      return _ntop;
-    });
-
   //// Capybara
 //  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
 //  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
@@ -162,15 +239,22 @@ int main(int argc, char *argv[]){
   //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_21/data/merged_database_stdnj5/");
   
   //// Bear 
-  //string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/");
-  //string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
-  //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/");
+//   string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/");
+//   string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/");
 
+  // MET 
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_abcd/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/merged_mcbase_abcd/");
 
-  //// Shrew
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/");
+  // DeepAK8 study
+  string ak8_mc_standard_path("/net/cms2/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/");
+  string ak8_tag("ak8");
+  if(ak8_tag != "") {
+		foldersig = ak8_mc_standard_path;
+		foldermc  = ak8_mc_standard_path;
+  	}
+
 
   // Old 2015 data
   if(skim.Contains("2015")){
@@ -195,20 +279,18 @@ int main(int argc, char *argv[]){
   NamedFunc baseline=baseline_s;
   if(do_ht) baseline = baseline && "ht>500";
   else baseline = baseline && st>500;
+  // AK8 Selections
+  if     (ak8_tag == "ak8_is300ak8") baseline = baseline && is_300ak8; 
+  else if(ak8_tag == "ak8_2Lnom"   ) baseline = baseline && ak8_nLoose_nom   >= 2;
+  else if(ak8_tag == "ak8_2Ldecor" ) baseline = baseline && ak8_nLoose_decor >= 2;
+  else if(ak8_tag == "ak8_1Lnom"   ) baseline = baseline && ak8_nLoose_nom   >= 1;
+  else if(ak8_tag == "ak8_1Ldecor" ) baseline = baseline && ak8_nLoose_decor >= 1;
 
-  baseline = baseline && "nak8jets>1 && ak8jets_pt[0]>300.";
+  auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal,     colors("t1tttt"), {foldersig+"*mGluino-2000_mLSP-100_*.root"}, baseline && "stitch_met");
+  auto proc_t1c  = Process::MakeShared<Baby_full>("T1tttt(C)",  Process::Type::signal,     kMagenta        , {foldersig+"*mGluino-1200_mLSP-800_*.root"}, baseline && "stitch_met");
+  auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep",    Process::Type::background, colors("tt_1l"),  {foldermc+ "*_TTJets*SingleLept*.root"},     baseline && "stitch_met && ntruleps==1 && pass");  
+  auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep",    Process::Type::background, colors("tt_2l"),  {foldermc+ "*_TTJets*DiLept*.root"},         baseline && "stitch_met && ntruleps==2 && pass");
 
-  auto proc_t1c = Process::MakeShared<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
-    {foldersig+"*mGluino-1200_mLSP-800_*.root"},
-    baseline && "stitch_met");
-  auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
-    {foldersig+"*mGluino-2000_mLSP-100_*.root"},
-    baseline && "stitch_met");
-  auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root"}, baseline && "stitch_met && ntruleps==1 && pass");  
-  auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
-    {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root"}, baseline && "stitch_met && ntruleps==2 && pass");
-  
   // Filling all other processes
   vector<string> vnames_other({"_WJetsToLNu", "_ST_", "_TTW", "_TTZ", "DYJetsToLL", 
 	"_ZJet", "_ttHTobb_M125_", "_TTGJets", "_TTTT",  // Bear
@@ -282,7 +364,7 @@ int main(int argc, char *argv[]){
     {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"}, baseline && " pass");
 
   vector<shared_ptr<Process> > all_procs;
-  if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l, proc_other};
+  if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l/*, proc_other*/};
   else {
     all_procs = vector<shared_ptr<Process> >{proc_bkg};
     split_bkg = false;
@@ -291,7 +373,12 @@ int main(int argc, char *argv[]){
     all_procs.push_back(proc_t1nc);
     all_procs.push_back(proc_t1c);
   }
+//   if     (tag == "ak8_is300ak8") all_procs = {proc_t1c_is300ak8, proc_t1nc_is300ak8, proc_tt1l_is300ak8, proc_tt2l_is300ak8};
+//   else if(tag == "ak8_2Lnom")    all_procs = {proc_t1c_2Lnom,    proc_t1nc_2Lnom,    proc_tt1l_2Lnom,    proc_tt2l_2Lnom   };
+//   else if(tag == "ak8_2Ldecor")  all_procs = {proc_t1c_2Ldecor,  proc_t1nc_2Ldecor,  proc_tt1l_2Ldecor,  proc_tt2l_2Ldecor };
+
   all_procs.push_back(proc_data);
+
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining basic cuts //////////////////////////////////////////
@@ -317,20 +404,20 @@ int main(int argc, char *argv[]){
   TString c_nj5   = "njets==5";
 
   ////// ABCD cuts
-  vector<TString> abcdcuts_std = {"mt<=140 && mj14<=400  &&  nj_all_1l",
-                                  "mt<=140 && mj14>400   &&  nj_1l",
-                                  "mt>140  && mj14<=400  &&  nj_all_1l",
-                                  "mt>140  && mj14>400   &&  nj_1l"};
+  vector<TString> abcdcuts_std  = {"mt<=140 && mj14<="+mj_upper+" &&                                   nj_all_1l",
+                                   "mt<=140 && mj14> "+mj_upper+" &&                                   nj_1l",
+                                   "mt>140  && mj14<="+mj_upper+" &&                                   nj_all_1l",
+                                   "mt>140  && mj14> "+mj_upper+" &&                                   nj_1l"};
 
-  vector<TString> abcdcuts_veto = {"mt<=140 && mj14<=400 && nleps==1 && nveto==0 && nbm>=1  &&  nj_all_1l",
-                                   "mt<=140 && mj14>400  && nleps==1 && nveto==0 && nbm>=1  &&  nj_1l",
-                                   "mt>140  && mj14<=400 && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_all_1l",
-                                   "mt>140  && mj14>400  && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_1l"};
+  vector<TString> abcdcuts_veto = {"mt<=140 && mj14<="+mj_upper+" && nleps==1 && nveto==0 && nbm>=1 && nj_all_1l",
+                                   "mt<=140 && mj14> "+mj_upper+" && nleps==1 && nveto==0 && nbm>=1 && nj_1l",
+                                   "mt>140  && mj14<="+mj_upper+" && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_all_1l",
+                                   "mt>140  && mj14> "+mj_upper+" && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_1l"};
 
-  vector<TString> abcdcuts_2l = {"mt<=140 && mj14<=400 && nleps==1 && nveto==0 && nbm>=1  &&  nj_all_1l",
-                                 "mt<=140 && mj14>400  && nleps==1 && nveto==0 && nbm>=1  &&  nj_1l",
-                                 "           mj14<=400 && nleps==2             && nbm<=2  &&  nj_all_2l",
-                                 "           mj14>400  && nleps==2             && nbm<=2  &&  nj_2l"};
+  vector<TString> abcdcuts_2l   = {"mt<=140 && mj14<="+mj_upper+" && nleps==1 && nveto==0 && nbm>=1 && nj_all_1l",
+                                   "mt<=140 && mj14> "+mj_upper+" && nleps==1 && nveto==0 && nbm>=1 && nj_1l",
+                                   "           mj14<="+mj_upper+" && nleps==2             && nbm<=2 && nj_all_2l",
+                                   "           mj14> "+mj_upper+" && nleps==2             && nbm<=2 && nj_2l"};
 
   vector<TString> abcdcuts_2lveto;
   for(size_t ind=0; ind<2; ind++) abcdcuts_2lveto.push_back(abcdcuts_2l[ind]);
@@ -497,20 +584,20 @@ int main(int argc, char *argv[]){
         caption += " for $\\nb\\geq2$";
       }
       if(method.Contains("allmet")) {
-	metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet, c_higmet};
-	caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
-	firstSigBin = 1;
+				metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet, c_higmet};
+				caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
+				firstSigBin = 1;
       } // allmetsignal
       if(method.Contains("met100")) {
-	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
-	caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
-	firstSigBin = 2;
+				metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+				caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
+				firstSigBin = 2;
       } // allmetsignal
-      if(method.Contains("met350")) {
-	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, "met>350"};
-	caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
-	firstSigBin = 2;
-      } // allmetsignal
+//      if(method.Contains("met350")) {
+//				metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, "met>350"};
+//				caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
+//				firstSigBin = 2;
+//      } // allmetsignal
       if(method.Contains("200")) metcuts = vector<TString>{c_lowmet};
       if(method.Contains("350")) metcuts = vector<TString>{c_midmet};
       if(method.Contains("500")) metcuts = vector<TString>{c_higmet};
@@ -733,7 +820,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(do_signal) Ncol += 2;
   if(split_bkg) Ncol += 3;
   if(only_mc) {
-    if(do_signal) Ncol -= 1;
+    if(do_signal) Ncol -= 2;
     else Ncol -= 3;
   }
   TString blind_s = "$\\spadesuit$";
@@ -749,6 +836,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   else outname += "_blind";
   if(do_ht) outname += "_ht500";
   if(ichep_nbm) outname += "_ichepnbm";
+  outname += "_MJ"+mj_upper;
   outname += "_"+abcd.method+".tex";
   ofstream out(outname);
 
@@ -756,16 +844,19 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(abcd.method.Contains("signal") && Ncol>7 && !table_preview) out << "\\resizebox{\\textwidth}{!}{\n";
   out << "\\begin{tabular}[tbp!]{ l ";
   if(do_signal) out << "|cc";
+//   if(do_signal) out << "|c";
   if(split_bkg) out << "|ccc";
   out << "|cc|ccc";
   if(do_zbi) out<<"c";
   out<<"}\\hline\\hline\n";
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
-  if(do_signal) out << " & T1tttt(NC) & T1tttt(C) ";
+  if(do_signal) out << " & NC & C ";
+//   if(do_signal) out << " & T1tttt(NC)";
   if(split_bkg) out << " & Other & $t\\bar{t}(1\\ell)$ & $t\\bar{t}(2\\ell)$ ";
   out << "& $\\kappa$ & MC bkg. & Pred.";
   if(!only_mc) out << "& Obs. & Obs./MC "<<(do_zbi?"& Signi.":"");
   else if(do_signal) out << "& Signi.(NC) & Signi.(C)";
+//   else if(do_signal) out << "& S(NC)";
   out << " \\\\ \\hline\\hline\n";
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -793,6 +884,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         //// Printing signal yields
         if(do_signal)
           out<<ump<<RoundNumber(allyields[2][index].Yield(), digits)<< ump <<RoundNumber(allyields[3][index].Yield(), digits);
+//           out<<ump<<RoundNumber(allyields[2][index].Yield(), digits);
         //// Printing Other, tt1l, tt2l
         if(split_bkg){
           size_t offset = (do_signal?2:0);
@@ -1514,24 +1606,25 @@ void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TStr
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
-      {"method", required_argument, 0, 'm'},  // Method to run on (if you just want one)
-      {"correct", no_argument, 0, 'c'},       // Apply correction
-      {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
-      {"skim", required_argument, 0, 's'},    // Which skim to use: standard, 2015 data
-      {"json", required_argument, 0, 'j'},    // Which JSON to use: 0p815, 2p6, 4p0, 7p65, 12p9
-      {"split_bkg", no_argument, 0, 'b'},     // Prints Other, tt1l, tt2l contributions
-      {"no_signal", no_argument, 0, 'n'},     // Does not print signal columns
-      {"do_leptons", no_argument, 0, 'p'},    // Does tables for e/mu/emu as well
-      {"unblind", no_argument, 0, 'u'},       // Unblinds R4/D4
-      {"only_mc", no_argument, 0, 'o'},       // Uses MC as data for the predictions
-      {"only_kappa", no_argument, 0, 'k'},    // Only plots kappa (no table)
-      {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
-      {"only_dilepton", no_argument, 0, '2'}, // Makes tables only for dilepton tests
-      {"ht", no_argument, 0, 0},              // Cuts on ht>500 instead of st>500
-      {"mm", required_argument, 0, 0},        // Mismeasurment scenario, 0 for data
-      {"quick", no_argument, 0, 0},           // Used inclusive ttbar for quick testing
-      {"ichep_nbm", no_argument, 0, 0},       // Use ICHEP b-tagging working point
-      {"preview", no_argument, 0, 0},         // Table preview, no caption
+      {"method", required_argument, 0, 'm'}, // Method to run on (if you just want one)
+      {"correct",      no_argument, 0, 'c'}, // Apply correction
+      {"lumi",   required_argument, 0, 'l'}, // Luminosity to normalize MC with (no data)
+      {"skim",   required_argument, 0, 's'}, // Which skim to use: standard, 2015 data
+      {"json",   required_argument, 0, 'j'}, // Which JSON to use: 0p815, 2p6, 4p0, 7p65, 12p9
+      {"split_bkg",    no_argument, 0, 'b'}, // Prints Other, tt1l, tt2l contributions
+      {"no_signal",    no_argument, 0, 'n'}, // Does not print signal columns
+      {"do_leptons",   no_argument, 0, 'p'}, // Does tables for e/mu/emu as well
+      {"unblind",      no_argument, 0, 'u'}, // Unblinds R4/D4
+      {"only_mc",      no_argument, 0, 'o'}, // Uses MC as data for the predictions
+      {"only_kappa",   no_argument, 0, 'k'}, // Only plots kappa (no table)
+      {"debug",        no_argument, 0, 'd'}, // Debug: prints yields and cuts used
+      {"only_dilepton",no_argument, 0, '2'}, // Makes tables only for dilepton tests
+      {"MJcut",  required_argument, 0, 'M'}, // MJcut for ABCD plane
+      {"ht",           no_argument, 0, 0},   // Cuts on ht>500 instead of st>500
+      {"mm",     required_argument, 0, 0},   // Mismeasurment scenario, 0 for data
+      {"quick",        no_argument, 0, 0},   // Used inclusive ttbar for quick testing
+      {"ichep_nbm",    no_argument, 0, 0},   // Use ICHEP b-tagging working point
+      {"preview",      no_argument, 0, 0},   // Table preview, no caption
       {0, 0, 0, 0}
     };
 
@@ -1583,6 +1676,9 @@ void GetOptions(int argc, char *argv[]){
     case 'd':
       debug = true;
       break;
+	case 'M':
+	  mj_upper = optarg;
+	  break;
     case 0:
       optname = long_options[option_index].name;
       if(optname == "ht"){
