@@ -38,7 +38,7 @@ int main(){
         folder_mc+"*ggZH_HToBB*.root", folder_mc+"*ttHJetTobb*.root",
         folder_mc+"*_TTGJets*.root", folder_mc+"*_TTTT_*.root",
         folder_mc+"*_WH_HToBB*.root", folder_mc+"*_WZTo*.root",
-        folder_mc+"*_ZH_HToBB*.root", folder_mc+"_ZZ_*.root"});
+        folder_mc+"*_ZH_HToBB*.root", folder_mc+"*_ZZ_*.root"});
   auto data_2016 = Process::MakeShared<Baby_full>("2016 Data", Process::Type::data, kBlack,
     {"/net/cms2/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/*.root"},
     "pass&&(trig[4]||trig[8]||trig[13]||trig[33])");

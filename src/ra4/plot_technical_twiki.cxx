@@ -118,7 +118,7 @@ int main(int argc, char *argv[]){
         foldermc+"*ggZH_HToBB*"+tag+"*", foldermc+"*ttHJetTobb*"+tag+"*",
         foldermc+"*_TTTT_*"+tag+"*",
         foldermc+"*_WH_HToBB*"+tag+"*", foldermc+"*_WZTo*"+tag+"*",
-        foldermc+"*_ZH_HToBB*"+tag+"*", foldermc+"_ZZ_*"+tag+"*"}, baseline);
+        foldermc+"*_ZH_HToBB*"+tag+"*", foldermc+"*_ZZ_*"+tag+"*"}, baseline);
 
   auto t1tttt_nc = Process::MakeShared<Baby_full>(t1t_s+"}(1800,100)", Process::Type::signal, colors("t1tttt"),
     {"/net/cms29/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"}, baseline);

@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
         dir_mc_isr+"*ggZH_HToBB*.root", dir_mc_isr+"*ttHJetTobb*.root",
         dir_mc_isr+"*_TTTT_*.root",
         dir_mc_isr+"*_WH_HToBB*.root", dir_mc_isr+"*_WZTo*.root",
-        dir_mc_isr+"*_ZH_HToBB*.root", dir_mc_isr+"_ZZ_*.root"},"stitch");
+        dir_mc_isr+"*_ZH_HToBB*.root", dir_mc_isr+"*_ZZ_*.root"},"stitch");
 
   string dir_data_isr = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_isrdata_"+isrtype+"/";
   dir_data_isr += quick ? "mergedbaby__0*root" : "*root";

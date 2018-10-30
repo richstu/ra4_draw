@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
         mc_dir+"*ggZH_HToBB*.root", mc_dir+"*ttHJetTobb*.root",
         mc_dir+"*_TTGJets*.root", mc_dir+"*_TTTT_*.root",
         mc_dir+"*_WH_HToBB*.root", mc_dir+"*_WZTo*.root",
-        mc_dir+"*_ZH_HToBB*.root", mc_dir+"_ZZ_*.root"});
+        mc_dir+"*_ZH_HToBB*.root", mc_dir+"*_ZZ_*.root"});
 
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {data_dir+"*.root"},"pass&&trig_ra4&&(json12p9||mj14<=400.||mt<=140.||njets<=5||nleps!=1)");

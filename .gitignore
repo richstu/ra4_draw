@@ -37,12 +37,15 @@
 *.pdf
 *.fdb_latexmk
 *.fls
+run/
 !txt/variables/*
 !txt/colors.txt
 !txt/plot_styles.txt
 *.#*
 sftp-config.json
 .DS_Store
+datacard_*
+sys_*.txt
 
 # LaTeX
 *.tex

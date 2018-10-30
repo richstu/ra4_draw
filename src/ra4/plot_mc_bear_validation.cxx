@@ -67,7 +67,7 @@ int main(){
         bear_mc_dir+"*ggZH_HToBB*.root", bear_mc_dir+"*ttHJetTobb*.root",
         bear_mc_dir+"*_TTGJets*.root", bear_mc_dir+"*_TTTT_*.root",
         bear_mc_dir+"*_WH_HToBB*.root", bear_mc_dir+"*_WZTo*.root",
-	bear_mc_dir+"*_ZH_HToBB*.root", bear_mc_dir+"_ZZ_*.root"},
+	bear_mc_dir+"*_ZH_HToBB*.root", bear_mc_dir+"*_ZZ_*.root"},
     "stitch&&pass");
 
   auto capy_other = Process::MakeShared<Baby_full>("Capybara MC, non-ttbar", Process::Type::background, kAzure+2,
@@ -78,7 +78,7 @@ int main(){
         capy_mc_dir+"*ggZH_HToBB*.root", capy_mc_dir+"*ttHJetTobb*.root",
         capy_mc_dir+"*_TTGJets*.root", capy_mc_dir+"*_TTTT_*.root",
         capy_mc_dir+"*_WH_HToBB*.root", capy_mc_dir+"*_WZTo*.root",
-	capy_mc_dir+"*_ZH_HToBB*.root", capy_mc_dir+"_ZZ_*.root"},
+	capy_mc_dir+"*_ZH_HToBB*.root", capy_mc_dir+"*_ZZ_*.root"},
     "stitch&&pass");
 
 

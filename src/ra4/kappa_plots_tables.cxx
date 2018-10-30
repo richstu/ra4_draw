@@ -46,6 +46,7 @@ namespace{
   bool only_dilepton = false;
   bool do_leptons = false;
   bool do_signal = true;
+  bool low_abcd = false;
   bool ichep_nbm = false;
   bool unblind = false;
   bool debug = false;
@@ -60,7 +61,8 @@ namespace{
   string mm_scen = "";
   float lumi=35.9;
   bool quick_test = false;
-  string mj_upper("400");
+  pair<string, string> sig_nc = make_pair("2100","100");
+  pair<string, string> sig_c = make_pair("1900","1250");
 }
 
 string GetScenario(const string &method);
@@ -239,17 +241,13 @@ int main(int argc, char *argv[]){
   //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_21/data/merged_database_stdnj5/");
   
   //// Bear 
-//   string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/");
-//   string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/");
-
-  // MET 
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_abcd/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/merged_mcbase_abcd/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/");
+  string folderdata("");//bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/");
 
   // DeepAK8 study
-  string ak8_mc_standard_path("/net/cms2/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/");
-  string ak8_tag("ak8");
+  string ak8_mc_standard_path(bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_standard/");
+  string ak8_tag("");// ("ak8");
   if(ak8_tag != "") {
 		foldersig = ak8_mc_standard_path;
 		foldermc  = ak8_mc_standard_path;
@@ -286,21 +284,37 @@ int main(int argc, char *argv[]){
   else if(ak8_tag == "ak8_1Lnom"   ) baseline = baseline && ak8_nLoose_nom   >= 1;
   else if(ak8_tag == "ak8_1Ldecor" ) baseline = baseline && ak8_nLoose_decor >= 1;
 
-  auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal,     colors("t1tttt"), {foldersig+"*mGluino-2000_mLSP-100_*.root"}, baseline && "stitch_met");
-  auto proc_t1c  = Process::MakeShared<Baby_full>("T1tttt(C)",  Process::Type::signal,     kMagenta        , {foldersig+"*mGluino-1200_mLSP-800_*.root"}, baseline && "stitch_met");
-  auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep",    Process::Type::background, colors("tt_1l"),  {foldermc+ "*_TTJets*SingleLept*.root"},     baseline && "stitch_met && ntruleps==1 && pass");  
-  auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep",    Process::Type::background, colors("tt_2l"),  {foldermc+ "*_TTJets*DiLept*.root"},         baseline && "stitch_met && ntruleps==2 && pass");
+  auto proc_t1nc = Process::MakeShared<Baby_full>("("+sig_nc.first+","+sig_nc.second+")", Process::Type::signal,     colors("t1tttt"), 
+    {foldersig+"*mGluino-"+sig_nc.first+"_mLSP-"+sig_nc.second+"_*.root"},  baseline && "stitch_met");
+  auto proc_t1c  = Process::MakeShared<Baby_full>("("+sig_c.first+","+sig_c.second+")",  Process::Type::signal,     kMagenta, 
+    {foldersig+"*mGluino-"+sig_c.first+"_mLSP-"+sig_c.second+"_*.root"}, baseline && "stitch_met");
+  auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep",    Process::Type::background, colors("tt_1l"),  
+    {foldermc+ "*_TTJets*SingleLept*.root"},      baseline && "stitch_met && pass");  
+  auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep",    Process::Type::background, colors("tt_2l"),  
+    {foldermc+ "*_TTJets*DiLept*.root"},          baseline && "stitch_met && pass");
 
   // Filling all other processes
-  vector<string> vnames_other({"_WJetsToLNu", "_ST_", "_TTW", "_TTZ", "DYJetsToLL", 
-	"_ZJet", "_ttHTobb_M125_", "_TTGJets", "_TTTT",  // Bear
-    //"_ZJet", "_ttHJetTobb", "_TTGJets", "_TTTT", // Cabybara 
-	"_WH_HToBB", "_ZH_HToBB", "_WWTo", "_WZ", "_ZZ_"});
+  vector<string> vnames_other({
+    "_WJetsToLNu",
+     "_ST_",
+     "_TTW",
+     "_TTZ",
+     "DYJetsToLL",
+    "_ZJet",
+     "_ttHTobb_M125_",
+     "_TTGJets",
+     "_TTTT",
+    "_WH_HToBB",
+     "_ZH_HToBB",
+     "_WWTo",
+     "_WZ",
+     "_ZZ_"
+  });
   // QCD changed name in Capybara (2016_08_10)
   if(skim.Contains("2015")) vnames_other.push_back("QCD_HT");
   else{
-    vnames_other.push_back("QCD_HT*0_Tune");
-    vnames_other.push_back("QCD_HT*Inf_Tune");
+    // vnames_other.push_back("QCD_HT*0_Tune");
+    // vnames_other.push_back("QCD_HT*Inf_Tune");
   }
   set<string> names_other;
   for(auto name : vnames_other)
@@ -364,7 +378,7 @@ int main(int argc, char *argv[]){
     {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"}, baseline && " pass");
 
   vector<shared_ptr<Process> > all_procs;
-  if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l/*, proc_other*/};
+  if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l, proc_other};
   else {
     all_procs = vector<shared_ptr<Process> >{proc_bkg};
     split_bkg = false;
@@ -399,25 +413,29 @@ int main(int argc, char *argv[]){
 
   ////// Njets cuts
   TString c_vlownj = "njets>=4 && njets<=5";
-  TString c_lownj = "njets>=6 && njets<=8";
-  TString c_hignj = "njets>=9";
-  TString c_nj5   = "njets==5";
+  TString c_lownj = "njets>=6 && njets<=7";
+  TString c_hignj = "njets>=8";
 
   ////// ABCD cuts
-  vector<TString> abcdcuts_std  = {"mt<=140 && mj14<="+mj_upper+" &&                                   nj_all_1l",
-                                   "mt<=140 && mj14> "+mj_upper+" &&                                   nj_1l",
-                                   "mt>140  && mj14<="+mj_upper+" &&                                   nj_all_1l",
-                                   "mt>140  && mj14> "+mj_upper+" &&                                   nj_1l"};
+  vector<TString> abcdcuts_std  = {"mt<=140 && mj14<=400 &&                                   nj_all_1l",
+                                   "mt<=140 && mj14> 400 &&                                   nj_1l",
+                                   "mt>140 && mj14<=400 &&                                   nj_all_1l",
+                                   "mt>140 && mj14> 400 &&                                   nj_1l"};
 
-  vector<TString> abcdcuts_veto = {"mt<=140 && mj14<="+mj_upper+" && nleps==1 && nveto==0 && nbm>=1 && nj_all_1l",
-                                   "mt<=140 && mj14> "+mj_upper+" && nleps==1 && nveto==0 && nbm>=1 && nj_1l",
-                                   "mt>140  && mj14<="+mj_upper+" && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_all_1l",
-                                   "mt>140  && mj14> "+mj_upper+" && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_1l"};
+  vector<TString> abcdcuts_mtcr  = {"mt<=100 && mj14<=400 &&                                   nj_all_1l",
+                                   "mt<=100 && mj14> 400 &&                                   nj_1l",
+                                   "mt>100 && mt<=140  && mj14<=400 &&                                   nj_all_1l",
+                                   "mt>100 && mt<=140  && mj14> 400 &&                                   nj_1l"};
 
-  vector<TString> abcdcuts_2l   = {"mt<=140 && mj14<="+mj_upper+" && nleps==1 && nveto==0 && nbm>=1 && nj_all_1l",
-                                   "mt<=140 && mj14> "+mj_upper+" && nleps==1 && nveto==0 && nbm>=1 && nj_1l",
-                                   "           mj14<="+mj_upper+" && nleps==2             && nbm<=2 && nj_all_2l",
-                                   "           mj14> "+mj_upper+" && nleps==2             && nbm<=2 && nj_2l"};
+  vector<TString> abcdcuts_veto = {"mt<=140 && mj14<=400 && nleps==1 && nveto==0 && nbm>=1 && nj_all_1l",
+                                   "mt<=140 && mj14> 400 && nleps==1 && nveto==0 && nbm>=1 && nj_1l",
+                                   "mt>140  && mj14<=400 && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_all_1l",
+                                   "mt>140  && mj14> 400 && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_1l"};
+
+  vector<TString> abcdcuts_2l   = {"mt<=140 && mj14<=400 && nleps==1 && nveto==0 && nbm>=1 && nj_all_1l",
+                                   "mt<=140 && mj14> 400 && nleps==1 && nveto==0 && nbm>=1 && nj_1l",
+                                   "           mj14<=400 && nleps==2             && nbm<=2 && nj_all_2l",
+                                   "           mj14> 400 && nleps==2             && nbm<=2 && nj_2l"};
 
   vector<TString> abcdcuts_2lveto;
   for(size_t ind=0; ind<2; ind++) abcdcuts_2lveto.push_back(abcdcuts_2l[ind]);
@@ -446,7 +464,7 @@ int main(int argc, char *argv[]){
 
   vector<TString> methods = methods_std;
 
-  if(only_method!="") methods = vector<TString>({only_method});
+  if(only_method!="") methods = vector<TString>({only_method+"_highmj_abcd", only_method+"_lowmj_abcd"});
   if(do_leptons){
     for(auto name: methods){
       name += "_el";
@@ -483,7 +501,7 @@ int main(int argc, char *argv[]){
     if(method.Contains("2l") || method.Contains("veto")) {
       metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
       if(only_mc) metcuts.push_back(c_higmet);
-      if(method.Contains("onemet")) metcuts = vector<TString>{"met>150 && met<=500"};
+      if(method.Contains("twomet")) metcuts = vector<TString>{"met>100 && met<=200", "met>200 && met<=500"};
       bincuts = vector<TString>{c_lownj, c_hignj}; // 2l nj cuts automatically lowered in abcd_method
       if(method.Contains("onebin")) bincuts = vector<TString>{"njets>=6"};
       caption = "Dilepton validation regions. D3 and D4 have ";
@@ -602,31 +620,55 @@ int main(int argc, char *argv[]){
       if(method.Contains("350")) metcuts = vector<TString>{c_midmet};
       if(method.Contains("500")) metcuts = vector<TString>{c_higmet};
       if(method.Contains("nb0")) {
-	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
-	bincuts = vector<TString>{"nbm==0&&njets>=6"};
-	basecuts = "nleps==1 && nveto==0";
-	caption = "Signal search regions plus $100<\\met\\leq200$ GeV for $\\Nb==0$";
-	firstSigBin = 2;
+        metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+        bincuts = vector<TString>{"nbm==0&&njets>=6"};
+        basecuts = "nleps==1 && nveto==0";
+        caption = "Signal search regions plus $100<\\met\\leq200$ GeV for $\\Nb==0$";
+        firstSigBin = 2;
       } // allmetsignal
       if(method.Contains("onemet")) {
-	metcuts = vector<TString>{"met>200"};
-	caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
-	firstSigBin = 0;
+        metcuts = vector<TString>{"met>200"};
+        caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
+        firstSigBin = 0;
       } // allmetsignal
       if(method.Contains("onebin")) bincuts = vector<TString>{"njets>=6"};
     } // signal
 
+    if(method.Contains("mtcr")) {
+      abcdcuts = abcdcuts_mtcr;
+      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+      bincuts = vector<TString>{"njets>=6"};
+      caption = "m_{T} 100-140 control regions";
+      abcd_title = "m_{T} CR";
+      firstSigBin = 0;
+    }
 
     if(method.Contains("m5j")) {
-      metcuts = vector<TString>{c_lowmet, c_midmet};
-      bincuts = vector<TString>{c_lownb+" && "+c_nj5, c_midnb+" && "+c_nj5, c_hignb+" && "+c_nj5};
+      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
+      bincuts = vector<TString>{"njets==5"};
       caption = "Validation regions with $1\\ell, \\njets=5$";
       abcd_title = njets+" = 5";
       if(method.Contains("met100")) {
-	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
-	caption = "Validation regions with $1\\ell, \\njets=5$";
+        metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
+        caption = "Validation regions with $1\\ell, \\njets=5$";
       } // allmetsignal
       if(method.Contains("onebin")) bincuts = vector<TString>{"njets==5"};
+      if(only_mc) metcuts.push_back(c_higmet);     
+    }
+
+    if(method.Contains("m6j")) {
+      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
+      bincuts = vector<TString>{"njets==6"};
+      caption = "Validation regions with $1\\ell, \\njets=6$";
+      abcd_title = njets+" = 6";
+      if(only_mc) metcuts.push_back(c_higmet);     
+    }
+
+    if(method.Contains("m1b")) {
+      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
+      bincuts = vector<TString>{c_lownb+" && "+"njets>=6"};
+      caption = "Validation regions with $1\\ell, \\nb=1$";
+      abcd_title = "N_{b} = 1";
       if(only_mc) metcuts.push_back(c_higmet);     
     }
 
@@ -672,7 +714,10 @@ int main(int argc, char *argv[]){
 
     //////// Pushing all cuts to then find the yields
     if(doVBincuts) abcds.push_back(abcd_method(method, metcuts, vbincuts, abcdcuts, caption, basecuts, abcd_title));
-    else abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts, abcd_title));
+    else {
+      abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts, abcd_title));
+      abcds.back().printCuts();
+    }
     abcds.back().setFirstSignalBin(firstSigBin);
 
     if(skim.Contains("mj12")) {
@@ -836,7 +881,6 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   else outname += "_blind";
   if(do_ht) outname += "_ht500";
   if(ichep_nbm) outname += "_ichepnbm";
-  outname += "_MJ"+mj_upper;
   outname += "_"+abcd.method+".tex";
   ofstream out(outname);
 
@@ -850,8 +894,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(do_zbi) out<<"c";
   out<<"}\\hline\\hline\n";
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
-  if(do_signal) out << " & NC & C ";
-//   if(do_signal) out << " & T1tttt(NC)";
+  if(do_signal) out << " & ("+sig_nc.first+","+sig_nc.second+") & ("+sig_c.first+","+sig_c.second+") ";
   if(split_bkg) out << " & Other & $t\\bar{t}(1\\ell)$ & $t\\bar{t}(2\\ell)$ ";
   out << "& $\\kappa$ & MC bkg. & Pred.";
   if(!only_mc) out << "& Obs. & Obs./MC "<<(do_zbi?"& Signi.":"");
@@ -997,7 +1040,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
     opts.YTitleOffset(0.6);
     opts.LeftMargin(0.1);
     if(kappas.size()>=5){
-	opts.RightMargin(0.03);
+      opts.RightMargin(0.03);
       }
 
     cout<<"kappas.size() is "<<kappas.size()<<endl;
@@ -1212,11 +1255,11 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     k_ordered_mm.push_back(vector<vector<kmarker> >());
     for(size_t ibin=0; ibin < kappas[iplane].size(); ibin++){
       if(maxy < fYaxis*(kappas[iplane][ibin][0]+kappas[iplane][ibin][1])) 
-	maxy = fYaxis*(kappas[iplane][ibin][0]+kappas[iplane][ibin][1]);
+        maxy = fYaxis*(kappas[iplane][ibin][0]+kappas[iplane][ibin][1]);
       if(maxy < fYaxis*(kmcdat[iplane][ibin][0]+kmcdat[iplane][ibin][1])) 
-	maxy = fYaxis*(kmcdat[iplane][ibin][0]+kmcdat[iplane][ibin][1]);
+        maxy = fYaxis*(kmcdat[iplane][ibin][0]+kmcdat[iplane][ibin][1]);
       if(maxy < fYaxis*(kappas_mm[iplane][ibin][0])) 
-	maxy = fYaxis*(kappas_mm[iplane][ibin][0]);
+        maxy = fYaxis*(kappas_mm[iplane][ibin][0]);
       TString bincut = abcd.bincuts[iplane][ibin];
       bincut.ReplaceAll(" ","");
       bincut.ReplaceAll("mm_","");
@@ -1241,8 +1284,8 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             if(bincut==k_ordered[iplane][ik][0].cut){
               k_ordered[iplane][ik].push_back({bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]});
               kmd_ordered[iplane][ik].push_back({bincut, bcuts[ib].color, bcuts[ib].style, kmcdat[iplane][ibin]});
-	      if(unblind || !abcd.signalplanes[iplane])
-		k_ordered_mm[iplane][ik].push_back({bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]});
+              if(unblind || !abcd.signalplanes[iplane])
+                k_ordered_mm[iplane][ik].push_back({bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]});
               found = true;
               break;
             } // if same njets cut
@@ -1252,7 +1295,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]}}));
             kmd_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kmcdat[iplane][ibin]}}));
             if(unblind || !abcd.signalplanes[iplane])
-	      k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]}}));
+              k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]}}));
             found = true;
             nbins++;
           }
@@ -1263,8 +1306,8 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
       if(!found) {
         k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kappas[iplane][ibin]}}));
         kmd_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kmcdat[iplane][ibin]}}));
-	if(unblind || !abcd.signalplanes[iplane])
-	  k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[0].style, kappas_mm[iplane][ibin]}}));
+        if(unblind || !abcd.signalplanes[iplane])
+          k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[0].style, kappas_mm[iplane][ibin]}}));
         nbins++;
         if(ind_bcuts.size()==0) ind_bcuts.push_back(bcuts[0]);
       }
@@ -1356,17 +1399,17 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	      float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
 	      TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
 	      if(abcd.signalplanes[iplane])
-		klab.SetTextColor(cSignal);
+          klab.SetTextColor(cSignal);
 	      else klab.SetTextColor(1);
-	      klab.SetTextSize(0.045);
-	      klab.DrawLatex(xval, 0.952*maxy, text);
+	      klab.SetTextSize(0.04);
+	      if (!only_mc) klab.DrawLatex(xval, 0.952*maxy, text);
 	      //// Printing stat uncertainty of kappa_mm/kappa
 	      float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
 	      float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
 	      float kap_mmDown = k_ordered_mm[iplane][ibin][ib].kappa[2];
 	      float errStat = (kap>kap_mm?sqrt(pow(kapDown,2)+pow(kap_mmUp,2)):sqrt(pow(kapUp,2)+pow(kap_mmDown,2)));
-	      text = "#sigma_{stat} = "+RoundNumber(errStat*100,0, kap)+"%";
-	      text = "#sigma_{stat} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
+	      text = "#sigma_{st} = "+RoundNumber(errStat*100,0, kap)+"%";
+        text = "#sigma_{st} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
 	      klab.SetTextSize(0.05);
 	      klab.DrawLatex(xval, 0.888*maxy, text);
 	    } // If unblind || not signal bin
@@ -1556,7 +1599,7 @@ vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> >
       if(valdown<0) valdown = 0;
       preds[iplane].push_back(vector<float>({val, valup, valdown}));
       // Throwing toys to find kappas and uncertainties
-      val = calcKappa(kentries, kweights, pow_kappa, valdown, valup);
+      val = calcKappa(kentries, kweights, pow_kappa, valdown, valup, false, true);
       if(valdown<0) valdown = 0;
       kappas[iplane].push_back(vector<float>({val, valup, valdown}));
       // Throwing toys to find kappas and uncertainties
@@ -1623,6 +1666,7 @@ void GetOptions(int argc, char *argv[]){
       {"ht",           no_argument, 0, 0},   // Cuts on ht>500 instead of st>500
       {"mm",     required_argument, 0, 0},   // Mismeasurment scenario, 0 for data
       {"quick",        no_argument, 0, 0},   // Used inclusive ttbar for quick testing
+      {"low_abcd",     no_argument, 0, 0}, // MJcut for ABCD plane
       {"ichep_nbm",    no_argument, 0, 0},   // Use ICHEP b-tagging working point
       {"preview",      no_argument, 0, 0},   // Table preview, no caption
       {0, 0, 0, 0}
@@ -1676,9 +1720,6 @@ void GetOptions(int argc, char *argv[]){
     case 'd':
       debug = true;
       break;
-	case 'M':
-	  mj_upper = optarg;
-	  break;
     case 0:
       optname = long_options[option_index].name;
       if(optname == "ht"){
@@ -1686,11 +1727,13 @@ void GetOptions(int argc, char *argv[]){
       } else if(optname == "mm"){
         mm_scen = optarg;
       }else if(optname == "ichep_nbm"){
-	    ichep_nbm = true;
+        ichep_nbm = true;
       }else if(optname == "preview"){
-	    table_preview = true;
+        table_preview = true;
       }else if(optname == "quick"){
-	    quick_test = true;
+        quick_test = true;
+      }else if(optname == "low_abcd"){
+        low_abcd = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
 	    exit(1);

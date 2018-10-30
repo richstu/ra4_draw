@@ -59,7 +59,7 @@ int main(){
         bear_mc+"*ggZH_HToBB*.root", bear_mc+"*ttHJetTobb*.root",
         bear_mc+"*_TTGJets*.root", bear_mc+"*_TTTT_*.root",
         bear_mc+"*_WH_HToBB*.root", bear_mc+"*_WZTo*.root",
-        bear_mc+"*_ZH_HToBB*.root", bear_mc+"_ZZ_*.root"});
+        bear_mc+"*_ZH_HToBB*.root", bear_mc+"*_ZZ_*.root"});
 
 
   vector<shared_ptr<Process> > procs;

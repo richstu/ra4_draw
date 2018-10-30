@@ -112,13 +112,13 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
   // Bear
-  // string foldersig = bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
-  // string foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_abcd/";
-  // string folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/";
+  string foldersig = bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
+  string foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_abcd/";
+  string folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/";
   // Shrew
-  string foldersig = bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_stdnj5/";
-  string foldermc = bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_stdnj5/";
-  string folderdata = "";
+  // string foldersig = bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_stdnj5/";
+  // string foldermc = bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_stdnj5/";
+  // string folderdata = "";
 
   GetOptions(argc, argv);
 
@@ -174,8 +174,9 @@ int main(int argc, char *argv[]){
   // --------------------------------------
   //            Processes
   //---------------------------------------
-  set<string> bkg_files = {//foldermc+"*_TTJets_SingleLeptFromT_ge*"};
-    foldermc+"*_TTJets*Lept*", foldermc+"*_WJetsToLNu*", foldermc+"*_ST_*", 
+  set<string> other_files = {
+    foldermc+"*_WJetsToLNu*",
+     foldermc+"*_ST_*", 
     foldermc+"*_TTW*", foldermc+"*_TTZ*", foldermc+"*_TTGJets*", foldermc+"*_TTTT*",
     foldermc+"*DYJetsToLL*", foldermc+"*_ZJet*", foldermc+"*_ttHTobb_M125_*", 
     foldermc+"*_WH_HToBB*", foldermc+"*_ZH_HToBB*", foldermc+"*_WWTo*", 
@@ -183,9 +184,14 @@ int main(int argc, char *argv[]){
     foldermc+"*QCD_HT*0_Tune*",foldermc+"*QCD_HT*Inf_Tune*"
   };
 
-  vector<shared_ptr<Process> > bkg_procs;
-  bkg_procs.push_back(Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, kBlack,
-    bkg_files, filters && "stitch_met && pass"));
+  auto proc_tt1l = Process::MakeShared<Baby_full>("tt_1l",    Process::Type::background, 1,  
+    {foldermc+ "*_TTJets*SingleLept*.root"}, filters && "stitch_met && pass");  
+  auto proc_tt2l = Process::MakeShared<Baby_full>("tt_2l",    Process::Type::background, 1,  
+    {foldermc+ "*_TTJets*DiLept*.root"}, filters && "stitch_met && pass");  
+  auto proc_other = Process::MakeShared<Baby_full>("other",    Process::Type::background, 1,  
+    other_files, filters && "stitch_met && pass");
+
+  vector<shared_ptr<Process> > bkg_procs = {proc_tt1l, proc_tt2l, proc_other};
 
   vector<shared_ptr<Process> > data_procs;
   data_procs.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
@@ -205,8 +211,8 @@ int main(int argc, char *argv[]){
   // N.B.: currently, changing naming convention would break writing the closure systematics derived from CRs
   vector<string> vl_met, vc_met, vc_mj_r1;
   vl_met.push_back("met200to350"); vc_met.push_back("met>200 && met<=350"); vc_mj_r1.push_back("mj14<=400");
-  vl_met.push_back("met350to500"); vc_met.push_back("met>350 && met<=500"); vc_mj_r1.push_back(Contains(tag,"vary_mj")? "mj14<=500" : "mj14<=400");
-  vl_met.push_back("met500");      vc_met.push_back("met>500");             vc_mj_r1.push_back(Contains(tag,"vary_mj")? "mj14<=600" : "mj14<=400");
+  vl_met.push_back("met350to500"); vc_met.push_back("met>350 && met<=500"); vc_mj_r1.push_back(Contains(tag,"vary_mj")? "mj14<=450" : "mj14<=400");
+  vl_met.push_back("met500");      vc_met.push_back("met>500");             vc_mj_r1.push_back(Contains(tag,"vary_mj")? "mj14<=500" : "mj14<=400");
   unsigned nbins_met(vl_met.size());
 
   vector<string> vl_nb, vc_nb;
@@ -216,9 +222,20 @@ int main(int argc, char *argv[]){
   unsigned nbins_nb(vl_nb.size());
 
   vector<string> vl_nj, vc_nj;
-  vl_nj.push_back("6to8j");  vc_nj.push_back("njets>=6 && njets<=8");
-  vl_nj.push_back("ge9j");   vc_nj.push_back("njets>=9");
+  vl_nj.push_back("6to8j");  vc_nj.push_back("njets>=6 && njets<=7");
+  vl_nj.push_back("ge9j");   vc_nj.push_back("njets>=8");
   unsigned nbins_nj(vl_nj.size());
+
+  vector<string> vl_mj, vc_mj;
+  vl_mj.push_back("mj400toXXX");  vc_mj.push_back("mj14<=XXX");
+  vl_mj.push_back("mjXXX");  vc_mj.push_back("mj14>XXX");
+  unsigned nbins_mj(vl_mj.size());
+  vector<string> v_metdep_midmj = {"500","650","800"};
+  // vector<string> v_metdep_midmj = {"400","650"};
+  if (v_metdep_midmj.size()!=vc_met.size()) {
+    cout<<"ERROR: Intermediate MJ thresholds not specified for each MET bin"<<endl;
+    exit(1);
+  }
 
   vector<bindef> vbins; 
   for (unsigned imet(0); imet<nbins_met; imet++){
@@ -229,11 +246,15 @@ int main(int argc, char *argv[]){
       vbins.push_back(bindef(_label, _cut));
       for (unsigned inb(0); inb<nbins_nb; inb++){
         for (unsigned inj(0); inj<nbins_nj; inj++){
-          _label = "r2_"+vl_met[imet]+'_'+vl_nb[inb]+'_'+vl_nj[inj];
-          _cut = vc_met[imet]+"&&"
-                 +c_mt_r1+"&&"+CopyReplaceAll(vc_mj_r1[imet],"<=",">")+"&&"
-                 +vc_nb[inb]+"&&"+vc_nj[inj];
-          vbins.push_back(bindef(_label, _cut));
+          for (unsigned imj(0); imj<nbins_mj; imj++){
+            _label = "r2_"+vl_met[imet]+'_'+vl_nb[inb]+'_'+vl_nj[inj];
+            _label += '_'+CopyReplaceAll(vl_mj[imj],"XXX",v_metdep_midmj[imet]);
+            _cut = vc_met[imet]+"&&"
+                   +c_mt_r1+"&&"+CopyReplaceAll(vc_mj_r1[imet],"<=",">")+"&&"
+                   +vc_nb[inb]+"&&"+vc_nj[inj];
+            _cut += "&&"+CopyReplaceAll(vc_mj[imj],"XXX",v_metdep_midmj[imet]);
+            vbins.push_back(bindef(_label, _cut));
+          }
         }
       }
       _label = "r3_"+vl_met[imet];
@@ -242,11 +263,15 @@ int main(int argc, char *argv[]){
     }
     for (unsigned inb(0); inb<nbins_nb; inb++){
       for (unsigned inj(0); inj<nbins_nj; inj++){
-        _label = "r4_"+vl_met[imet]+'_'+vl_nb[inb]+'_'+vl_nj[inj];
-        _cut = vc_met[imet]+"&&"
-               +CopyReplaceAll(c_mt_r1,"<=",">")+"&&"+CopyReplaceAll(vc_mj_r1[imet],"<=",">")+"&&"
-               +vc_nb[inb]+"&&"+vc_nj[inj];
-        vbins.push_back(bindef(_label, _cut));
+        for (unsigned imj(0); imj<nbins_mj; imj++){
+          _label = "r4_"+vl_met[imet]+'_'+vl_nb[inb]+'_'+vl_nj[inj];
+          _label += '_'+CopyReplaceAll(vl_mj[imj],"XXX",v_metdep_midmj[imet]);
+          _cut = vc_met[imet]+"&&"
+                 +CopyReplaceAll(c_mt_r1,"<=",">")+"&&"+CopyReplaceAll(vc_mj_r1[imet],"<=",">")+"&&"
+                 +vc_nb[inb]+"&&"+vc_nj[inj];
+          _cut += "&&"+CopyReplaceAll(vc_mj[imj],"XXX",v_metdep_midmj[imet]);
+          vbins.push_back(bindef(_label, _cut));
+        }
       }
     }
   }
@@ -366,31 +391,33 @@ int main(int argc, char *argv[]){
   yield_table = static_cast<Table*>(pm.Figures()[0].get());
   bkg_params = yield_table->BackgroundYield(lumi);
   vector<float> bkg_yields;
-  for (auto &ipar: bkg_params)
-    bkg_yields.push_back(ipar.Yield());  
+  for (unsigned ipar(0); ipar< bkg_params.size(); ipar++)
+    bkg_yields.push_back(bkg_params[ipar].Yield());  
 
   // calculate kappas
   vector<float> vkappas, vkappas_unc;
   if (!Contains(tag,"noabcd")) {
     vector<float> powers = {1, -1, -1, 1};
-    // order of for loops must match the one used to define cut vector, i.e. met, nb, nj!
+    // order of for loops must match the one used to define cut vector, i.e. met, nb, nj, mj!
     for (unsigned imet(0); imet<nbins_met; imet++){
       for (unsigned inb(0); inb<nbins_nb; inb++){
         for (unsigned inj(0); inj<nbins_nj; inj++){
-            unsigned r1_idx = imet*(2*nbins_nb*nbins_nj+2);  
-            unsigned r2_idx = r1_idx + inb*nbins_nj + inj + 1;
-            unsigned r3_idx = r1_idx + nbins_nb*nbins_nj + 1; 
-            unsigned r4_idx = r3_idx + inb*nbins_nj + inj + 1;  
-          // repackage yields as required for input to calcKappa
-          vector<vector<float>> _entries, _weights;
-          for (auto &_idx: vector<unsigned>{r1_idx, r2_idx, r3_idx, r4_idx}){
-            _entries.push_back(vector<float>{static_cast<float>(bkg_params[_idx].NEffective())});
-            _weights.push_back(vector<float>{static_cast<float>(bkg_params[_idx].Weight())});
-          }
-          float kappa_up(0), kappa_dn(0);
-          double kappa = calcKappa(_entries, _weights, powers, kappa_dn, kappa_up);
-          vkappas.push_back(kappa);
-          vkappas_unc.push_back(kappa_up>kappa_dn ? kappa_up:kappa_dn);
+          for (unsigned imj(0); imj<nbins_mj; imj++){
+            unsigned r1_idx = imet*(2*nbins_nb*nbins_nj*nbins_mj+2);  
+            unsigned r2_idx = r1_idx + inb*nbins_nj*nbins_mj + inj*nbins_mj + imj + 1;
+            unsigned r3_idx = r1_idx + nbins_nb*nbins_nj*nbins_mj + 1; 
+            unsigned r4_idx = r3_idx + inb*nbins_nj*nbins_mj + inj*nbins_mj + imj + 1;  
+            // repackage yields as required for input to calcKappa
+            vector<vector<float>> _entries, _weights;
+            for (auto &_idx: vector<unsigned>{r1_idx, r2_idx, r3_idx, r4_idx}){
+              _entries.push_back(vector<float>{static_cast<float>(bkg_params[_idx].NEffective())});
+              _weights.push_back(vector<float>{static_cast<float>(bkg_params[_idx].Weight())});
+            }
+            float kappa_up(0), kappa_dn(0);
+            double kappa = calcKappa(_entries, _weights, powers, kappa_dn, kappa_up);
+            vkappas.push_back(kappa);
+            vkappas_unc.push_back(kappa_up>kappa_dn ? kappa_up:kappa_dn);
+          } //mj
         } //nj
       } // nb
     } // met bin loop
@@ -415,8 +442,7 @@ int main(int argc, char *argv[]){
     for (auto &ipar: data_params)
       data_yields.push_back(ipar.Yield());    
   } else {
-    for (auto &ipar: bkg_params)
-      data_yields.push_back(ipar.Yield());    
+      data_yields = bkg_yields;   
   }
 
   for (unsigned isig(0); isig<sig_params.size(); isig++) {
@@ -441,9 +467,10 @@ int main(int argc, char *argv[]){
     outpath += "_"+RoundNumber(lumi,1).ReplaceAll(".","p")+"ifb_"+tag+".txt";
     if (!do_syst)  outpath.ReplaceAll(".txt*","_nosys.txt");
     cout<<"open "<<outpath<<endl;
-    unsigned wname(28), wdist(7), wbin(21);
+    unsigned wname(28), wdist(7), wbin(31);
     for (size_t ibin(0); ibin<nbins; ibin++) 
-      if(vbins[ibin].tag.length() > wbin) wbin = vbins[ibin].tag.length()+1;
+      if(vbins[ibin].tag.length() > wbin) wbin = vbins[ibin].tag.length();
+    wbin+=1;
     unsigned digit = 2;
     if (unblind) digit = 0;
 
@@ -657,24 +684,27 @@ int main(int argc, char *argv[]){
                        <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
                        <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
                        <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
-                       <<right<<setw(15)<<RoundNumber(bkg_params[iyield].Yield(),2)
+                       <<right<<setw(15)<<RoundNumber(bkg_yields[iyield],2)
                        <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
                        <<endl;
         iyield++;
         for (unsigned inb(0); inb<nbins_nb; inb++){
           for (unsigned inj(0); inj<nbins_nj; inj++){
-            _label = "r2_"+vl_met[imet]+'_'+vl_nb[inb]+'_'+vl_nj[inj];
-            fcard<<"rp_"<<left<<setw(wbin)<<_label<<setw(10)<<"rateParam"<<left<<setw(wbin)<<_label<<"bkg "
-                 <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
-                 <<(data_yields[iyield]<50 ? " [0,100]":"")<<endl;
-            if(debug) cout <<left<<setw(wbin)<<_label
-                           <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
-                           <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
-                           <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
-                           <<right<<setw(15)<<RoundNumber(bkg_params[iyield].Yield(),2)
-                           <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
-                           <<endl;
-            iyield++;
+            for (unsigned imj(0); imj<nbins_mj; imj++){
+              _label = "r2_"+vl_met[imet]+'_'+vl_nb[inb]+'_'+vl_nj[inj];
+              _label += '_'+CopyReplaceAll(vl_mj[imj],"XXX",v_metdep_midmj[imet]);
+              fcard<<"rp_"<<left<<setw(wbin)<<_label<<setw(10)<<"rateParam"<<left<<setw(wbin)<<_label<<"bkg "
+                   <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
+                   <<(data_yields[iyield]<50 ? " [0,100]":"")<<endl;
+              if(debug) cout <<left<<setw(wbin)<<_label
+                             <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
+                             <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
+                             <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
+                             <<right<<setw(15)<<RoundNumber(bkg_yields[iyield],2)
+                             <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
+                             <<endl;
+              iyield++;
+            }
           }
         }
         _label = "r3_"+vl_met[imet];
@@ -685,30 +715,33 @@ int main(int argc, char *argv[]){
                        <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
                        <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
                        <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
-                       <<right<<setw(15)<<RoundNumber(bkg_params[iyield].Yield(),2)
+                       <<right<<setw(15)<<RoundNumber(bkg_yields[iyield],2)
                        <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
                        <<endl;
         iyield++;
         for (unsigned inb(0); inb<nbins_nb; inb++){
           for (unsigned inj(0); inj<nbins_nj; inj++){
-            _label = "r4_"+vl_met[imet]+'_'+vl_nb[inb]+'_'+vl_nj[inj];
-            fcard<<"rp_"<<left<<setw(wbin)<<_label<<setw(10)<<"rateParam"<<left<<setw(wbin)<<_label<<"bkg "
-            <<"(@0*@1/@2)*@3 "<<"rp_r3_"+vl_met[imet]<<",rp_"+CopyReplaceAll(_label,"r4_","r2_")
-            <<",rp_r1_"+vl_met[imet]<<","+CopyReplaceAll(_label,"r4_","kappa_")
-            <<endl;
-            if(debug) cout <<left<<setw(wbin)<<_label
-                           <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
-                           <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
-                           <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
-                           <<right<<setw(15)<<RoundNumber(bkg_params[iyield].Yield(),2)
-                           <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
-                           <<endl;
-            unsigned ikappa = imet*nbins_nb*nbins_nj +inb*nbins_nj +inj;
-            kappas<<left<<setw(wbin)<<CopyReplaceAll(_label,"r4_","kappa_")<<setw(10)<<"param "
-                 <<RoundNumber(vkappas[ikappa], 2)<<"  "<<RoundNumber(vkappas_unc[ikappa], 2)<<endl;
-            iyield++;
-          } //nj
-        } // nb
+            for (unsigned imj(0); imj<nbins_mj; imj++){
+              _label = "r4_"+vl_met[imet]+'_'+vl_nb[inb]+'_'+vl_nj[inj];
+              _label += '_'+CopyReplaceAll(vl_mj[imj],"XXX",v_metdep_midmj[imet]);
+              fcard<<"rp_"<<left<<setw(wbin)<<_label<<setw(10)<<"rateParam"<<left<<setw(wbin)<<_label<<"bkg "
+              <<"(@0*@1/@2)*@3 "<<"rp_r3_"+vl_met[imet]<<",rp_"+CopyReplaceAll(_label,"r4_","r2_")
+              <<",rp_r1_"+vl_met[imet]<<","+CopyReplaceAll(_label,"r4_","kappa_")
+              <<endl;
+              if(debug) cout <<left<<setw(wbin)<<_label
+                             <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
+                             <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
+                             <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
+                             <<right<<setw(15)<<RoundNumber(bkg_yields[iyield],2)
+                             <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
+                             <<endl;
+              unsigned ikappa = imet*nbins_nb*nbins_nj*nbins_mj +inb*nbins_nj*nbins_mj +inj*nbins_mj+imj;
+              kappas<<left<<setw(wbin)<<CopyReplaceAll(_label,"r4_","kappa_")<<setw(10)<<"param "
+                   <<RoundNumber(vkappas[ikappa], 2)<<"  "<<RoundNumber(vkappas_unc[ikappa], 2)<<endl;
+              iyield++;
+            }
+          }
+        } 
         fcard<<kappas.str();
         if (debug) cout<<kappas.str();
       } // met bin loop

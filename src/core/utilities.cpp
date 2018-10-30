@@ -194,7 +194,9 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>200&&met<=500", "200<met<=500");
   ReplaceAll(code, "njets>=4&&njets<=5", "4<=njets<=5");
   ReplaceAll(code, "njets>=5&&njets<=7", "5<=njets<=7");
+  ReplaceAll(code, "njets>=5&&njets<=6", "5<=njets<=6");
   ReplaceAll(code, "njets>=6&&njets<=8", "6<=njets<=8");
+  ReplaceAll(code, "njets>=6&&njets<=7", "6<=njets<=7");
   ReplaceAll(code, "nbm>=1&&nbm<=2", "1<=nbm<=2");
 
   ReplaceAll(code, "1==1", "Full Sample");
@@ -303,6 +305,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nbm_moriond","N_{b}");
   ReplaceAll(code, "nbm","N_{b}");
   ReplaceAll(code, "nbl","N_{b,l}");
+  ReplaceAll(code, "mj14", " M_{J}");
   ReplaceAll(code, "mj", " M_{J}");
 
   ReplaceAll(code, "el_tks_mt", "Track m_{T}");

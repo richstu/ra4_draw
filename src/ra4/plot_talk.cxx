@@ -46,7 +46,7 @@ int main(){
         trig_skim_mc+"*ggZH_HToBB*.root", trig_skim_mc+"*ttHJetTobb*.root",
         trig_skim_mc+"*_TTGJets*.root", trig_skim_mc+"*_TTTT_*.root",
         trig_skim_mc+"*_WH_HToBB*.root", trig_skim_mc+"*_WZTo*.root",
-        trig_skim_mc+"*_ZH_HToBB*.root", trig_skim_mc+"_ZZ_*.root"});
+        trig_skim_mc+"*_ZH_HToBB*.root", trig_skim_mc+"*_ZZ_*.root"});
 
   auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
     {trig_mc+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
