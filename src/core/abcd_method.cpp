@@ -107,21 +107,25 @@ void abcd_method::serializeCuts(){
 
         bool low_abcd = false;
         if (method.Contains("_lowmj_abcd")) low_abcd = true;
-        vector<string> midmj = {"400","450", "500"};
-        vector<string> himj = {"500","650", "800"};
+        vector<string> midmj = {"350", "400","450", "500"};
+        vector<string> himj = {"450", "500","650", "800"};
         totcut.ReplaceAll(" ","").ReplaceAll("&&"," && ");
-        if (totcut.Contains("met>200")) {
+        if (totcut.Contains("met>100") || totcut.Contains("met>150")) {
           totcut.ReplaceAll("mj14<=400","mj14<="+midmj[0]);
           if (low_abcd) totcut.ReplaceAll("mj14>400","mj14>"+midmj[0]+" && mj14<="+himj[0]);
           else totcut.ReplaceAll("mj14>400","mj14>"+himj[0]);
-        } else if (totcut.Contains("met>350")) {
+        } else if (totcut.Contains("met>200")) {
           totcut.ReplaceAll("mj14<=400","mj14<="+midmj[1]);
           if (low_abcd) totcut.ReplaceAll("mj14>400","mj14>"+midmj[1]+" && mj14<="+himj[1]);
           else totcut.ReplaceAll("mj14>400","mj14>"+himj[1]);
-        } else if (totcut.Contains("met>500")) {
+        } else if (totcut.Contains("met>350")) {
           totcut.ReplaceAll("mj14<=400","mj14<="+midmj[2]);
           if (low_abcd) totcut.ReplaceAll("mj14>400","mj14>"+midmj[2]+" && mj14<="+himj[2]);
           else totcut.ReplaceAll("mj14>400","mj14>"+himj[2]);
+        } else if (totcut.Contains("met>500")) {
+          totcut.ReplaceAll("mj14<=400","mj14<="+midmj[3]);
+          if (low_abcd) totcut.ReplaceAll("mj14>400","mj14>"+midmj[3]+" && mj14<="+himj[3]);
+          else totcut.ReplaceAll("mj14>400","mj14>"+himj[3]);
         }
 
         allcuts.push_back(totcut);
