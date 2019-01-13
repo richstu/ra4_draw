@@ -1,3 +1,6 @@
+// Macro to calculate systematic uncertainties for the signal scan
+// this is superseded by write_datacards
+
 #include <fstream>
 #include <iostream>
 #include <iomanip>

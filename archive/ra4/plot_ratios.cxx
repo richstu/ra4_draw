@@ -1,4 +1,5 @@
 ///// plot_ratios: plots rMJ and rmT, and combinations of these
+//superseded by plot_partial_kappa
 
 #include <fstream>
 #include <iostream>

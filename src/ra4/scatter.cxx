@@ -1,3 +1,4 @@
+// Macro for making figures like 35 from AN2016_187_v9
 #include "ra4/scatter.hpp"
 
 #include <cstdlib>

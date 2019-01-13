@@ -236,9 +236,9 @@ int main(int argc, char *argv[]){
   // nb plots integrated in MET
   if (metcuts.size()>0) tmp_seln += "&&"+metcuts[0];
   if (!note) {
-    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbl", "N_{b}^{L} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_hig*eff_higtrig).Tag(sample);
-    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbm", "N_{b}^{M} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_hig*eff_higtrig).Tag(sample);
-    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbt", "N_{b}^{T} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_hig*eff_higtrig).Tag(sample);
+    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbl", "N_{b}^{L} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);
+    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbm", "N_{b}^{M} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);
+    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbt", "N_{b}^{T} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);
 
     pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbdl", "N_{b}^{L}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
     pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbdm", "N_{b}^{M}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
@@ -256,11 +256,11 @@ int main(int argc, char *argv[]){
   } else { 
     if (!note) {
       pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_bcat, "CSVv2 b-tag categories (TTML)"), 
-        tmp_seln && hig_bcat>0., procs, linplot).Weight(weight_hig*eff_higtrig).Tag(sample); 
+        tmp_seln && hig_bcat>0., procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample); 
       pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_bcat, "CSVv2 b-tag categories (TTML)"), 
-        tmp_seln && hig_bcat>0. && "hig_dm<=40 && hig_am<=200", procs, linplot).Weight(weight_hig*eff_higtrig).Tag(sample);            
+        tmp_seln && hig_bcat>0. && "hig_dm<=40 && hig_am<=200", procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);            
       pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_bcat, "CSVv2 b-tag categories (TTML)"), 
-        tmp_seln && hig_bcat>0. && "hig_dm<=40 && hig_am<=200 && hig_drmax<=2.2", procs, linplot).Weight(weight_hig*eff_higtrig).Tag(sample);    
+        tmp_seln && hig_bcat>0. && "hig_dm<=40 && hig_am<=200 && hig_drmax<=2.2", procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);    
       // deep
       pm.Push<Hist1D>(Axis(6,-0.5,5.5,higd_bcat_extended, "Extended b-tag categories (TTML)"), 
         tmp_seln && higd_bcat_extended<6, procs, linplot).Weight(wgt).Tag(sample);

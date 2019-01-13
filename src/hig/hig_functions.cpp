@@ -35,7 +35,7 @@ const NamedFunc hig_pt2("hig_pt2",[](const Baby &b) -> NamedFunc::ScalarType{
 const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
   int tmp_ntrub(0);
   for (unsigned i(0); i<b.jets_pt()->size(); i++){
-    if (!b.jets_h1()->at(i) && !b.jets_h2()->at(i)) continue;
+    if (!b.jets_h1d()->at(i) && !b.jets_h2d()->at(i)) continue;
     if (b.jets_hflavor()->at(i)==5) tmp_ntrub++;
   }
   return tmp_ntrub;
@@ -722,19 +722,14 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
     return eff;
   });
 
-const NamedFunc weight_hig("weight_hig",[](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.type()>0 && b.type()<1000) return 1;
-  else return b.weight()/b.w_btag()*b.w_bhig();
-});
-
 const NamedFunc weight_higd("weight_hig_deep",[](const Baby &b) -> NamedFunc::ScalarType{
   if (b.type()==-999999){ //normalize weights for TChiHZ benchmarks
-    if (b.mgluino()==225) return b.weight()/b.w_btag()*b.w_bhig_deep()/.9666;
-    else if (b.mgluino()==400) return b.weight()/b.w_btag()*b.w_bhig_deep()/.9705;
-    else if (b.mgluino()==700) return b.weight()/b.w_btag()*b.w_bhig_deep()/.987;
+    if (b.mgluino()==225) return b.weight()/b.w_btag_deep()*b.w_bhig_deep()/.9666;
+    else if (b.mgluino()==400) return b.weight()/b.w_btag_deep()*b.w_bhig_deep()/.9705;
+    else if (b.mgluino()==700) return b.weight()/b.w_btag_deep()*b.w_bhig_deep()/.987;
   } else if (b.type()>0 && b.type()<1000) return 1;
   
-  return b.weight()/b.w_btag()*b.w_bhig_deep();
+  return b.weight()/b.w_btag_deep()*b.w_bhig_deep();
 });
 
 const NamedFunc mhig("mhig",[](const Baby &b) -> NamedFunc::ScalarType{

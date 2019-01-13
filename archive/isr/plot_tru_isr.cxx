@@ -1,3 +1,5 @@
+// Macro to make figure 33 from AN2016_187_v9
+
 #include <iostream>
 #include <string>
 #include <vector>

@@ -81,7 +81,7 @@ void GetOptions(int argc, char *argv[]);
 void fillTtbarSys(ofstream &fsys);
 
 vector<double> getYields(Baby_full &baby, const NamedFunc &baseline, const vector<NamedFunc> &bincuts,
-                         vector<double> &yield, vector<double> &w2, double lumi, const TString &flag = "");
+                         vector<double> &yield, vector<double> &w2, double lumi);
 
 const NamedFunc ntop("ntop", [](const Baby &b) -> NamedFunc::ScalarType{
     int _ntop = 0;
@@ -823,7 +823,7 @@ void fillTtbarSys(ofstream &fsys){
 }
 
 vector<double> getYields(Baby_full &baby, const NamedFunc &/*baseline*/, const vector<NamedFunc> &bincuts,
-                         vector<double> &yield, vector<double> &w2, const TString &flag){
+                         vector<double> &yield, vector<double> &w2){
   for(size_t i = 0; i <v_data_npv.size(); ++i){
     h_data_npv.SetBinContent(i+1, v_data_npv.at(i));
     h_data_npv.SetBinError(i+1, 0.);
@@ -857,14 +857,6 @@ vector<double> getYields(Baby_full &baby, const NamedFunc &/*baseline*/, const v
       float wgt = bincuts.at(ind).GetScalar(baby);
       if(wgt != 0.){
         ++entries.at(ind);
-        
-        if(flag=="jer_tail"){
-          double jet_res_min = *min_element(baby.jets_pt_res()->begin(), baby.jets_pt_res()->end());
-          double jet_res_max = *max_element(baby.jets_pt_res()->begin(), baby.jets_pt_res()->end());
-          if((jet_res_min>0&&jet_res_min<0.675) || jet_res_max>1.391)
-            wgt *= 1.5;
-        }
-
         yield.at(ind) += wgt;
         w2.at(ind) += wgt*wgt;
       }
