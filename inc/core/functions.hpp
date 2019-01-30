@@ -30,6 +30,7 @@ namespace Functions{
   extern const NamedFunc ntop_med_nom;
   extern const NamedFunc ntop_tight_nom;
   extern const NamedFunc offshellw;
+  extern const NamedFunc nbd;
 
   bool IsGoodJet(const Baby &b, std::size_t ijet);
   bool IsGoodak8Jet(const Baby &b, std::size_t ijet);
