@@ -37,7 +37,7 @@ const NamedFunc fakeb_fromw("fakeb_fromw",[](const Baby &b) -> NamedFunc::Scalar
   vector<unsigned> mc_match;
   for (unsigned ijet(0); ijet<b.jets_pt()->size(); ijet++){
     // Finding jets used in the di-Higgs reco that are not true b's
-    if (!b.jets_h1()->at(ijet) && !b.jets_h2()->at(ijet)) continue;
+    if (!b.jets_h1d()->at(ijet) && !b.jets_h2d()->at(ijet)) continue;
     if (b.jets_hflavor()->at(ijet)!=5) {
       float mindR=999.;
       unsigned imc_min;
@@ -65,7 +65,7 @@ const NamedFunc fakeb_fromw("fakeb_fromw",[](const Baby &b) -> NamedFunc::Scalar
   if(nfakesw<2 && false){
     cout<<endl<<endl<<"Nfakes = "<<nfakesw<<endl;
     for (unsigned ijet(0); ijet<b.jets_pt()->size(); ijet++){
-      if (!b.jets_h1()->at(ijet) && !b.jets_h2()->at(ijet)) continue;
+      if (!b.jets_h1d()->at(ijet) && !b.jets_h2d()->at(ijet)) continue;
       if (b.jets_hflavor()->at(ijet)!=5) {
 	cout<<"Jet "<<setw(4)<<ijet<<": ("<<setw(8)<<b.jets_pt()->at(ijet)<<", "<<setw(8)<<b.jets_eta()->at(ijet)<<", "<<
 	  setw(8)<<b.jets_phi()->at(ijet)<<")"<<endl;

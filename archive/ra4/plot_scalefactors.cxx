@@ -46,7 +46,7 @@ int main(){
   auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {mc_folder+"*_TTWJets*.root", mc_folder+"*_TTZTo*.root"}, "pass");
   auto vv = Process::MakeShared<Baby_full>("VV", Process::Type::background, kRed,
-    {mc_folder+"_ZZ_*.root", mc_folder+"*_WWTo*.root",mc_folder+"*_WZTo*.root"},"pass");
+    {mc_folder+"*_ZZ_*.root", mc_folder+"*_WWTo*.root",mc_folder+"*_WZTo*.root"},"pass");
   auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {mc_folder+"*DYJetsToLL*.root",    mc_folder+"*_QCD_HT*.root", 
         mc_folder+"*_ZJet*.root",      mc_folder+"*ggZH_HToBB*.root", 

@@ -1,109 +1,71 @@
-#include "ra4/plot_dy_mismeasurement_study.hpp"
+#include "ra4/plot_dilep_angles.hpp"
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <memory>
-
-#include <unistd.h>
-#include <getopt.h>
+#include <cmath>
 
 #include "TError.h"
-#include "TColor.h"
 #include "TVector2.h"
 
-#include "core/baby.hpp"
-#include "core/process.hpp"
-#include "core/named_func.hpp"
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
-#include "core/table.hpp"
 #include "core/hist1d.hpp"
 #include "core/event_scan.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
 
-namespace{
-  bool single_thread = false;
-}
-
-void GetOptions(int argc, char *argv[]);
-
-int main(int argc, char *argv[]){
+int main(){
   gErrorIgnoreLevel = 6000;
-  GetOptions(argc, argv);
 
-  double lumi = 2.7;
-
-  string trig_skim_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/skim_nleps2/";
+  double lumi = 2.6;
 
   Palette colors("txt/colors.txt", "default");
 
-  auto dy = Process::MakeShared<Baby_full>("Drell Yan", Process::Type::background, colors("wjets"),
-    {trig_skim_mc+"*DYJetsToLL*.root"},"stitch");
-  auto diboson = Process::MakeShared<Baby_full>("WW,ZZ,WZ", Process::Type::background, colors("single_t"),
-    {trig_skim_mc+"*_WWTo*.root",trig_skim_mc+"*_WZTo*.root", trig_skim_mc+"_ZZ_*.root"});
-  auto tt = Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_2l"),
-    {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
-    "stitch");
-  auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("ttv"),
-    {trig_skim_mc+"*_WJetsToLNu*.root"});
-
-  //auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
-  //  {trig_skim_mc+"*_WJetsToLNu*.root"});
-  //auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
-  // {trig_skim_mc+"*_ST_*.root"});
-  /* auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
-     {trig_skim_mc+"*_TTWJets*.root", trig_skim_mc+"*_TTZTo*.root"});*/
+  string folder_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/";
+  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
+    {folder_mc+"*_TTJets*Lept*.root", folder_mc+"*_TTJets_HT*.root"}, "ntruleps<=1&&stitch");
+  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
+    {folder_mc+"*_TTJets*Lept*.root", folder_mc+"*_TTJets_HT*.root"}, "ntruleps>=2&&stitch");
+  auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+    {folder_mc+"*_WJetsToLNu*.root"});
+  auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+    {folder_mc+"*_ST_*.root"});
+  auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+    {folder_mc+"*_TTWJets*.root", folder_mc+"*_TTZTo*.root"});
   auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {/*trig_skim_mc+"*_WJetsToLNu*.root",*/ trig_skim_mc+"*_QCD_HT*.root",
-        trig_skim_mc+"*_ZJet*.root",/* trig_skim_mc+"*_WWTo*.root",*/
-        trig_skim_mc+"*ggZH_HToBB*.root", trig_skim_mc+"*ttHJetTobb*.root",
-        trig_skim_mc+"*_TTGJets*.root", trig_skim_mc+"*_TTTT_*.root",
-        trig_skim_mc+"*_WH_HToBB*.root"/*, trig_skim_mc+"*_WZTo*.root"*/,
-        trig_skim_mc+"*_ZH_HToBB*.root",trig_skim_mc+"*_ST_*.root"/*, trig_skim_mc+"_ZZ_*.root"*/
-        ,trig_skim_mc+"*_TTWJets*.root", trig_skim_mc+"*_TTZTo*.root"});
+    {folder_mc+"*DYJetsToLL*.root", folder_mc+"*_QCD_HT*.root",
+        folder_mc+"*_ZJet*.root", folder_mc+"*_WWTo*.root",
+        folder_mc+"*ggZH_HToBB*.root", folder_mc+"*ttHJetTobb*.root",
+        folder_mc+"*_TTGJets*.root", folder_mc+"*_TTTT_*.root",
+        folder_mc+"*_WH_HToBB*.root", folder_mc+"*_WZTo*.root",
+        folder_mc+"*_ZH_HToBB*.root", folder_mc+"*_ZZ_*.root"});
+  auto data_2016 = Process::MakeShared<Baby_full>("2016 Data", Process::Type::data, kBlack,
+    {"/net/cms2/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/*.root"},
+    "pass&&(trig[4]||trig[8]||trig[13]||trig[33])");
+  auto data_2015 = Process::MakeShared<Baby_full>("2015 Data", Process::Type::data, kRed,
+    {"/net/cms2/cms2r0/babymaker/babies/2016_04_29/data/merged_1lht500met200/*.root"},
+    "pass&&(trig[4]||trig[8]||trig[13]||trig[28])");
 
-  auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
-    {trig_skim_mc+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
-  auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
-    {trig_skim_mc+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
-  t1tttt_c->SetLineStyle(2);
+  vector<shared_ptr<Process> > procs = {data_2016, data_2015, tt1l, tt2l, wjets, single_t, ttv, other};
 
-  auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {"/net/cms2/cms2r0/babymaker/babies/2016_06_26/data/skim_nleps2/*.root"},"json2p6&&pass&&(trig[20]||trig[21]||trig[23]||trig[29]||trig[24]||trig[4]||trig[8]||trig[13]||trig[33])");
-
-  auto data_ee = Process::MakeShared<Baby_full>("Data, ee", Process::Type::data, kBlack,
-    {"/net/cms2/cms2r0/babymaker/babies/2016_06_26/data/skim_nleps2/*.root"},"nels==2&&elel_m>60&&json2p6&&pass&&(trig[20]||trig[21]||trig[23]||trig[29]||trig[24]||trig[4]||trig[8]||trig[13]||trig[33])");
-
-  auto data_mumu = Process::MakeShared<Baby_full>("Data, #mu#mu", Process::Type::background, 30,
-    {"/net/cms2/cms2r0/babymaker/babies/2016_06_26/data/skim_nleps2/*.root"},"nmus==2&&mumu_m>60&&json2p6&&pass&&(trig[20]||trig[21]||trig[23]||trig[29]||trig[24]||trig[4]||trig[8]||trig[13]||trig[33])");
-
-  vector<shared_ptr<Process> > full_trig_skim = {data, t1tttt_nc, t1tttt_c, dy, diboson, tt, wjets, other};
-  vector<shared_ptr<Process> > ee_vs_mumu = {data_ee,data_mumu};
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
-  log_lumi.Title(TitleType::preliminary)
-    .Bottom(BottomType::ratio)
+  log_lumi.Title(TitleType::info)
+    .Bottom(BottomType::off)
     .YAxis(YAxisType::log)
     .Stack(StackType::data_norm);
   PlotOpt lin_lumi = log_lumi().YAxis(YAxisType::linear);
-  PlotOpt log_shapes = log_lumi().Stack(StackType::shapes)
-    .Bottom(BottomType::off)
-    .ShowBackgroundError(false);
-  PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
-  PlotOpt log_lumi_info = log_lumi().Title(TitleType::info);
-  PlotOpt lin_lumi_info = lin_lumi().Title(TitleType::info);
-  PlotOpt log_shapes_info = log_shapes().Title(TitleType::info).Bottom(BottomType::ratio);
-  PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::ratio);
-  vector<PlotOpt> all_plot_types = {log_lumi, lin_lumi, log_shapes, lin_shapes,
-                                    log_lumi_info, lin_lumi_info, log_shapes_info, lin_shapes_info};
-  vector<PlotOpt> norms = {log_lumi_info, lin_lumi_info};
-  vector<PlotOpt> shapes = {lin_shapes_info,log_shapes_info};
+  vector<PlotOpt> plot_types = {log_lumi, lin_lumi};
 
   PlotMaker pm;
   double pi = acos(-1.);
+
+  NamedFunc baseline = "met<=500&&nbm<=2&&ht>500&&met>200";
+  NamedFunc dilep_all = baseline && "(nleps==2&&njets>=4) || (nleps==1&&nveto==1&&njets>=5&&nbm>=1&&mt>140)";
+  NamedFunc dilep_ee = baseline && "nels==2&&nmus==0&&njets>=4";
+  NamedFunc dilep_em = baseline && "nels==1&&nmus==1&&njets>=4";
+  NamedFunc dilep_mm = baseline && "nels==0&&nmus==2&&njets>=4";
+  NamedFunc dilep_ev = baseline && "nels==1&&nmus==0&&nveto==1&&njets>=5&&nbm>=1&&mt>140";
+  NamedFunc dilep_mv = baseline && "nels==0&&nmus==1&&nveto==1&&njets>=5&&nbm>=1&&mt>140";
 
   NamedFunc dphi_ll("dphi_ll", [](const Baby &b) -> NamedFunc::ScalarType{
       double phi1, eta1, phi2, eta2;
@@ -127,69 +89,36 @@ int main(int argc, char *argv[]){
   NamedFunc min_dr_lj("min_dr_lj", MinDeltaRLepJet);
   NamedFunc max_dr_lj("max_dr_lj", MaxDeltaRLepJet);
 
-  string selections[] = {"nleps==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120",
-                         "nleps==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120",
-                         "nleps==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120&&met>200",
-                         "nleps==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120&&met>200",
-                         /*"nleps==2&&ht>200&&njets<=2&&nbl==0&&met<500&&(elel_m+mumu_m+999)>200&&leps_pt[0]>120"*/};
+  vector<pair<string, NamedFunc> > categories = {{"all", dilep_all}, {"ee", dilep_ee}, {"em", dilep_em},
+                                                 {"mm", dilep_mm}, {"ev", dilep_ev}, {"mv", dilep_mv}};
 
-  string leps[] = {"&&nels==1&&nmus==1","&&nels==2&&elel_m>60","&&nmus==2&&mumu_m>60"/*,"&&nmus==2&&mumu_m>200","&&nels==2&&elel_m>200","&&nels==1&&nmus==1"*/};
+  for(const auto &cat: categories){
+    std::string tag = "angles_"+cat.first;
+    const NamedFunc &cut = cat.second;
 
-  pm.Push<Hist1D>(Axis(50,0,500, "elel_m", "m_{el el} [GeV]", {60.}), "nels==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", full_trig_skim, norms);
-  pm.Push<Hist1D>(Axis(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", {60.}), "nmus==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(20, 0., pi, dphi_ll, "#Delta#phi(l,l)"), cut, procs, plot_types).Tag(tag);
+    pm.Push<Hist1D>(Axis(20, 0., pi, min_dphi_lmet, "Min. #Delta#phi(l,MET)"), cut, procs, plot_types).Tag(tag);
+    pm.Push<Hist1D>(Axis(20, 0., pi, max_dphi_lmet, "Max. #Delta#phi(l,MET)"), cut, procs, plot_types).Tag(tag);
+    pm.Push<Hist1D>(Axis(20, 0., pi, min_dphi_lj, "Min. #Delta#phi(l,jet)"), cut, procs, plot_types).Tag(tag);
+    pm.Push<Hist1D>(Axis(20, 0., pi, max_dphi_lj, "Max. #Delta#phi(l,jet)"), cut, procs, plot_types).Tag(tag);
+    pm.Push<Hist1D>(Axis(20, 0., pi, min_dphi_metj, "Min. #Delta#phi(MET,jet)"), cut, procs, plot_types).Tag(tag);
+    pm.Push<Hist1D>(Axis(20, 0., pi, max_dphi_metj, "Max. #Delta#phi(MET,jet)"), cut, procs, plot_types).Tag(tag);
 
-  for(unsigned int ilep=0;ilep<1;ilep++){
-    pm.Push<Hist1D>(Axis(30,0,600, "leps_pt[0]", "Leading lepton p_{T}", {120.}), "nleps==2&&ht>200&&nbl==0&&njets<=2&&met<500"+leps[ilep], full_trig_skim, norms);
-    pm.Push<Hist1D>(Axis(20,0,1000, "ht", "H_{T}", {200.}), "nleps==2&&nbl==0&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
-    pm.Push<Hist1D>(Axis(5,-0.5,4.5, "nbl", "N_{b, loose}", {0.5}), "nleps==2&&ht>200&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
-    pm.Push<Hist1D>(Axis(9,-0.5,8.5, "njets", "N_{jets}", {2.5}), "nleps==2&&ht>200&&nbl==0&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(20, 0., 6, dr_ll, "#Delta R(l,l)"), cut, procs, plot_types).Tag(tag);
+    pm.Push<Hist1D>(Axis(20, 0., 6, min_dr_lj, "Min. #Delta R(l,jet)"), cut, procs, plot_types).Tag(tag);
+    pm.Push<Hist1D>(Axis(20, 0., 6, max_dr_lj, "Max. #Delta R(l,jet)"), cut, procs, plot_types).Tag(tag);
   }
 
-  pm.Push<Hist1D>(Axis(50,0,500, "elel_m", "m_{el el} [GeV]", {60.}), "nels==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", full_trig_skim, norms);
-  pm.Push<Hist1D>(Axis(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", {60.}), "nmus==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", full_trig_skim, norms);
+  pm.Push<EventScan>("dilep_angle", dilep_mm || dilep_em, vector<NamedFunc>{
+      "run", "lumiblock", "event", "nmus", "nels", "nveto",
+        dphi_ll, dr_ll, min_dphi_lmet, max_dphi_lmet, min_dphi_lj,
+        max_dphi_lj, min_dr_lj, max_dr_lj, min_dphi_metj, max_dphi_metj,
+        "mj14", "mt", "njets", "nbm", "met", "met_phi", "leps_pt",
+        "leps_phi", "leps_eta", "leps_id", "jets_pt", "jets_phi", "jets_eta"
+        }, procs, 10);
 
-  for(unsigned int ilep=0;ilep<2;ilep++){
-    pm.Push<Hist1D>(Axis(30,0,600, "leps_pt[0]", "Leading lepton p_{T}", {120.}), "nleps==2&&ht<200&&nbl==0&&njets<=2&&met<500"+leps[ilep], full_trig_skim, norms);
-    pm.Push<Hist1D>(Axis(20,0,1000, "ht", "H_{T}",{200.}),"nleps==2&&nbl==0&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
-    pm.Push<Hist1D>(Axis(5,-0.5,4.5, "nbl", "N_{b, loose}",{0.5}),"nleps==2&&ht<200&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
-    pm.Push<Hist1D>(Axis(9,-0.5,8.5, "njets", "N_{jets}",{2.5}),"nleps==2&&ht<200&&nbl==0&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
-  }
-
-  for(unsigned int isel=0;isel<2;isel++){
-    for(unsigned int ilep=0;ilep<2;ilep++){
-      pm.Push<Hist1D>(Axis(8,0,800, "mj14", "M_{J} [GeV]", {250.,400.}), selections[isel]+leps[ilep], full_trig_skim, norms);
-      pm.Push<Hist1D>(Axis(10,0,500, "met", "MET [GeV]", {350.}), selections[isel]+leps[ilep], full_trig_skim, norms);
-      pm.Push<Hist1D>(Axis(20,0,1000, "leps_pt[0]", "Leading lepton p_{T} [GeV]", {20.}), selections[isel]+leps[ilep], full_trig_skim, norms);
-      pm.Push<Hist1D>(Axis(25,0,500, "mt", "m_{T} [GeV]", {140.}), selections[isel]+leps[ilep], full_trig_skim, norms);
-      pm.Push<Hist1D>(Axis(20, 0., pi, min_dphi_lmet, "Min. #Delta#phi(l,MET)"), selections[isel]+leps[ilep], full_trig_skim, norms);
-      pm.Push<Hist1D>(Axis(20, 0., pi, max_dphi_lmet, "Max. #Delta#phi(l,MET)"), selections[isel]+leps[ilep], full_trig_skim, norms);
-      //pm.Push<Hist1D>(Axis(20,0,40, "npv", "N_{PV}", selections[isel]+leps[ilep]), full_trig_skim, norms);
-      if(ilep==1) pm.Push<Hist1D>(Axis(20,0,1000, "elel_m", "m_{el el} [GeV]", {90.}), selections[isel]+leps[ilep], full_trig_skim, norms);
-      if(ilep==0) pm.Push<Hist1D>(Axis(20,0,1000, "elmu_m", "m_{el mu} [GeV]", {90.}), selections[isel]+leps[ilep], full_trig_skim, norms);
-      if(ilep==2) pm.Push<Hist1D>(Axis(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", {90.}), selections[isel]+leps[ilep], full_trig_skim, norms);
-    }
-  }
-
-  PlotMaker pm_data;
-  for(unsigned int isel=0;isel<2;isel++){
-    pm_data.Push<Hist1D>(Axis(10,0,500, "mj14", "MJ 1.4 with leptons [GeV]", {350.}), selections[isel], ee_vs_mumu, norms);
-    pm_data.Push<Hist1D>(Axis(10,0,500, "met", "MET [GeV]", {350.}), selections[isel], ee_vs_mumu, norms);
-    pm_data.Push<Hist1D>(Axis(20,0,1000, "leps_pt[0]", "Leading lepton p_{T} [GeV]", {20.}), selections[isel], ee_vs_mumu, norms);
-    pm_data.Push<Hist1D>(Axis(25,0,500, "mt", "m_{T} [GeV]", {140.}), selections[isel], ee_vs_mumu, norms);
-    pm_data.Push<Hist1D>(Axis(20, 0., pi, min_dphi_lmet, "Min. #Delta#phi(l,MET)"), selections[isel], ee_vs_mumu, norms);
-    pm_data.Push<Hist1D>(Axis(20, 0., pi, max_dphi_lmet, "Max. #Delta#phi(l,MET)"), selections[isel], ee_vs_mumu, norms);
-    // if(ilep==0)
-    pm_data.Push<Hist1D>(Axis(20,0,1000, "elel_m+mumu_m+999", "m_{lep lep} [GeV]", {90.}), selections[isel], ee_vs_mumu, norms);
-    // if(ilep==1) pm.Push<Hist1D>(Axis(20,0,1000, "elmu_m", "m_{el mu} [GeV]", {90.}), selections[isel]+leps[ilep], ee_vs_mumu, shapes);
-    // if(ilep==2) pm.Push<Hist1D>(Axis(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", {90.}), selections[isel]+leps[ilep], ee_vs_mumu, shapes);
-
-  }
-
-  if(single_thread) pm.multithreaded_ = false;
+  //pm.multithreaded_ = false;
   pm.MakePlots(lumi);
-  cout<<lumi<<endl;
-  if(single_thread) pm_data.multithreaded_ = false;
-  pm_data.MakePlots(1.0);
 }
 
 bool IsGoodMuon(const Baby &b, size_t imu){
@@ -494,36 +423,4 @@ NamedFunc::ScalarType MaxDeltaRLepJet(const Baby &b){
     }
   }
   return maxr;
-}
-
-void GetOptions(int argc, char *argv[]){
-  while(true){
-    static struct option long_options[] = {
-      {"single_thread", no_argument, 0, 's'},
-      {0, 0, 0, 0}
-    };
-
-    char opt = -1;
-    int option_index;
-    opt = getopt_long(argc, argv, "s", long_options, &option_index);
-
-    if( opt == -1) break;
-
-    string optname;
-    switch(opt){
-    case 's':
-      single_thread = true;
-      break;
-    case 0:
-      optname = long_options[option_index].name;
-      if(false){
-      }else{
-        printf("Bad option! Found option name %s\n", optname.c_str());
-      }
-      break;
-    default:
-      printf("Bad option! getopt_long returned character code 0%o\n", opt);
-      break;
-    }
-  }
 }

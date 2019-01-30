@@ -57,7 +57,7 @@ int main(){
         mc_2015+"*ggZH_HToBB*.root", mc_2015+"*ttHJetTobb*.root",
         mc_2015+"*_TTGJets*.root", mc_2015+"*_TTTT_*.root",
         mc_2015+"*_WH_HToBB*.root", mc_2015+"*_WZTo*.root",
-        mc_2015+"*_ZH_HToBB*.root", mc_2015+"_ZZ_*.root"});
+        mc_2015+"*_ZH_HToBB*.root", mc_2015+"*_ZZ_*.root"});
 
   auto data2015 = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {data_2015+"*.root"},"pass&&(trig[4]||trig[8])");

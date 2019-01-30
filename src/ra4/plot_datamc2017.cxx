@@ -95,7 +95,7 @@ int main(){
         trig_skim2l_mc+"*_TTGJets*.root", trig_skim2l_mc+"*_TTTT_*.root",
         trig_skim2l_mc+"*_WH_HToBB*.root", trig_skim2l_mc+"*_WZTo*.root",
         trig_skim2l_mc+"*_ST_*.root", trig_skim2l_mc+"*_WJetsToLNu*.root",
-        trig_skim2l_mc+"*_ZH_HToBB*.root", trig_skim2l_mc+"_ZZ_*.root",
+        trig_skim2l_mc+"*_ZH_HToBB*.root", trig_skim2l_mc+"*_ZZ_*.root",
         trig_skim2l_mc+"*_QCD_HT700to1000*.root",trig_skim2l_mc+"*_QCD_HT1000to1500*.root",
         trig_skim2l_mc+"*_QCD_HT1500to2000*.root",trig_skim2l_mc+"*_QCD_HT2000toInf*.root"});
 

@@ -1,3 +1,5 @@
+// Macro to make figure 22 from AN2016_187_v9
+
 #include <cmath>
 #include <stdio.h>
 #include <chrono>

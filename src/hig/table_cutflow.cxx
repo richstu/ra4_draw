@@ -25,7 +25,6 @@ using namespace PlotOptTypes;
 
 namespace{
   float lumi = 35.9;
-  bool deep = true;
   // vector<string> sigm = {}; 
   vector<string> sigm = {"225","400","700"}; 
 }
@@ -81,33 +80,19 @@ int main(){
       Process::Type::signal, 1, {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, "1"));
 
 
-  string c_2bt = "nbt>=2";
-  string c_2b = "nbt==2&&nbm==2";
-  string c_3b = "nbt>=2&&nbm==3&&nbl==3";
-  string c_4b = "nbt>=2&&nbm>=3&&nbl>=4";
-  string c_ge3b = "nbt>=2&&nbm>=3";
+  string c_2bt  = "nbdt>=2";
+  string c_2b   = "nbdt==2&&nbdm==2";
+  string c_3b   = "nbdt>=2&&nbdm==3&&nbdl==3";
+  string c_4b   = "nbdt>=2&&nbdm>=3&&nbdl>=4";
+  string c_ge3b = "nbdt>=2&&nbdm>=3";
 
-  string c_hig_dm = "hig_dm<=40";
-  string c_drmax = "hig_drmax<=2.2";
-  string hig = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40 && (hig_am>100 && hig_am<=140)";
-  string sbd = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40 && !(hig_am>100 && hig_am<=140)";
+  string c_hig_dm = "higd_dm<=40";
+  string c_drmax  = "higd_drmax<=2.2";
+  string hig = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && (higd_am>100 && higd_am<=140)";
+  string sbd = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && !(higd_am>100 && higd_am<=140)";
 
-  NamedFunc wgt = Higfuncs::weight_hig * Higfuncs::eff_higtrig;
+  NamedFunc wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
 
-  if (deep) {
-    c_2bt  = "nbdt>=2";
-    c_2b   = "nbdt==2&&nbdm==2";
-    c_3b   = "nbdt>=2&&nbdm==3&&nbdl==3";
-    c_4b   = "nbdt>=2&&nbdm>=3&&nbdl>=4";
-    c_ge3b = "nbdt>=2&&nbdm>=3";
-
-    c_hig_dm = "higd_dm<=40";
-    c_drmax  = "higd_drmax<=2.2";
-    hig = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && (higd_am>100 && higd_am<=140)";
-    sbd = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && !(higd_am>100 && higd_am<=140)";
-
-    wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  }
 
   string baseline = "pass_ra2_badmu && met/met_calo<5 && nvleps==0 && njets>=4 && njets<=5";
   string sigonly = "type>100e3";

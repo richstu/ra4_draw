@@ -130,7 +130,6 @@ int main(int argc, char *argv[]){
   vector<string> scenarios = ConfigParser::GetOptSets(sys_wgts_file);
   //NamedFunc w = "weight*eff_trig";
   NamedFunc w = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  if (!deep) w = Higfuncs::weight_hig * Higfuncs::eff_higtrig;
   if (rewgt) w = w * Higfuncs::wgt_comp;
   map<string, NamedFunc> weights, corrections;
   auto central = Functions::Variation::central;

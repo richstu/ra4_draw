@@ -94,14 +94,6 @@ int main(int argc, char *argv[]){
   string hig = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && (higd_am>100 && higd_am<=140)";
   string sbd = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && !(higd_am>100 && higd_am<=140)";
   NamedFunc wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;//*(1+Higfuncs::wgt_syst_ttx);// * Higfuncs::wgt_comp;
-  if (csv) {
-    c_2b = "nbt==2&&nbm==2";
-    c_3b = "nbt>=2&&nbm==3&&nbl==3";
-    c_4b = "nbt>=2&&nbm>=3&&nbl>=4";
-    hig = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40 && (hig_am>100 && hig_am<=140)";
-    sbd = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40 && !(hig_am>100 && hig_am<=140)";
-    wgt = Higfuncs::weight_hig * Higfuncs::eff_higtrig;  
-  }
 
   //        Cutflow table
   //-------------------------------- 
