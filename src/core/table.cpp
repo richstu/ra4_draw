@@ -106,6 +106,8 @@ Table::Table(const string &name,
              const vector<TableRow> &rows,
              const vector<shared_ptr<Process> > &processes,
 	     bool do_zbi,
+	     bool do_eff,
+	     bool do_unc,
 	     bool print_table,
 	     bool print_pie,
 	     bool print_titlepie):
@@ -113,6 +115,8 @@ Table::Table(const string &name,
   name_(name),
   rows_(rows),
   do_zbi_(do_zbi),
+  do_eff_(do_eff),
+  do_unc_(do_unc),
   print_table_(print_table),
   print_pie_(print_pie),
   print_titlepie_(print_titlepie),
@@ -148,8 +152,8 @@ void Table::Print(double luminosity,
     ? "tables/"+subdir+"/"+name_+"_lumi_"+fmt_lumi+".tex"
     : "tables/"+name_+"_lumi_"+fmt_lumi+".tex";
   std::ofstream file(file_name);
-  if (print_pie_) file << fixed << setprecision(2);
-  else file << fixed << setprecision(1);
+  if (print_pie_) file << fixed << setprecision(4);
+  else file << fixed << setprecision(4);
   PrintHeader(file, luminosity);
   for(size_t i = 0; i < rows_.size(); ++i){
     PrintRow(file, i, luminosity);
@@ -245,6 +249,8 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   file << "\\usepackage{graphicx,xspace,amssymb,amsmath,colordvi,colortbl,verbatim,multicol}\n";
   file << "\\usepackage{multirow, rotating}\n\n";
   file << "\\usepackage[active,tightpage]{preview}\n\n";
+  file << "\\usepackage{siunitx}\n";
+  file << "\\sisetup{round-mode = figures, round-precision=2}\n\n";
   file << "\\renewcommand{\\arraystretch}{1.1}\n\n";
 
   file << "\\begin{document}\n";
@@ -279,6 +285,10 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   file << " }\n";
   file << "    \\hline\\hline\n";
   file <<" \\multicolumn{1}{c|}{${\\cal L} = "<<setprecision(1)<<luminosity<<"$ fb$^{-1}$} ";
+  if(do_unc_)
+    file <<setprecision(5);
+  else
+    file <<setprecision(1);
 
   if(backgrounds_.size() > 1){
     for(size_t i = 0; i < backgrounds_.size(); ++i){
@@ -329,10 +339,44 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
         if (print_pie_) 
           file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow)/totyield << "$\\pm$" 
               << luminosity*sqrt(backgrounds_.at(i)->sumw2_.at(irow))/totyield;
-        else 
+        // changed these lines for efficiencies
+	if (do_eff_){
+	  if(irow==0)
+	    file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow);
+	  else{
+	    double eff = backgrounds_.at(i)->sumw_.at(irow)/backgrounds_.at(i)->sumw_.at(irow-1);
+	    double eff_relUnc = hypot(sqrt(backgrounds_.at(i)->sumw2_.at(irow))/backgrounds_.at(i)->sumw_.at(irow),sqrt(backgrounds_.at(i)->sumw2_.at(irow-1))/backgrounds_.at(i)->sumw_.at(irow-1));
+	    if(do_unc_){
+	      if(eff != eff || eff_relUnc != eff_relUnc)
+		file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}";
+	      else
+		file << " & \\num{" << eff << "}$\\pm$\\num{" << eff*eff_relUnc << "}";
+	    }
+	    else
+	      file << " & " << eff;
+	  }
+	}
+	else
           file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow);
       }
-      file << " & " << totyield << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
+      if (do_eff_){
+	if(irow==0)
+	  file << " & " << totyield;
+	else{
+	  double eff = totyield / (luminosity*GetYield(backgrounds_, irow-1));
+	  double eff_relUnc = hypot(luminosity*GetError(backgrounds_,irow)/totyield, GetError(backgrounds_,irow-1)/GetYield(backgrounds_,irow-1));
+	  if(do_unc_){
+	    if(eff != eff || eff_relUnc != eff_relUnc)
+	      file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}"; 
+	    else
+	      file << " & \\num{" << eff << "}$\\pm$\\num{" << eff*eff_relUnc << "}";
+	  }
+	  else
+	    file << " & " << eff;
+	}
+      }
+      else
+	file << " & " << totyield; // << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
     }else if(backgrounds_.size() == 1){
       file << " & " << luminosity*GetYield(backgrounds_, irow) << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
     }
@@ -347,7 +391,16 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
     }
 
     for(size_t i = 0; i < signals_.size(); ++i){
-      file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
+      if(do_eff_){
+	if(irow==0)
+	  file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
+	else if(irow<=3)
+	  file << " & " << signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
+	else
+	  file << " & " << signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
+      }
+      else
+	file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
       // file << " & " << luminosity*signals_.at(i)->sumw_.at(irow) << "$\\pm$" 
       //         << luminosity*sqrt(signals_.at(i)->sumw2_.at(irow));
       if(do_zbi_){

@@ -39,6 +39,8 @@ public:
 	const std::vector<TableRow> &rows,
 	const std::vector<std::shared_ptr<Process> > &processes,
 	bool do_zbi=true,
+	bool do_eff=true,
+	bool do_unc=true,
 	bool print_table=true,
 	bool print_pie=false,
 	bool print_titlepie=true);
@@ -60,6 +62,8 @@ public:
   std::string name_;
   std::vector<TableRow> rows_;
   bool do_zbi_;
+  bool do_eff_;
+  bool do_unc_;
   bool print_table_;
   bool print_pie_;
   bool print_titlepie_;
