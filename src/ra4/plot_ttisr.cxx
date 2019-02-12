@@ -436,7 +436,7 @@ NamedFunc::VectorType isrJetsPt(const Baby &b, float ptThresh){
 }
 
 NamedFunc::ScalarType isrSystemPt(const Baby &b){
-    if (isrtype=="ttisr") return b.jetsys_nob_pt();
+    if (isrtype=="ttisr") return b.jetsys_nobd_pt();
     else return b.jetsys_pt();
 }
 
