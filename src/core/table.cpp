@@ -286,7 +286,7 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   file << "    \\hline\\hline\n";
   file <<" \\multicolumn{1}{c|}{${\\cal L} = "<<setprecision(1)<<luminosity<<"$ fb$^{-1}$} ";
   if(do_unc_)
-    file <<setprecision(5);
+    file <<setprecision(2);
   else
     file <<setprecision(1);
 
@@ -332,7 +332,7 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
   }
 
   if(row.is_data_row_){
-    file << "    " << row.label_;
+    file << "    " << setw(50) << row.label_;
     if(backgrounds_.size() > 1){
       double totyield = luminosity*GetYield(backgrounds_, irow);
       for(size_t i = 0; i < backgrounds_.size(); ++i){
@@ -357,7 +357,7 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
 	  }
 	}
 	else
-          file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow);
+          file << " & " << setw(10) << luminosity*backgrounds_.at(i)->sumw_.at(irow);
       }
       if (do_eff_){
 	if(irow==0)

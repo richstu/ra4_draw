@@ -38,7 +38,7 @@ int main(){
 	                                     .LogMinimum(10)
 	                                     .CanvasWidth(600)
 	                                     .Title(TitleType::info)};
-  vector<PlotOpt> bkg_hist1k = {style().Stack(StackType::data_norm)
+  vector<PlotOpt> bkg_hist2k = {style().Stack(StackType::data_norm)
 	                                     .LogMinimum(2000)
 	                                     .CanvasWidth(600)
 	                                     .Title(TitleType::info)};
@@ -51,7 +51,7 @@ int main(){
 	pm18.Push<Hist2D>(Axis(60, -3, 3,   "mus_eta", "Muon #eta", {}), 
 	                  Axis(64,-3.2, 3.2,"mus_phi", "Muon #phi", {}),        baseline, data18, bkg_hist10).Tag("mu_2018");
 	pm18.Push<Hist2D>(Axis(60, -3, 3,   "jets_eta", "jet #eta", {}), 
-	                  Axis(64,-3.2, 3.2,"jets_phi", "jet #phi", {}),        baseline, data18, bkg_hist1k).Tag("jet_2018");
+	                  Axis(64,-3.2, 3.2,"jets_phi", "jet #phi", {}),        baseline, data18, bkg_hist2k).Tag("jet_2018");
 	pm18.min_print_=true;
 	pm18.MakePlots(60.0);
 }

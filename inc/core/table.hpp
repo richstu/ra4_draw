@@ -39,8 +39,8 @@ public:
 	const std::vector<TableRow> &rows,
 	const std::vector<std::shared_ptr<Process> > &processes,
 	bool do_zbi=true,
-	bool do_eff=true,
-	bool do_unc=true,
+	bool do_eff=false,
+	bool do_unc=false,
 	bool print_table=true,
 	bool print_pie=false,
 	bool print_titlepie=true);
