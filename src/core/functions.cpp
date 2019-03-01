@@ -9,6 +9,223 @@ using namespace std;
 
 namespace Functions{
 
+  float wnpv2017(const Baby &b){
+    if (b.type()<1000) return 1;
+    if (b.event()%1000<675) return 1;
+    int _npv = b.npv();
+    if(_npv <  2) return  0.621;// +- 0.058  
+    else if(_npv <  4) return  0.706;// +- 0.032  
+    else if(_npv <  6) return  0.803;// +- 0.024  
+    else if(_npv <  8) return  0.896;// +- 0.017  
+    else if(_npv < 10) return  0.847;// +- 0.010  
+    else if(_npv < 12) return  0.686;// +- 0.006  
+    else if(_npv < 14) return  0.569;// +- 0.004  
+    else if(_npv < 16) return  0.518;// +- 0.003  
+    else if(_npv < 18) return  0.494;// +- 0.003  
+    else if(_npv < 20) return  0.499;// +- 0.002  
+    else if(_npv < 22) return  0.525;// +- 0.002  
+    else if(_npv < 24) return  0.561;// +- 0.002  
+    else if(_npv < 26) return  0.623;// +- 0.002  
+    else if(_npv < 28) return  0.711;// +- 0.003  
+    else if(_npv < 30) return  0.826;// +- 0.003  
+    else if(_npv < 32) return  0.966;// +- 0.003  
+    else if(_npv < 34) return  1.166;// +- 0.004  
+    else if(_npv < 36) return  1.373;// +- 0.005  
+    else if(_npv < 38) return  1.587;// +- 0.005  
+    else if(_npv < 40) return  1.766;// +- 0.006  
+    else if(_npv < 42) return  1.962;// +- 0.007  
+    else if(_npv < 44) return  2.192;// +- 0.009  
+    else if(_npv < 46) return  2.352;// +- 0.010  
+    else if(_npv < 48) return  2.543;// +- 0.012  
+    else if(_npv < 50) return  2.758;// +- 0.015  
+    else if(_npv < 52) return  3.084;// +- 0.019  
+    else if(_npv < 54) return  3.423;// +- 0.024  
+    else if(_npv < 56) return  3.698;// +- 0.030  
+    else if(_npv < 58) return  4.008;// +- 0.037  
+    else if(_npv < 60) return  4.309;// +- 0.047  
+    else if(_npv < 62) return  5.114;// +- 0.064  
+    else if(_npv < 64) return  5.274;// +- 0.077  
+    else if(_npv < 66) return  6.153;// +- 0.105  
+    else if(_npv < 68) return  6.396;// +- 0.130  
+    else if(_npv < 70) return  7.101;// +- 0.167  
+    else if(_npv < 72) return  7.078;// +- 0.195  
+    else if(_npv < 74) return  8.941;// +- 0.291  
+    else if(_npv < 76) return  9.725;// +- 0.357  
+    else if(_npv < 78) return 10.044;// +- 0.439  
+    else if(_npv < 80) return 11.836;// +- 0.599  
+    else if(_npv < 82) return 12.909;// +- 0.755  
+    else if(_npv < 84) return 11.381;// +- 0.793  
+    else if(_npv < 86) return 11.387;// +- 0.969  
+    else if(_npv < 88) return 12.642;// +- 1.252  
+    else if(_npv < 90) return 15.268;// +- 1.592  
+    else if(_npv < 92) return 15.476;// +- 1.877  
+    else if(_npv < 94) return 11.923;// +- 1.960  
+    else if(_npv < 96) return 12.651;// +- 2.080  
+    else if(_npv < 98) return  7.552;// +- 1.888  
+    else return 11.175;// +- 1.443  
+  }
+
+  const NamedFunc wgt_run2("wgt_run2", [](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.type()<1000) return 1.;
+    double wgt = b.weight();
+    if (b.type()>100e3) return wgt*137.4;
+    if (b.SampleType()==2016){
+      return wgt*b.w_prefire()*35.9;
+    } else if (b.SampleType()==2017){
+      return wgt*b.w_prefire()*41.5*wnpv2017(b);
+    } else {
+      return wgt*60.0;
+    }
+  });
+
+  const NamedFunc trig_run2("trig_run2", [](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.type()>=1000) return 1.;
+    
+    int _pass(0);
+    if (b.SampleType()==2016){
+      _pass = b.trig()->at(3) || b.trig()->at(4) || b.trig()->at(34) || b.trig()->at(7) || 
+              b.trig()->at(8) || b.trig()->at(36) || b.trig()->at(14) || b.trig()->at(15) || 
+              b.trig()->at(30) || b.trig()->at(31) || b.trig()->at(19) || b.trig()->at(55) || 
+              b.trig()->at(20) || b.trig()->at(21) || b.trig()->at(40) || b.trig()->at(41);
+
+    } else { // 2017 or 2018
+      _pass = b.trig()->at(2) || b.trig()->at(3) || b.trig()->at(22) || b.trig()->at(6) || 
+              b.trig()->at(7) || b.trig()->at(30) || b.trig()->at(9) || b.trig()->at(10) || 
+              b.trig()->at(15) || b.trig()->at(13) || b.trig()->at(19) || b.trig()->at(20) || 
+              b.trig()->at(21) || b.trig()->at(26) || b.trig()->at(23) || b.trig()->at(24);
+    }
+    return _pass;
+  });
+
+  const NamedFunc eff_trig_run2("eff_trig_run2", [](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.type()<1000) return 1.;
+    double _met = b.met();
+    if (b.SampleType()==2016) {
+      if (b.nmus()>=1) {
+        if (_met<20) return 0.948;
+        else if (_met<40) return 0.949;
+        else if (_met<60) return 0.951;
+        else if (_met<80) return 0.955;
+        else if (_met<100) return 0.960;
+        else if (_met<120) return 0.970;
+        else if (_met<140) return 0.975;
+        else if (_met<160) return 0.984;
+        else if (_met<180) return 0.993;
+        else return 1.;
+      } else if (b.nels()>=1) {
+        if (_met<20) return 0.84109;
+        else if (_met<40) return 0.833;
+        else if (_met<60) return 0.850;
+        else if (_met<80) return 0.862;
+        else if (_met<100) return 0.890;
+        else if (_met<120) return 0.901;
+        else if (_met<140) return 0.937;
+        else if (_met<160) return 0.947;
+        else if (_met<180) return 0.967;
+        else if (_met<200) return 0.976;
+        else if (_met<220) return 0.993;
+        else return 1.;
+      } else {
+        return 0.;
+      }
+    } else if (b.SampleType()==2017) {
+      if (b.nmus()>=1) {
+        if (_met<20) return 0.933;
+        else if (_met<40) return 0.923;
+        else if (_met<60) return 0.924;
+        else if (_met<80) return 0.934;
+        else if (_met<100) return 0.944;
+        else if (_met<120) return 0.957;
+        else if (_met<140) return 0.969;
+        else if (_met<160) return 0.978;
+        else if (_met<180) return 0.986;
+        else if (_met<200) return 0.993;
+        else return 1.;
+      } else if (b.nels()>=1) {
+        if (_met<20) return 0.791;
+        else if (_met<40) return 0.779;
+        else if (_met<60) return 0.791;
+        else if (_met<80) return 0.794;
+        else if (_met<100) return 0.828;
+        else if (_met<120) return 0.854;
+        else if (_met<140) return 0.886;
+        else if (_met<160) return 0.917;
+        else if (_met<180) return 0.945;
+        else if (_met<200) return 0.968;
+        else if (_met<220) return 0.978;
+        else if (_met<240) return 0.990;
+        else if (_met<260) return 0.991;
+        else return 1.;
+      } else {
+        return 0.;
+      }
+    } else { //2018
+      if (b.nmus()>=1) {
+        if (_met<20) return 0.956;
+        else if (_met<40) return 0.964;
+        else if (_met<60) return 0.964;
+        else if (_met<80) return 0.969;
+        else if (_met<100) return 0.969;
+        else if (_met<120) return 0.976;
+        else if (_met<140) return 0.979;
+        else if (_met<160) return 0.995;
+        else if (_met<180) return 0.993;
+        else return 1.;
+      } else if (b.nels()>=1) {
+        if (_met<20) return 0.827;
+        else if (_met<40) return 0.814;
+        else if (_met<60) return 0.820;
+        else if (_met<80) return 0.817;
+        else if (_met<100) return 0.834;
+        else if (_met<120) return 0.851;
+        else if (_met<140) return 0.872;
+        else if (_met<160) return 0.909;
+        else if (_met<180) return 0.935;
+        else if (_met<200) return 0.965;
+        else if (_met<220) return 0.976;
+        else if (_met<240) return 0.991;
+        else if (_met<260) return 0.993;
+        else return 1.;
+      } else {
+        return 0.;
+      }
+    }
+  });
+
+  const NamedFunc hem_veto("hem_veto",[](const Baby &b) -> NamedFunc::ScalarType{
+    if(b.SampleType() == 2018) {
+      if (b.type()<1000) {
+        if (b.run() >= 319077) { 
+          if(b.nels() > 0) {
+            for(size_t i = 0; i < b.els_pt()->size(); i++) {
+              if(b.els_pt()->at(i) > 20 && b.els_sceta()->at(i) < -1.5 && (b.els_phi()->at(i) > -1.6 && b.els_phi()->at(i) < -0.8) && b.els_sigid()->at(i)) 
+                return static_cast<float>(0);
+            }
+          }
+          for(size_t i = 0; i < b.jets_pt()->size(); i++) {
+            if(Functions::IsGoodJet(b,i) && b.jets_eta()->at(i) < -1.5 && (b.jets_phi()->at(i) > -1.6 && b.jets_phi()->at(i) < -0.8)) 
+              return static_cast<float>(0);
+          }
+        }
+      } else {
+        if ((b.event()%1961) < 1296) { 
+          if(b.nels() > 0) {
+            for(size_t i = 0; i < b.els_pt()->size(); i++) {
+              if(b.els_pt()->at(i) > 20 && b.els_sceta()->at(i) < -1.5 && (b.els_phi()->at(i) > -1.6 && b.els_phi()->at(i) < -0.8) && b.els_sigid()->at(i)) 
+                return static_cast<float>(0);
+            }
+          }
+          for(size_t i = 0; i < b.jets_pt()->size(); i++) {
+            if(Functions::IsGoodJet(b,i) && b.jets_eta()->at(i) < -1.5 && (b.jets_phi()->at(i) > -1.6 && b.jets_phi()->at(i) < -0.8)) 
+              return static_cast<float>(0);
+          }
+        }
+      }
+    }
+    return static_cast<float>(1);
+  });
+
+
   const NamedFunc n_mus_bad("n_mus_bad", [](const Baby &b) -> NamedFunc::ScalarType{
       int n=0;
       for(unsigned int i=0; i< b.mus_pt()->size(); i++){
@@ -327,13 +544,13 @@ namespace Functions{
     int nisrjets = use_baby_nisr ? b.nisr() : NISRMatch(b);
 
     // weights derived in TTJets and applied using the nisr calculation algorithm
-    if      (nisrjets==0) return 1.099*wgt; //  +- 0.012
-    else if (nisrjets==1) return 0.969*wgt; //  +- 0.014
-    else if (nisrjets==2) return 0.870*wgt; //  +- 0.020
-    else if (nisrjets==3) return 0.772*wgt; //  +- 0.031
-    else if (nisrjets==4) return 0.712*wgt; //  +- 0.051
-    else if (nisrjets==5) return 0.661*wgt; //  +- 0.088
-    else if (nisrjets>=6) return 0.566*wgt; //  +- 0.133
+    if      (nisrjets==0) return 1.099*wgt; // ;// +- 0.012
+    else if (nisrjets==1) return 0.969*wgt; // ;// +- 0.014
+    else if (nisrjets==2) return 0.870*wgt; // ;// +- 0.020
+    else if (nisrjets==3) return 0.772*wgt; // ;// +- 0.031
+    else if (nisrjets==4) return 0.712*wgt; // ;// +- 0.051
+    else if (nisrjets==5) return 0.661*wgt; // ;// +- 0.088
+    else if (nisrjets>=6) return 0.566*wgt; // ;// +- 0.133
     else return wgt;
   }
 
@@ -345,14 +562,14 @@ namespace Functions{
     
     int nisrjets(b.njets());
     // weights derived in DY+jets
-    if      (nisrjets==0) return 0.981*wgt; //  +- 0.001
-    else if (nisrjets==1) return 1.071*wgt; //  +- 0.001
-    else if (nisrjets==2) return 1.169*wgt; //  +- 0.003
-    else if (nisrjets==3) return 1.157*wgt; //  +- 0.007
-    else if (nisrjets==4) return 1.014*wgt; //  +- 0.013
-    else if (nisrjets==5) return 0.920*wgt; //  +- 0.025
-    else if (nisrjets==6) return 0.867*wgt; //  +- 0.048
-    else if (nisrjets>=7) return 0.935*wgt; //  +- 0.088
+    if      (nisrjets==0) return 0.981*wgt; // ;// +- 0.001
+    else if (nisrjets==1) return 1.071*wgt; // ;// +- 0.001
+    else if (nisrjets==2) return 1.169*wgt; // ;// +- 0.003
+    else if (nisrjets==3) return 1.157*wgt; // ;// +- 0.007
+    else if (nisrjets==4) return 1.014*wgt; // ;// +- 0.013
+    else if (nisrjets==5) return 0.920*wgt; // ;// +- 0.025
+    else if (nisrjets==6) return 0.867*wgt; // ;// +- 0.048
+    else if (nisrjets>=7) return 0.935*wgt; // ;// +- 0.088
     else return wgt;
   }
 
