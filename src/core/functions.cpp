@@ -10,7 +10,7 @@ using namespace std;
 namespace Functions{
 
   float wnpv2017(const Baby &b){
-    if (b.type()<1000) return 1;
+    if (b.SampleType()<0) return 1;
     if (b.event()%1000<675) return 1;
     int _npv = b.npv();
     if(_npv <  2) return  0.621;// +- 0.058  
@@ -66,15 +66,15 @@ namespace Functions{
   }
 
   const NamedFunc wgt_run2("wgt_run2", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.type()<1000) return 1.;
+    if (b.SampleType()<0) return 1.;
     double wgt = b.weight();
     if (b.type()>100e3) return wgt*137.4;
     if (b.SampleType()==2016){
-      return wgt*b.w_prefire()*35.9;
+      return wgt*b.w_prefire();
     } else if (b.SampleType()==2017){
-      return wgt*b.w_prefire()*41.5*wnpv2017(b);
+      return wgt*b.w_prefire()*wnpv2017(b);
     } else {
-      return wgt*60.0;
+      return wgt;
     }
   });
 
