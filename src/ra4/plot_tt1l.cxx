@@ -49,15 +49,15 @@ int main(){
   string bfolder("");
   string hostname(execute("echo $HOSTNAME"));
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))  
-    bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
+    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string ntupletag=""; 
-  string foldermc(bfolder+"/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/");
 
   Palette colors("txt/colors.txt", "default");
 
 
-  NamedFunc baseline = "stitch_met && nleps==1 && nveto==0 && st>500 && met>100 && njets>=5 && nbm>=1 && weight<1";
+  NamedFunc baseline = "stitch_met && nleps==1 && nveto==0 && st>500 && met>100 && njets>=5 && nbd>=1 && weight<1";
 
   set<string> ttfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root"};
 
@@ -95,17 +95,16 @@ int main(){
 
   PlotMaker pm;
 
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>100 && met<=150", tt_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>150 && met<=200", tt_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>200 && met<=350", tt_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>350", tt_procs, plot_types).Tag("tt1l");
 
-  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>100&&njets>=5", tt_procs, plot_types).Tag("tt1l");
-  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>100&&njets>=6", tt_procs, plot_types).Tag("tt1l");
-  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>200&&njets>=5", tt_procs, plot_types).Tag("tt1l");
-  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>200&&njets>=6", tt_procs, plot_types).Tag("tt1l");
-
-  pm.Push<Hist1D>(Axis(35,0.,700.,max_b_pt,"Max b-quark p_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
-  pm.Push<Hist1D>(Axis(30,-0.5,1.,"(met-met_tru)/met","(MET-MET^{tru})/MET"),"met>100", 
-		  tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(30,-0.5,1.,"(met-met_tru)/met","(MET-MET^{tru})/MET"),"met>100 && met<=150", tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(30,-0.5,1.,"(met-met_tru)/met","(MET-MET^{tru})/MET"),"met>150 && met<=200", tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(30,-0.5,1.,"(met-met_tru)/met","(MET-MET^{tru})/MET"),"met>200 && met<=350", tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(30,-0.5,1.,"(met-met_tru)/met","(MET-MET^{tru})/MET"),"met>350", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(60,-100.,200.,"met-met_tru","MET-MET^{tru} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
-
 
   pm.Push<Hist1D>(Axis(30,300.,1500.,"ht","H_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
 

@@ -36,6 +36,7 @@ namespace Functions{
   extern const NamedFunc trig_run2;
   extern const NamedFunc eff_trig_run2;
 
+  float wnpv2017(const Baby &b);
   bool IsGoodJet(const Baby &b, std::size_t ijet);
   bool IsGoodak8Jet(const Baby &b, std::size_t ijet);
   bool IsGoodElectron(const Baby &b, std::size_t iel);

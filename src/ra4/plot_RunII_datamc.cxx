@@ -65,40 +65,8 @@ int main() {
 	Process::Type back = Process::Type::background;
 	Process::Type data = Process::Type::data;
 
-	const NamedFunc hem("hem_veto",[&](const Baby &b){
-		if(b.SampleType() == 2018 && b.run() >= 319077) { 
-			if(b.nels() > 0) {
-				for(size_t i = 0; i < b.els_pt()->size(); i++) {
-					if(b.els_pt()->at(i) > 20 && b.els_sceta()->at(i) < -1.5 && (b.els_phi()->at(i) > -1.6 && b.els_phi()->at(i) < -0.8) && b.els_sigid()->at(i)) 
-						return static_cast<float>(0);
-				}
-			}
-			if(b.njets() > 0) {
-			  for(size_t i = 0; i < b.jets_pt()->size(); i++) {
-			  	if(Functions::IsGoodJet(b,i) && b.jets_eta()->at(i) < -1.5 && (b.jets_phi()->at(i) > -1.6 && b.jets_phi()->at(i) < -0.8)) 
-			  		return static_cast<float>(0);
-			  }
-			}
-		}
-		else if(b.SampleType() == 2017 && (b.event()%1961) < 1296) { 
-			if(b.nels() > 0) {
-				for(size_t i = 0; i < b.els_pt()->size(); i++) {
-// 					if(b.els_pt()->at(i) > 20 && b.els_sceta()->at(i) < -1.5 && (b.els_phi()->at(i) > -1.6 && b.els_phi()->at(i) < -0.8) && b.els_sigid()->at(i)) 
-					if(b.els_pt()->at(i) > 20 && b.els_sceta()->at(i) < -1.5 && (b.els_phi()->at(i) > -1.6 && b.els_phi()->at(i) < -0.8)) 
-						return static_cast<float>(0);
-				}
-			}
-			if(b.njets() > 0) {
-			  for(size_t i = 0; i < b.jets_pt()->size(); i++) {
-			  	if(Functions::IsGoodJet(b,i) && b.jets_eta()->at(i) < -1.5 && (b.jets_phi()->at(i) > -1.6 && b.jets_phi()->at(i) < -0.8)) 
-			  		return static_cast<float>(0);
-			  }
-			}
-		}
- 		return static_cast<float>(1);
-	});
 	const NamedFunc hem_only("hem_only",[&](const Baby &b){
-		if(b.SampleType() == 2018 && b.run() >= 319077) { 
+		if(b.SampleType() == -2018 && b.run() >= 319077) { 
 			if(b.nels() > 0) {
 				for(size_t i = 0; i < b.els_pt()->size(); i++) {
 					if(b.els_pt()->at(i) > 20 && b.els_sceta()->at(i) < -1.5 && (b.els_phi()->at(i) > -1.6 && b.els_phi()->at(i) < -0.8) && b.els_sigid()->at(i)) 
@@ -110,7 +78,7 @@ int main() {
 					return static_cast<float>(1);
 			}
 		}
-		else if(b.SampleType() == 2017) { 
+		else if(b.SampleType() == 2018) { 
 			if(b.nels() > 0) {
 				for(size_t i = 0; i < b.els_pt()->size(); i++) {
 					if(b.els_pt()->at(i) > 20 && b.els_sceta()->at(i) < -1.5 && (b.els_phi()->at(i) > -1.6 && b.els_phi()->at(i) < -0.8) && b.els_sigid()->at(i)) 
@@ -236,7 +204,7 @@ int main() {
     PlotMaker pm;
 	  temp = data_mc.at(i);
 		tag = sample_label.at(i) + "_standard";
-		if(i == 2) w_tot = wgt*hem;
+		if(i == 2) w_tot = wgt*Functions::hem_veto;
 		// Standard
     pm.Push<Hist1D>(Axis(40,0, 80, "npv",  "N_{PV}",{}), 
                     "nleps>=1 && st>500 && met>100 && njets>=4", temp, lin_stack).Weight(w_tot).Tag(tag);

@@ -11,7 +11,7 @@ namespace Functions{
 
   float wnpv2017(const Baby &b){
     if (b.SampleType()<0) return 1;
-    if (b.event()%1000<675) return 1;
+    // if (b.event()%1000<675) return 1;
     int _npv = b.npv();
     if(_npv <  2) return  0.621;// +- 0.058  
     else if(_npv <  4) return  0.706;// +- 0.032  
@@ -66,23 +66,25 @@ namespace Functions{
   }
 
   const NamedFunc wgt_run2("wgt_run2", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.SampleType()<0) return 1.;
     double wgt = b.weight();
-    if (b.type()>100e3) return wgt*137.4;
+    if (b.type()>100e3) return wgt*137.;
+
+    if (b.SampleType()<0) return 1.;
+    
     if (b.SampleType()==2016){
-      return wgt*b.w_prefire();
+      return wgt*b.w_prefire()*35.9;
     } else if (b.SampleType()==2017){
-      return wgt*b.w_prefire()*wnpv2017(b);
+      return wgt*b.w_prefire()*wnpv2017(b)*41.5;
     } else {
-      return wgt;
+      return wgt*59.6;
     }
   });
 
   const NamedFunc trig_run2("trig_run2", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.type()>=1000) return 1.;
+    if (b.SampleType()>0) return 1.;
     
     int _pass(0);
-    if (b.SampleType()==2016){
+    if (b.SampleType()==-2016){
       _pass = b.trig()->at(3) || b.trig()->at(4) || b.trig()->at(34) || b.trig()->at(7) || 
               b.trig()->at(8) || b.trig()->at(36) || b.trig()->at(14) || b.trig()->at(15) || 
               b.trig()->at(30) || b.trig()->at(31) || b.trig()->at(19) || b.trig()->at(55) || 
@@ -98,7 +100,7 @@ namespace Functions{
   });
 
   const NamedFunc eff_trig_run2("eff_trig_run2", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.type()<1000) return 1.;
+    if (b.SampleType()<0) return 1.;
     double _met = b.met();
     if (b.SampleType()==2016) {
       if (b.nmus()>=1) {
@@ -193,12 +195,13 @@ namespace Functions{
   });
 
   const NamedFunc hem_veto("hem_veto",[](const Baby &b) -> NamedFunc::ScalarType{
-    if(b.SampleType() == 2018) {
-      if (b.type()<1000) {
+    if(abs(b.SampleType()) == 2018) {
+      if (b.SampleType()<0) {
         if (b.run() >= 319077) { 
           if(b.nels() > 0) {
-            for(size_t i = 0; i < b.els_pt()->size(); i++) {
-              if(b.els_pt()->at(i) > 20 && b.els_sceta()->at(i) < -1.5 && (b.els_phi()->at(i) > -1.6 && b.els_phi()->at(i) < -0.8) && b.els_sigid()->at(i)) 
+            for(size_t i = 0; i < b.leps_pt()->size(); i++) {
+              if (abs(b.leps_id()->at(i))==13) continue;
+              if(b.leps_eta()->at(i) < -1.5 && (b.leps_phi()->at(i) > -1.6 && b.leps_phi()->at(i) < -0.8)) 
                 return static_cast<float>(0);
             }
           }
@@ -210,8 +213,9 @@ namespace Functions{
       } else {
         if ((b.event()%1961) < 1296) { 
           if(b.nels() > 0) {
-            for(size_t i = 0; i < b.els_pt()->size(); i++) {
-              if(b.els_pt()->at(i) > 20 && b.els_sceta()->at(i) < -1.5 && (b.els_phi()->at(i) > -1.6 && b.els_phi()->at(i) < -0.8) && b.els_sigid()->at(i)) 
+            for(size_t i = 0; i < b.leps_pt()->size(); i++) {
+              if (abs(b.leps_id()->at(i))==13) continue;
+              if(b.leps_eta()->at(i) < -1.5 && (b.leps_phi()->at(i) > -1.6 && b.leps_phi()->at(i) < -0.8)) 
                 return static_cast<float>(0);
             }
           }
@@ -251,7 +255,7 @@ namespace Functions{
     });
 
   const NamedFunc nbd("nbd", [](const Baby &b) -> NamedFunc::ScalarType{
-    if(b.SampleType() == 2018) {
+    if(abs(b.SampleType()) == 2018) {
       int nb(0);
       for(size_t i = 0; i < b.jets_pt()->size(); i++) {
         if(IsGoodJet(b,i) && b.jets_csvd()->at(i) > 0.4184)

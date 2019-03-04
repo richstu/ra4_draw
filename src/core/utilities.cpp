@@ -196,7 +196,9 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "njets>=5&&njets<=7", "5<=njets<=7");
   ReplaceAll(code, "njets>=5&&njets<=6", "5<=njets<=6");
   ReplaceAll(code, "njets>=6&&njets<=8", "6<=njets<=8");
+  ReplaceAll(code, "njets>=6&&njets<=7", "6-7j");
   ReplaceAll(code, "njets>=6&&njets<=7", "6<=njets<=7");
+  ReplaceAll(code, "njets>=8", "#geq8j");
   ReplaceAll(code, "nbm>=1&&nbm<=2", "1<=nbm<=2");
 
   ReplaceAll(code, "1==1", "Full Sample");
