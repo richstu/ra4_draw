@@ -66,17 +66,19 @@ namespace Functions{
   }
 
   const NamedFunc wgt_run2("wgt_run2", [](const Baby &b) -> NamedFunc::ScalarType{
-    double wgt = b.weight();
-    if (b.type()>100e3) return wgt*137.;
-
     if (b.SampleType()<0) return 1.;
-    
-    if (b.SampleType()==2016){
-      return wgt*b.w_prefire()*35.9;
-    } else if (b.SampleType()==2017){
-      return wgt*b.w_prefire()*wnpv2017(b)*41.5;
+
+    double wgt = b.weight();
+    if (b.type()>=100e3) {
+      return wgt*b.w_prefire()*137.;
     } else {
-      return wgt*59.6;
+      if (b.SampleType()==2016){
+        return wgt*b.w_prefire()*35.9;
+      } else if (b.SampleType()==2017){
+        return wgt*b.w_prefire()*wnpv2017(b)*41.5;
+      } else {
+        return wgt*59.6;
+      }
     }
   });
 
@@ -229,6 +231,15 @@ namespace Functions{
     return static_cast<float>(1);
   });
 
+
+  const NamedFunc ntrub("ntrub", [](const Baby &b){
+      int ntrub_(0);
+      for(size_t i = 0; i < b.jets_pt()->size(); i++) {
+        if(IsGoodJet(b,i) && b.jets_hflavor()->at(i)==5)
+          ntrub_++;
+      }
+      return ntrub_;
+    });
 
   const NamedFunc n_mus_bad("n_mus_bad", [](const Baby &b) -> NamedFunc::ScalarType{
       int n=0;

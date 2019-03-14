@@ -9,6 +9,7 @@
  
 namespace Functions{
   extern const NamedFunc n_isr_match;
+  extern const NamedFunc ntrub;
   extern const NamedFunc n_mus_bad;
   extern const NamedFunc n_mus_bad_dupl;
   extern const NamedFunc n_mus_bad_trkmu;

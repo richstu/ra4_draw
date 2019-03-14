@@ -28,14 +28,14 @@ namespace {
   bool fake_PU = false;
   bool unblind = false;
   bool debug = false;
-  double lumi = 135;
+  float lumi=1;
+  int year = 2016;
   int ibatch = -1;
   int nfiles = 10;
   string model = "T1tttt";
   string tag = "nominal";
   string outfolder = getenv("PWD");
   string mass_pts_str = "";
-  TString nom_wgt = "weight*eff_trig"; // nominal weight to use
   enum SysType {kConst, kWeight, kSmear, kCorr, kMetSwap, kPU};
   TString syst = "all";
 
@@ -83,52 +83,27 @@ void fillTtbarSys(ofstream &fsys);
 vector<double> getYields(Baby_full &baby, const NamedFunc &baseline, const vector<NamedFunc> &bincuts,
                          vector<double> &yield, vector<double> &w2, double lumi);
 
-const NamedFunc ntop("ntop", [](const Baby &b) -> NamedFunc::ScalarType{
-    int _ntop = 0;
-    for (unsigned i(0); i<b.ak8jets_pt()->size(); i++) {
-      if (b.ak8jets_pt()->at(i)<=300) continue;
-      if (b.ak8jets_nom_raw_top()->at(i)>0.4) _ntop++;
-    }
-    return _ntop;
-  });
-
-const NamedFunc masstop("masstop", [](const Baby &b) -> NamedFunc::ScalarType{
-    int _masstop = 0;
-    for (unsigned i(0); i<b.ak8jets_pt()->size(); i++) {
-      if (b.ak8jets_pt()->at(i)<=300) continue;
-      if (b.ak8jets_m()->at(i)>150) _masstop++;
-    }
-    return _masstop;
-  });
-
 int main(int argc, char *argv[]){
   
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   time_t begtime, endtime;
   time(&begtime);
+  GetOptions(argc, argv);
 
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
-  // Bear
-  string foldersig = bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
-  string foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_abcd/";
-  string folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/";
-  // Shrew
-  // string foldersig = bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_stdnj5/";
-  // string foldermc = bfolder+"/cms2r0/babymaker/babies/2018_08_03/mc/merged_mcbase_stdnj5/";
-  // string folderdata = "";
 
-  GetOptions(argc, argv);
-
-  if (do_syst && (Contains(foldersig, "merged_") || Contains(foldersig, "skim_"))) {
-    cout<<"Systematics cannot be derived from skim!!"<<endl;
-    exit(1);
+  if (do_syst) {
+    cout<<"INFO:: Systematics are ON. Make sure to run on unskimmed!!"<<endl;
   }
   gSystem->mkdir(outfolder.c_str(), kTRUE);
 
 
+  // -----------------------------------------------------------
+  //        Determine signal mass points
+  //------------------------------------------------------------
   vector<pair<string, string>> mass_pts;
   if (mass_pts_str!="") {
     size_t found = mass_pts_str.find(",");
@@ -137,57 +112,85 @@ int main(int argc, char *argv[]){
     while (found != string::npos) {
       _tmp = mass_pts_str.substr(start, found-start);
       mass_pts.push_back(make_pair(_tmp.substr(0,_tmp.find("_")), _tmp.substr(_tmp.find("_")+1)));
+      cout<<"Adding mass point: mgluino = "<<mass_pts.back().first<<" mlsp = "<<mass_pts.back().second<<endl;
       start = found+1;
       found = mass_pts_str.find(",",start);
     } 
     _tmp = mass_pts_str.substr(start, found-start);
     mass_pts.push_back(make_pair(_tmp.substr(0,_tmp.find("_")), _tmp.substr(_tmp.find("_")+1)));
+    cout<<"Adding mass point: mgluino = "<<mass_pts.back().first<<" mlsp = "<<mass_pts.back().second<<endl;
   } else {
-    DIR *dir;
-    struct dirent *ent;
-    if ((dir = opendir (foldersig.c_str())) != NULL) {
-      int ifile = 0;
-      while ((ent = readdir (dir)) != NULL) {
-        if (Contains(ent->d_name,".root")){
-          if (ibatch==-1 || (ifile>=ibatch*nfiles && ifile<(ibatch+1)*nfiles)) {
-            string _tmp = ent->d_name;
-            string mglu = _tmp.substr(_tmp.find("ino-")+4,_tmp.find("_mLSP")-_tmp.find("ino-")-4);
-            string mlsp = _tmp.substr(_tmp.find("LSP-")+4,_tmp.find("_Tune")-_tmp.find("LSP-")-4);
-            mass_pts.push_back(make_pair(mglu, mlsp));
-            cout<<"Including mass point: "<<mglu<<" "<<mlsp<<endl;
-          }
-          ifile++;
-        }
-      }
-      closedir (dir);
-    } else {
-      cout<<"Could not find directory with signal samples"<<endl;
-      exit(1);
-    }
+    // FIX ME to run on full scan - maybe just transfer this functionality to the steering python script
+    // DIR *dir;
+    // struct dirent *ent;
+    // if ((dir = opendir (foldersig[0].c_str())) != NULL) {
+    //   int ifile = 0;
+    //   while ((ent = readdir (dir)) != NULL) {
+    //     if (Contains(ent->d_name,".root")){
+    //       if (ibatch==-1 || (ifile>=ibatch*nfiles && ifile<(ibatch+1)*nfiles)) {
+    //         string _tmp = ent->d_name;
+    //         string mglu = _tmp.substr(_tmp.find("ino-")+4,_tmp.find("_mLSP")-_tmp.find("ino-")-4);
+    //         string mlsp = _tmp.substr(_tmp.find("LSP-")+4,_tmp.find("_Tune")-_tmp.find("LSP-")-4);
+    //         mass_pts.push_back(make_pair(mglu, mlsp));
+    //         cout<<"Including mass point: "<<mglu<<" "<<mlsp<<endl;
+    //       }
+    //       ifile++;
+    //     }
+    //   }
+    //   closedir (dir);
+    // } else {
+    //   cout<<"Could not find directory with signal samples"<<endl;
+    //   exit(1);
+    // }
   }
-
-  TString baseline("st>500 && met>200 && mj14>250 && njets>=6 && nbm>=1 && nleps==1 && nveto==0");
-  NamedFunc filters = "st<10000 && pass_ra2_badmu && met/met_calo<5";
-  if (Contains(tag, "masstop")) filters = filters && masstop>=1;
-  else if (Contains(tag, "top")) filters = filters && ntop>=1;
 
   // --------------------------------------
   //            Processes
   //---------------------------------------
-  set<string> other_files = {
-    foldermc+"*_WJetsToLNu*",
-     foldermc+"*_ST_*", 
-    foldermc+"*_TTW*", foldermc+"*_TTZ*", foldermc+"*_TTGJets*", foldermc+"*_TTTT*",
-    foldermc+"*DYJetsToLL*", foldermc+"*_ZJet*", foldermc+"*_ttHTobb_M125_*", 
-    foldermc+"*_WH_HToBB*", foldermc+"*_ZH_HToBB*", foldermc+"*_WWTo*", 
-    foldermc+"*_WZ*", foldermc+"*_ZZ_*",
-    foldermc+"*QCD_HT*0_Tune*",foldermc+"*QCD_HT*Inf_Tune*"
-  };
+  TString baseline("st>500 && met>200 && mj14>250 && njets>=6 && nbd>=1 && nleps==1 && nveto==0");
+  NamedFunc filters = Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
+  NamedFunc nom_wgt = Functions::wgt_run2 * Functions::eff_trig_run2; 
+
+  set<int> years;
+  if (year==0) years = {2016, 2017, 2018};
+  else years = {year};
+
+  map<int, string> foldermc, folderdata, foldersig;
+  foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
+  foldersig[2016] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
+  folderdata[2016] = "";//bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
+
+  foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/T1tttt/unskimmed/";
+  folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_mcbase_stdnj5/";
+
+  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/mc/merged_mcbase_stdnj5/";
+  foldersig[2018] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
+  folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/data/merged_mcbase_stdnj5/";
+
+  // Filling all other processes
+  vector<string> vnames_other = {
+    "_WJetsToLNu_HT",
+    "_ST_",
+    "_TTW","_TTZ", 
+    "_DYJetsToLL_M-50_HT","_ZJet","_ttH",
+     "_TTGJets","_TTTT","_WH_HToBB","_ZH_HToBB","_WWTo","_WZ","_ZZ_","QCD_HT*0_Tune","QCD_HT*Inf_Tune"
+    };
+
+  set<string> tt1l_files, tt2l_files, other_files, data_files;
+  for (auto &yr: years) {
+    tt1l_files.insert(foldermc[yr]+"*_TTJets*SingleLept*.root");
+    tt2l_files.insert(foldermc[yr]+"*_TTJets*DiLept*.root");
+    data_files.insert(folderdata[yr]+"*root");
+    for(auto name : vnames_other)
+      other_files.insert(foldermc[yr] + "*" + name + "*.root");
+      
+  }
 
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt_1l",    Process::Type::background, 1,  
-    {foldermc+ "*_TTJets*SingleLept*.root"}, filters && "stitch_met && pass");  
+    tt1l_files, filters && "stitch_met && pass");  
   auto proc_tt2l = Process::MakeShared<Baby_full>("tt_2l",    Process::Type::background, 1,  
-    {foldermc+ "*_TTJets*DiLept*.root"}, filters && "stitch_met && pass");  
+    tt2l_files, filters && "stitch_met && pass");  
   auto proc_other = Process::MakeShared<Baby_full>("other",    Process::Type::background, 1,  
     other_files, filters && "stitch_met && pass");
 
@@ -195,12 +198,17 @@ int main(int argc, char *argv[]){
 
   vector<shared_ptr<Process> > data_procs;
   data_procs.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    set<string>{folderdata+"*root"}, filters && "trig_ra4 && pass"));
+    data_files, filters && Functions::trig_run2 && "pass"));
 
   vector<shared_ptr<Process> > sig_procs;
-  for (auto &imass: mass_pts)
-    sig_procs.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::signal, kBlack,
-      set<string>{foldersig+"/*mGluino-"+imass.first+"_mLSP-"+imass.second+"_*.root"}, filters));
+  for (auto &imass: mass_pts) {
+    set<string> sig_files;
+    for (auto &yr: years) 
+      sig_files.insert(foldersig[yr]+"*mGluino-"+imass.first+"_mLSP-"+imass.second+"_*.root");
+    
+    sig_procs.push_back(Process::MakeShared<Baby_full>("T1tttt", Process::Type::signal, kBlack,
+      sig_files, filters));
+  }
 
   // --------------------------------------
   //            Binning
@@ -211,19 +219,19 @@ int main(int argc, char *argv[]){
   // N.B.: currently, changing naming convention would break writing the closure systematics derived from CRs
   vector<string> vl_met, vc_met, vc_mj_r1;
   vl_met.push_back("met200to350"); vc_met.push_back("met>200 && met<=350"); vc_mj_r1.push_back("mj14<=400");
-  vl_met.push_back("met350to500"); vc_met.push_back("met>350 && met<=500"); vc_mj_r1.push_back(Contains(tag,"vary_mj")? "mj14<=450" : "mj14<=400");
-  vl_met.push_back("met500");      vc_met.push_back("met>500");             vc_mj_r1.push_back(Contains(tag,"vary_mj")? "mj14<=500" : "mj14<=400");
+  vl_met.push_back("met350to500"); vc_met.push_back("met>350 && met<=500"); vc_mj_r1.push_back("mj14<=450");
+  vl_met.push_back("met500");      vc_met.push_back("met>500");             vc_mj_r1.push_back("mj14<=500");
   unsigned nbins_met(vl_met.size());
 
   vector<string> vl_nb, vc_nb;
-  vl_nb.push_back("1b");     vc_nb.push_back("nbm==1");
-  vl_nb.push_back("2b");     vc_nb.push_back("nbm==2");
-  vl_nb.push_back("ge3b");   vc_nb.push_back("nbm>=3");
+  vl_nb.push_back("1b");     vc_nb.push_back("nbd==1");
+  vl_nb.push_back("2b");     vc_nb.push_back("nbd==2");
+  vl_nb.push_back("ge3b");   vc_nb.push_back("nbd>=3");
   unsigned nbins_nb(vl_nb.size());
 
-  vector<string> vl_nj, vc_nj;
-  vl_nj.push_back("6to8j");  vc_nj.push_back("njets>=6 && njets<=7");
-  vl_nj.push_back("ge9j");   vc_nj.push_back("njets>=8");
+  vector<string> vl_nj; vector<vector<string>> vc_nj;
+  vl_nj.push_back("6to7j");  vc_nj.push_back({"njets>=6 && njets<=7", "njets>=6 && njets<=7","njets>=6 && njets<=7"});
+  vl_nj.push_back("ge8j");   vc_nj.push_back({"njets>=8", "njets>=8", "njets>=8"});
   unsigned nbins_nj(vl_nj.size());
 
   vector<string> vl_mj, vc_mj;
@@ -231,7 +239,6 @@ int main(int argc, char *argv[]){
   vl_mj.push_back("mjXXX");  vc_mj.push_back("mj14>XXX");
   unsigned nbins_mj(vl_mj.size());
   vector<string> v_metdep_midmj = {"500","650","800"};
-  // vector<string> v_metdep_midmj = {"400","650"};
   if (v_metdep_midmj.size()!=vc_met.size()) {
     cout<<"ERROR: Intermediate MJ thresholds not specified for each MET bin"<<endl;
     exit(1);
@@ -251,7 +258,7 @@ int main(int argc, char *argv[]){
             _label += '_'+CopyReplaceAll(vl_mj[imj],"XXX",v_metdep_midmj[imet]);
             _cut = vc_met[imet]+"&&"
                    +c_mt_r1+"&&"+CopyReplaceAll(vc_mj_r1[imet],"<=",">")+"&&"
-                   +vc_nb[inb]+"&&"+vc_nj[inj];
+                   +vc_nb[inb]+"&&"+vc_nj[inj][imet];
             _cut += "&&"+CopyReplaceAll(vc_mj[imj],"XXX",v_metdep_midmj[imet]);
             vbins.push_back(bindef(_label, _cut));
           }
@@ -268,7 +275,7 @@ int main(int argc, char *argv[]){
           _label += '_'+CopyReplaceAll(vl_mj[imj],"XXX",v_metdep_midmj[imet]);
           _cut = vc_met[imet]+"&&"
                  +CopyReplaceAll(c_mt_r1,"<=",">")+"&&"+CopyReplaceAll(vc_mj_r1[imet],"<=",">")+"&&"
-                 +vc_nb[inb]+"&&"+vc_nj[inj];
+                 +vc_nb[inb]+"&&"+vc_nj[inj][imet];
           _cut += "&&"+CopyReplaceAll(vc_mj[imj],"XXX",v_metdep_midmj[imet]);
           vbins.push_back(bindef(_label, _cut));
         }
@@ -296,13 +303,13 @@ int main(int argc, char *argv[]){
     v_sys.push_back(sysdef("Trigger efficiency", "trig", kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_trig["+to_string(i)+"]/eff_trig"); 
     v_sys.push_back(sysdef("B-tag efficiency", "bctag", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_bctag["+to_string(i)+"]/w_btag");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_bctag_deep["+to_string(i)+"]/w_btag_deep");
     v_sys.push_back(sysdef("B-tag efficiency FS", "fs_bctag", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_bctag["+to_string(i)+"]/w_btag");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_bctag_deep["+to_string(i)+"]/w_btag_deep");
     v_sys.push_back(sysdef("Mistag efficiency", "udsgtag", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_udsgtag["+to_string(i)+"]/w_btag");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_udsgtag_deep["+to_string(i)+"]/w_btag_deep");
     v_sys.push_back(sysdef("Mistag efficiency FS", "fs_udsgtag",kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_udsgtag["+to_string(i)+"]/w_btag");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_udsgtag_deep["+to_string(i)+"]/w_btag_deep");
     v_sys.push_back(sysdef("Jet energy corrections", "jec", kCorr));
     v_sys.back().shift_index = 1; // JEC Up index in sys_met, etc.
     // v_sys.push_back(sysdef("Jet energy resolution", "jer", kSmear));
@@ -351,7 +358,7 @@ int main(int argc, char *argv[]){
     } else if (sys.sys_type == kWeight) {
       for (auto &bin: vbins) {
         for (auto &wgt: sys.v_wgts) {
-          cuts.emplace_back(TableRow("", baseline+"&&"+bin.cut,0,0,nom_wgt+"*"+wgt));
+          cuts.emplace_back(TableRow("", baseline+"&&"+bin.cut,0,0,nom_wgt * wgt));
         }
       }
     } else if (sys.sys_type == kCorr || sys.sys_type == kSmear) {
@@ -395,6 +402,7 @@ int main(int argc, char *argv[]){
     bkg_yields.push_back(bkg_params[ipar].Yield());  
 
   // calculate kappas
+  if (debug) cout<<"calculating kappas..."<<endl;
   vector<float> vkappas, vkappas_unc;
   if (!Contains(tag,"noabcd")) {
     vector<float> powers = {1, -1, -1, 1};
@@ -426,6 +434,7 @@ int main(int argc, char *argv[]){
   //------------------------------------------
   //       Get SIG yields
   //------------------------------------------
+  if (debug) cout<<"Getting signal yields..."<<endl;
   vector<vector<GammaParams>> sig_params;
   yield_table = static_cast<Table*>(pm.Figures()[1].get());
   for (auto &isig: sig_procs) {
@@ -435,6 +444,7 @@ int main(int argc, char *argv[]){
   //------------------------------------------
   //       Get DATA yields
   //------------------------------------------
+  if (debug) cout<<"Getting data yields..."<<endl;
   vector<float> data_yields;
   if(unblind){
     yield_table = static_cast<Table*>(pm.Figures()[2].get());
@@ -448,6 +458,7 @@ int main(int argc, char *argv[]){
   for (unsigned isig(0); isig<sig_params.size(); isig++) {
     //    calculate average of yields with GEN and RECO MET for signal
     // -----------------------------------------------------------------------
+    if (debug) cout<<"Going over sig_params..."<<endl;
     vector<GammaParams> nom_met_avg;
     for (auto &sys: v_sys) {
       if (sys.sys_type == kMetSwap) {
@@ -462,8 +473,10 @@ int main(int argc, char *argv[]){
     }
     //   Writing datacard header
     //---------------------------------------
+    if (debug) cout<<"Writing data cards..."<<endl;
     TString outpath = outfolder+"/datacard_SMS-"+model;
-    outpath += "_mGluino-"+mass_pts[isig].first+"_mLSP-"+mass_pts[isig].second;
+    outpath += "_mGluino-"+mass_pts[isig].first+"_mLSP-"+mass_pts[isig].second+"_";
+    outpath += year;
     outpath += "_"+RoundNumber(lumi,1).ReplaceAll(".","p")+"ifb_"+tag+".txt";
     if (!do_syst)  outpath.ReplaceAll(".txt*","_nosys.txt");
     cout<<"open "<<outpath<<endl;
@@ -523,7 +536,6 @@ int main(int argc, char *argv[]){
     // ordered as: 2l lownj, 2l high nj, 5j lowmet, 5j mid met
     vector<float> cr_unc = {1.06, 1.16, 1.16, 1.4}; // nominal 35.9 ifb, based on data CR 
     if (lumi>130) cr_unc = {1.03, 1.07, 1.08, 1.17}; // nominal 135 ifb, based on data CR 
-    if (Contains(tag,"vary_mj")) cr_unc = {1.03, 1.07, 1.08, 1.21}; // nominal 35.9, based on data CR 
 
     if (do_syst){
       fcard<<endl<<setw(wname)<<"dilep_lownj"<<setw(wdist)<<"lnN";
@@ -668,7 +680,7 @@ int main(int argc, char *argv[]){
       unsigned iyield(0);
       wbin +=3; // to allow the label to fit even with "rp_" in front
       // order of for loops must match the one used to define cut vector, i.e. met, nb, nj!
-      if(debug) cout <<endl<<left<<setw(25)<<"bin"
+      if(debug) cout <<endl<<left<<setw(wbin)<<"bin"
                      <<right<<setw(15)<<"Sig."
                      <<right<<setw(15)<<"Sig. (MET avg)"
                      <<right<<setw(15)<<"Bkg. MC"
@@ -760,7 +772,7 @@ TString nom2sys_bin(TString ibin, size_t shift_index){
   ibin.ReplaceAll("st", "sys_st["+to_string(shift_index)+"]");
   ibin.ReplaceAll("mj14", "sys_mj14["+to_string(shift_index)+"]");
   ibin.ReplaceAll("njets", "sys_njets["+to_string(shift_index)+"]");
-  ibin.ReplaceAll("nbm", "sys_nbm["+to_string(shift_index)+"]");
+  ibin.ReplaceAll("nbd", "sys_nbdm["+to_string(shift_index)+"]");
   return ibin;
 }
 
@@ -903,13 +915,14 @@ void GetOptions(int argc, char *argv[]){
       {"fake_PU", no_argument, 0, 0},
       {"no_syst", no_argument, 0, 0},
       {"unblind", no_argument, 0, 'u'},
+      {"year", no_argument, 0, 'y'},
       {"debug", no_argument, 0, 'd'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s:m:t:o:p:l:b:n:ud", long_options, &option_index);
+    opt = getopt_long(argc, argv, "s:m:t:o:p:l:b:n:uy:d", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -923,6 +936,7 @@ void GetOptions(int argc, char *argv[]){
     case 'b': ibatch = atoi(optarg); break;
     case 'n': nfiles = atoi(optarg); break;
     case 'u': unblind = true; break;
+    case 'y': year = atoi(optarg); break;
     case 'd': debug = true; break;
     case 0:
       optname = long_options[option_index].name;

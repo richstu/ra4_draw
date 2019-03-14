@@ -29,7 +29,7 @@ void SlideMaker::AddSlide(vector<string> pnames, unsigned ncols, string title,
   string height = RoundNumber(0.85/nrows,2).Data();
   if (title!="") height = RoundNumber(0.9/nrows,2).Data();
   outfile_<<"\\frame{\n";
-  if (ncols<=2)
+  if (ncols<=2 || nrows>=3)
     outfile_<<"\\resizebox{\\textheight}{!}{\n";
   else
     outfile_<<"\\resizebox{\\textwidth}{!}{\n";

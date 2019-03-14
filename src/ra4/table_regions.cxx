@@ -30,7 +30,7 @@ namespace{
   int year = 2018;
   bool only_tt = false;
   bool debug = false;
-  string tag = "nbdm";
+  string tag = "nbd";
   pair<string, string> sig_nc = make_pair("2100","100");
   pair<string, string> sig_c = make_pair("1900","1250");
 }
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
       
   }
 
-  NamedFunc baseline = "mj14>250 && st>500 && nleps==1 && nveto==0 && met>100 && njets>=6 && nbdm>=1";
+  NamedFunc baseline = "mj14>250 && st>500 && nleps==1 && nveto==0 && met>100 && njets>=6 && nbd>=1";
   baseline = baseline && Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
 
   vector<shared_ptr<Process> > procs;
@@ -106,12 +106,12 @@ int main(int argc, char *argv[]){
   met.push_back("met>500");             mjl.push_back("500"); mjh.push_back("800");
 
   vector<string> nbnj;
-  nbnj.push_back("nbdm==1 && njets<=7");
-  nbnj.push_back("nbdm==1 && njets>=8");
-  nbnj.push_back("nbdm==2 && njets<=7");
-  nbnj.push_back("nbdm==2 && njets>=8");
-  nbnj.push_back("nbdm>=3 && njets<=7");
-  nbnj.push_back("nbdm>=3 && njets>=8");
+  nbnj.push_back("nbd==1 && njets<=7");
+  nbnj.push_back("nbd==1 && njets>=8");
+  nbnj.push_back("nbd==2 && njets<=7");
+  nbnj.push_back("nbd==2 && njets>=8");
+  nbnj.push_back("nbd>=3 && njets<=7");
+  nbnj.push_back("nbd>=3 && njets>=8");
 
   vector<TString> abcd_lo  = {"mt<=140 && mj14<=MJ1X",
                               "mt<=140 && mj14> MJ1X && mj14<=MJ2X",

@@ -135,17 +135,17 @@ int main(int argc, char *argv[]){
   else years = {year};
 
   map<int, string> foldermc, folderdata, foldersig;
-  foldermc[2016] = (bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/");
-  foldersig[2016] = (bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/");
-  folderdata[2016] = (bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/");
+  foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
+  foldersig[2016] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
+  folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
 
-  foldermc[2017] = (bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/");
-  foldersig[2017] = ("");//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
-  folderdata[2017] = ("");//bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_mcbase_stdnj5/";
+  foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/T1tttt/unskimmed/";
+  folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_mcbase_stdnj5/";
 
-  foldermc[2018] = (bfolder+"/cms2r0/babymaker/babies/2019_01_18/mc/merged_mcbase_stdnj5/");
-  foldersig[2018] = ("");//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/");
-  folderdata[2018] = ("");//bfolder+"/cms2r0/babymaker/babies/2019_01_04/data/merged_mcbase_stdnj5/");
+  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/mc/merged_mcbase_stdnj5/";
+  foldersig[2018] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
+  folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/data/merged_mcbase_stdnj5/";
   
 
   Palette colors("txt/colors.txt", "default");
@@ -251,20 +251,15 @@ int main(int argc, char *argv[]){
   TString c_hignj = "njets>=8";
 
   ////// ABCD cuts
-  vector<TString> abcdcuts_std  = {"mt<=140 && mj14<=400 &&                                   nj_all_1l",
-                                   "mt<=140 && mj14> 400 &&                                   nj_1l",
-                                   "mt>140 && mj14<=400 &&                                   nj_all_1l",
-                                   "mt>140 && mj14> 400 &&                                   nj_1l"};
-
-  vector<TString> abcdcuts_mtcr  = {"mt<=100 && mj14<=400 &&                                   nj_all_1l",
-                                   "mt<=100 && mj14> 400 &&                                   nj_1l",
-                                   "mt>100 && mt<=140  && mj14<=400 &&                                   nj_all_1l",
-                                   "mt>100 && mt<=140  && mj14> 400 &&                                   nj_1l"};
+  vector<TString> abcdcuts_std  = {"mt<=140 && mj14<=400 && nj_all_1l",
+                                   "mt<=140 && mj14> 400 && nj_1l",
+                                   "mt>140  && mj14<=400 && nj_all_1l",
+                                   "mt>140  && mj14> 400 && nj_1l"};
 
   vector<TString> abcdcuts_veto = {"mt<=140 && mj14<=400 && nleps==1 && nveto==0 && nbd>=1 && nj_all_1l",
                                    "mt<=140 && mj14> 400 && nleps==1 && nveto==0 && nbd>=1 && nj_1l",
-                                   "mt>140  && mj14<=400 && nleps==1 && nveto==1 && nbd>=1 && nbd<=2  &&  nj_all_1l",
-                                   "mt>140  && mj14> 400 && nleps==1 && nveto==1 && nbd>=1 && nbd<=2  &&  nj_1l"};
+                                   "mt>140  && mj14<=400 && nleps==1 && nveto==1 && nbd>=1 && nj_all_1l",
+                                   "mt>140  && mj14> 400 && nleps==1 && nveto==1 && nbd>=1 && nj_1l"};
 
   vector<TString> abcdcuts_2l   = {"mt<=140 && mj14<=400 && nleps==1 && nveto==0 && nbd>=1 && nj_all_1l",
                                    "mt<=140 && mj14> 400 && nleps==1 && nveto==0 && nbd>=1 && nj_1l",
@@ -287,9 +282,7 @@ int main(int argc, char *argv[]){
   PlotMaker pm;
 
   ///// Running over these methods
-  vector<TString> methods_all = {"m2lveto", "m2lonly", "mvetoonly", "signal", "signal_nb1", "signal_nb2",
-                                 "m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150",
-				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
+  vector<TString> methods_all = {"m2lveto", "m2lonly", "mvetoonly", "signal"};
  
   vector<TString> methods = methods_all;
 
@@ -328,9 +321,9 @@ int main(int argc, char *argv[]){
 
     //////// General assignments to all methods
     if(method.Contains("2l") || method.Contains("veto")) {
-      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
+      metcuts = vector<TString>{"met>100 && met<=200", "met>200 && met<=500"};
       if(only_mc) metcuts.push_back(c_higmet);
-      if(method.Contains("twomet")) metcuts = vector<TString>{"met>100 && met<=200", "met>200 && met<=500"};
+      if(method.Contains("metbins")) metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
       bincuts = vector<TString>{c_lownj, c_hignj}; // 2l nj cuts automatically lowered in abcd_method
       if(method.Contains("onebin")) bincuts = vector<TString>{"njets>=6"};
       caption = "Dilepton validation regions. D3 and D4 have ";
@@ -367,14 +360,6 @@ int main(int argc, char *argv[]){
       caption = "Signal search regions + $\\njets=5$";
       abcd_title = "Signal + "+njets+"=5 ";
     }
-    if(method.Contains("njets2l")) {
-      metcuts = vector<TString>{"met>100&&met<=200", "met>200&&met<=500"};
-      bincuts = vector<TString>{"njets>=6&&njets<=8", "njets>=9"}; 
-    }
-    if(method.Contains("inclvetoonly")) {
-      metcuts = vector<TString>{"met>100&&met<=200", "met>200&&met<=500"};
-      bincuts = vector<TString>{"njets>=6"}; 
-    }
     //////// Dilepton methods
     if(method.Contains("2lonly")) {
       abcdcuts = abcdcuts_2l;
@@ -391,19 +376,6 @@ int main(int argc, char *argv[]){
       caption += "one lepton and one track";
       abcd_title = "Dilepton (lv)";
     }
-    if(method.Contains("2lcombined")) {
-      metcuts = vector<TString>{"met>200&&met<=500"};
-      bincuts = vector<TString>{"njets>=6"}; // 2l nj cuts automatically lowered in abcd_method
-      abcdcuts = abcdcuts_2l;
-      caption += "two reconstructed leptons";
-    }
-    if(method.Contains("2lvetocombined")) {
-      metcuts = vector<TString>{"met>150&&met<=500"};
-      bincuts = vector<TString>{"njets>=6"}; // 2l nj cuts automatically lowered in abcd_method
-      abcdcuts = abcdcuts_2lveto;
-      caption += "either two reconstructed leptons, or one lepton and one track";
-    }
-
     //////// Single lepton methods, all use the standard ABCD plane and nleps==1&&nveto==0&&nbd>=1
     if(method.Contains("signal")) {
       metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
@@ -439,41 +411,14 @@ int main(int argc, char *argv[]){
       if(only_mc) metcuts.push_back(c_higmet);     
     }
 
-    ////// Aggregate regions (single lepton). The nbd, njets integration in R1/R3 is done in abcd_method
-    if(method.Contains("agg_himet")) {
-      metcuts = vector<TString>{"met>500"};
-      bincuts = vector<TString>{"nbd>=3&&njets>=6"};
-      caption = "High-\\met aggregate region with $1\\ell$, $\\met>500\\text{ GeV}$, $\\njets\\geq6$, $\\nb\\geq3$";
-      firstSigBin = 0;
-    }
-    if(method.Contains("agg_mixed")) {
-      metcuts = vector<TString>{"met>350"};
-      bincuts = vector<TString>{"nbd>=2&&njets>=9"};
-      caption = "Mixed aggregate region with $1\\ell$, $\\met>350\\text{ GeV}$, $\\njets\\geq9$, $\\nb\\geq2$";
-      firstSigBin = 0;
-    }
-    if(method.Contains("agg_himult")) {
-      metcuts = vector<TString>{"met>200"};
-      bincuts = vector<TString>{"nbd>=3&&njets>=9"};
-      caption = "High-multiplicity aggregate region with $1\\ell$, $\\met>200\\text{ GeV}$, $\\njets\\geq9$, $\\nb\\geq3$";
-      firstSigBin = 0;
-    }
-    if(method.Contains("agg_1b")) {
-      metcuts = vector<TString>{"met>500"};
-      bincuts = vector<TString>{"nbd>=1&&njets>=9"};
-      caption = "Single b-tag aggregate region with $1\\ell$, $\\met>500\\text{ GeV}$, $\\njets\\geq9$, $\\nb\\geq1$";
-      firstSigBin = 0;
-    }
-
-    //////// MET150 methods
-    if(method.Contains("met150")) {
-      metcuts = vector<TString>{c_vlowmet};
-      caption.ReplaceAll("regions", "region for very low \\met");
-    }
-    if(method.Contains("m1lmet150")) {
-      bincuts = vector<TString>{c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj,
-                                c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj};
-      caption = "Single lepton validation region for very low \\met";
+    if(method.Contains("m56j")) {
+      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
+      bincuts = vector<TString>{c_lownb+" && njets>=5 && njets<=6", 
+                                c_midnb+" && njets>=5 && njets<=6",
+                                c_hignb+" && njets>=5 && njets<=6"};
+      caption = "Validation regions with $1\\ell, \\njets 5-6$";
+      abcd_title = njets+" 5-6";
+      if(only_mc) metcuts.push_back(c_higmet);     
     }
 
     //////// Pushing all cuts to then find the yields
