@@ -263,8 +263,8 @@ int main(int argc, char *argv[]){
 
   vector<TString> abcdcuts_2l   = {"mt<=140 && mj14<=400 && nleps==1 && nveto==0 && nbd>=1 && nj_all_1l",
                                    "mt<=140 && mj14> 400 && nleps==1 && nveto==0 && nbd>=1 && nj_1l",
-                                   "           mj14<=400 && nleps==2             && nbd<=2 && nj_all_2l",
-                                   "           mj14> 400 && nleps==2             && nbd<=2 && nj_2l"};
+                                   "           mj14<=400 && nleps==2             && nbd<=1 && nj_all_2l",
+                                   "           mj14> 400 && nleps==2             && nbd<=1 && nj_2l"};
 
   vector<TString> abcdcuts_2lveto;
   for(size_t ind=0; ind<2; ind++) abcdcuts_2lveto.push_back(abcdcuts_2l[ind]);
@@ -321,11 +321,13 @@ int main(int argc, char *argv[]){
 
     //////// General assignments to all methods
     if(method.Contains("2l") || method.Contains("veto")) {
-      metcuts = vector<TString>{"met>100 && met<=200", "met>200 && met<=500"};
-      if(only_mc) metcuts.push_back(c_higmet);
-      if(method.Contains("metbins")) metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
-      bincuts = vector<TString>{c_lownj, c_hignj}; // 2l nj cuts automatically lowered in abcd_method
-      if(method.Contains("onebin")) bincuts = vector<TString>{"njets>=6"};
+      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+      doVBincuts = true;
+      vbincuts = vector<vector<TString>>{{"njets==7", "njets>=8"},
+                                         {"njets==7", "njets>=8"},
+                                         {"njets==7", "njets>=8"},
+                                         {"njets==7", "njets>=8"},
+                                         {"njets>=6 && njets<=7", "njets>=8"}}; 
       caption = "Dilepton validation regions. D3 and D4 have ";
       abcd_title = "Dilepton";
     } else {
@@ -379,9 +381,16 @@ int main(int argc, char *argv[]){
     //////// Single lepton methods, all use the standard ABCD plane and nleps==1&&nveto==0&&nbd>=1
     if(method.Contains("signal")) {
       metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
-      bincuts = vector<TString>{c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj,
-                                c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj,
-                                c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj};
+      doVBincuts = true;
+      vbincuts = vector<vector<TString>>{{c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
+                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
+                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
+                                         {c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
+                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
+                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
+                                         {c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj,
+                                         c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj,
+                                         c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj}};
       caption = "Signal search regions";
       abcd_title = "Signal + low MET";
       firstSigBin = 0;
@@ -392,6 +401,21 @@ int main(int argc, char *argv[]){
       } // allmetsignal
       if(method.Contains("met100")) {
 				metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+      vbincuts = vector<vector<TString>>{{c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
+                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
+                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
+                                         {c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
+                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
+                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
+                                         {c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
+                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
+                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
+                                         {c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
+                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
+                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
+                                         {c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj,
+                                         c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj,
+                                         c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj}};
 				caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
 				firstSigBin = 2;
       } // allmetsignal
@@ -405,20 +429,27 @@ int main(int argc, char *argv[]){
 
     if(method.Contains("m5j")) {
       metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
-      bincuts = vector<TString>{"njets==5"};
+      bincuts = vector<TString>{c_lownb+" && njets==5", 
+                                c_midnb+" && njets==5",
+                                c_hignb+" && njets==5"};
       caption = "Validation regions with $1\\ell, \\njets=5$";
       abcd_title = njets+" = 5";
-      if(only_mc) metcuts.push_back(c_higmet);     
+      // if(only_mc) metcuts.push_back(c_higmet);     
     }
 
     if(method.Contains("m56j")) {
-      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
-      bincuts = vector<TString>{c_lownb+" && njets>=5 && njets<=6", 
+      metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet};
+      doVBincuts = true;
+      vbincuts = vector<vector<TString>>{{c_lownb+" && njets>=5 && njets<=6", 
                                 c_midnb+" && njets>=5 && njets<=6",
-                                c_hignb+" && njets>=5 && njets<=6"};
+                                c_hignb+" && njets>=5 && njets<=6"},
+                                {c_lownb+" && njets>=5 && njets<=6", 
+                                c_midnb+" && njets>=5 && njets<=6",
+                                c_hignb+" && njets>=5 && njets<=6"},
+                                {"nbd>=1 && njets>=5 && njets<=6"}};
       caption = "Validation regions with $1\\ell, \\njets 5-6$";
       abcd_title = njets+" 5-6";
-      if(only_mc) metcuts.push_back(c_higmet);     
+      // if(only_mc) metcuts.push_back(c_higmet);     
     }
 
     //////// Pushing all cuts to then find the yields
@@ -615,10 +646,11 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
           out << "All "<<(abcd.bincuts[iplane][ibin].Contains("nbd")?"\\nb, ":"")<<"\\njets" ;
         else {
           if(abcd.method.Contains("2lonly") && iabcd>=2) out<<"$"<<CodeToLatex(abcd.lowerNjets(abcd.bincuts[iplane][ibin]).Data())<<"$";
-          else if(abcd.method.Contains("2lveto") && iabcd>=2){
-            if(abcd.bincuts[iplane][ibin].Contains("6")) out<<"Low \\njets";
-            else out<<"High \\njets";
-          } else out<<"$"<<CodeToLatex(abcd.bincuts[iplane][ibin].Data())<<"$";
+          // else if(abcd.method.Contains("2lveto") && iabcd>=2){
+          //   if(abcd.bincuts[iplane][ibin].Contains("7")) out<<"Low \\njets";
+          //   else out<<"High \\njets";
+          // } 
+          else out<<"$"<<CodeToLatex(abcd.bincuts[iplane][ibin].Data())<<"$";
         }
         //// Printing signal yields
         if(do_signal)
@@ -1110,8 +1142,13 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	      float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
 	      float kap_mmDown = k_ordered_mm[iplane][ibin][ib].kappa[2];
 	      float errStat = (kap>kap_mm?sqrt(pow(kapDown,2)+pow(kap_mmUp,2)):sqrt(pow(kapUp,2)+pow(kap_mmDown,2)));
-	      text = "#sigma_{st} = "+RoundNumber(errStat*100,0, kap)+"%";
-        text = "#sigma_{st} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
+        // text = "#sigma_{st} = "+RoundNumber(errStat*100,0, kap)+"%";
+	      text = RoundNumber(errStat*100,0, kap)+"%";
+        // text = "#sigma_{st} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
+        if (fabs(ekmdUp) > fabs(ekmdDown))
+          text = RoundNumber(ekmdUp*100,0, kap)+"%";
+        else
+          text = RoundNumber(ekmdDown*100,0, kap)+"%";
 	      klab.SetTextSize(0.05);
 	      klab.DrawLatex(xval, 0.888*maxy, text);
 	    } // If unblind || not signal bin

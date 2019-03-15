@@ -192,14 +192,18 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>300&&met<=500", "300<met<=500");
   ReplaceAll(code, "met>350&&met<=500", "350<met<=500");
   ReplaceAll(code, "met>200&&met<=500", "200<met<=500");
-  ReplaceAll(code, "njets>=4&&njets<=5", "4<=njets<=5");
-  ReplaceAll(code, "njets>=5&&njets<=7", "5<=njets<=7");
-  ReplaceAll(code, "njets>=5&&njets<=6", "5<=njets<=6");
-  ReplaceAll(code, "njets>=6&&njets<=8", "6<=njets<=8");
+  ReplaceAll(code, "njets==5", "5j");
+  ReplaceAll(code, "njets==7", "7j");
+  ReplaceAll(code, "njets>=4&&njets<=5", "4-5j");
+  ReplaceAll(code, "njets>=5&&njets<=7", "5-7j");
+  ReplaceAll(code, "njets>=5&&njets<=6", "5-6j");
+  ReplaceAll(code, "njets>=6&&njets<=8", "6-8j");
   ReplaceAll(code, "njets>=6&&njets<=7", "6-7j");
-  ReplaceAll(code, "njets>=6&&njets<=7", "6<=njets<=7");
   ReplaceAll(code, "njets>=8", "#geq8j");
-  ReplaceAll(code, "nbm>=1&&nbm<=2", "1<=nbm<=2");
+  ReplaceAll(code, "nbd>=1", "#geq1b");
+  ReplaceAll(code, "nbd==1", "1b");
+  ReplaceAll(code, "nbd==2", "2b");
+  ReplaceAll(code, "nbd>=3", "#geq3b");
 
   ReplaceAll(code, "1==1", "Full Sample");
   ReplaceAll(code, "el_tks_chg*lep_charge<0", "OS");
@@ -269,6 +273,9 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "npv", "N_{PV}");
   ReplaceAll(code, "mumu_pt1", "p_{T}^{#mu}");
   ReplaceAll(code, "elel_pt1", "p_{T}^{e}");
+  ReplaceAll(code, "mj14>=400 && mj14<=500", "M_{J} 400-500");
+  ReplaceAll(code, "mj14>=450 && mj14<=650", "M_{J} 450-650");
+  ReplaceAll(code, "mj14>=500 && mj14<=800", "M_{J} 500-800");
 
   ReplaceAll(code, "abs(mc_id)==1000006", "stop");
   ReplaceAll(code, "abs(mc_id)==1000022", "LSP");
