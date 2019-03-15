@@ -40,11 +40,10 @@
 using namespace std;
 
 namespace{
-  bool only_mc = false;
+  bool only_mc = true;
   bool only_tt = false;
   bool only_kappa = false;
   bool split_bkg = false;
-  bool only_dilepton = false;
   bool do_leptons = false;
   bool do_signal = true;
   bool unblind = false;
@@ -98,17 +97,13 @@ int main(int argc, char *argv[]){
 
   string ntupletag="";
 
-  if(mm_scen == ""){
-    cout << " ======== Doing all mis-measurement scenarios ======== \n" << endl;
-    only_mc = true;
-  }else if(mm_scen == "data"){
+  if(mm_scen == "data") {
     cout << " ======== Comparing MC and actual DATA ======== \n" << endl;
-  }else if(mm_scen == "no_mismeasurement" || mm_scen == "off" || mm_scen == "mc_as_data"){
-    cout << " ======== No mismeasurement applied ======== \n" << endl;
-    if(mm_scen == "mc_as_data") only_mc = true;
-  }else{
-    cout << " ======== Doing mis-measurement scenario " << mm_scen << " ======== \n" << endl;
-    only_mc = true;
+    only_mc = false;
+  } else {
+    if(mm_scen == "") cout << " ======== Doing all mis-measurement scenarios ======== \n" << endl;
+    else if(mm_scen == "off") cout << " ======== No mismeasurement applied ======== \n" << endl;
+    else cout << " ======== Doing mis-measurement scenario " << mm_scen << " ======== \n" << endl;
   }
   
   vector<string> scenarios = ConfigParser::GetOptSets(sys_wgts_file);
@@ -239,6 +234,8 @@ int main(int argc, char *argv[]){
   TString c_midmet   = "met>350 && met<=500";
   TString c_higmet   = "met>500";
 
+  TString c_lowmidmet   = "met>200 && met<=500";
+
   ////// Nb cuts
   TString c_vlownb = "nbd==0";
   TString c_lownb  = "nbd==1";
@@ -246,9 +243,19 @@ int main(int argc, char *argv[]){
   TString c_hignb  = "nbd>=3";
 
   ////// Njets cuts
-  TString c_vlownj = "njets>=4 && njets<=5";
-  TString c_lownj = "njets>=6 && njets<=7";
+  TString c_njcr = "njets>=5 && njets<=6";
+  TString c_lownj_lowmet = "njets==7";
+  TString c_lownj_higmet = "njets>=6 && njets<=7";
   TString c_hignj = "njets>=8";
+
+
+  vector<TString> nbnj_lowmet = {c_lownb+" && "+c_lownj_lowmet, c_lownb+" && "+c_hignj,
+                                 c_midnb+" && "+c_lownj_lowmet, c_midnb+" && "+c_hignj,
+                                 c_hignb+" && "+c_lownj_lowmet, c_hignb+" && "+c_hignj};
+
+  vector<TString> nbnj_higmet = {c_lownb+" && "+c_lownj_higmet, c_lownb+" && "+c_hignj,
+                                 c_midnb+" && "+c_lownj_higmet, c_midnb+" && "+c_hignj,
+                                 c_hignb+" && "+c_lownj_higmet, c_hignb+" && "+c_hignj};
 
   ////// ABCD cuts
   vector<TString> abcdcuts_std  = {"mt<=140 && mj14<=400 && nj_all_1l",
@@ -320,136 +327,77 @@ int main(int argc, char *argv[]){
     firstSigBin = -1; //// First MET bin that is a signal bin
 
     //////// General assignments to all methods
-    if(method.Contains("2l") || method.Contains("veto")) {
-      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
-      doVBincuts = true;
-      vbincuts = vector<vector<TString>>{{"njets==7", "njets>=8"},
-                                         {"njets==7", "njets>=8"},
-                                         {"njets==7", "njets>=8"},
-                                         {"njets==7", "njets>=8"},
-                                         {"njets>=6 && njets<=7", "njets>=8"}}; 
-      caption = "Dilepton validation regions. D3 and D4 have ";
-      abcd_title = "Dilepton";
+    if(method.Contains("2lonly")) {
+      abcdcuts = abcdcuts_2l;
+      caption += "Dilepton validation regions. D3 and D4 have two reconstructed leptons";
+      abcd_title = "Dilepton (ll)";
+    } else if(method.Contains("2lveto")) {
+      abcdcuts = abcdcuts_2lveto;
+      caption += "Dilepton validation regions. D3 and D4 have either two reconstructed leptons, or one lepton and one track";
+      abcd_title = "Dilepton (ll+lv)";
+    } else if(method.Contains("vetoonly")) {
+      abcdcuts = abcdcuts_veto;
+      caption += "Dilepton validation regions. D3 and D4 have one lepton and one track";
+      abcd_title = "Dilepton (lv)";
     } else {
-      if(only_dilepton) continue;
       abcdcuts = abcdcuts_std;
       basecuts = "nleps==1 && nveto==0 && nbd>=1";
     }
 
-    
-    /////// Methods to check Nb
-    if(method.Contains("nb1l")) {
-      metcuts = vector<TString>{"met>200&&met<=500&&njets==5", "met>200&&met<=500&&njets>=6"};
-      firstSigBin = 1;
-      bincuts = vector<TString>{"nbd==1", "nbd==2", "nbd>=3"};
-      caption = "Signal search regions + $\\njets=5$";
-      abcd_title = "Signal + "+njets+"=5 ("+nbs+" bins)";
-    }
-    /////// Methods to check Njets
-    if(method.Contains("njets1lmet100x200")) {
-      metcuts = vector<TString>{"met>100&&met<=150", "met>100&&met<=150","met>150&&met<=200", "met>150&&met<=200"};
-      vbincuts = vector<vector<TString> >{{"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"},
-					  {"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"}}; 
-      doVBincuts = true;
-      caption = "Low MET";
-      abcd_title = "Low MET ("+njets+" bins)";
-    }
-    if(method.Contains("njets1lmet200x500")) {
-      metcuts = vector<TString>{"met>200&&met<=500", "met>200&&met<=500"};
-      vbincuts = vector<vector<TString> >{{"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"}}; 
-      doVBincuts = true;
-      firstSigBin = 1;
-      caption = "Signal search regions + $\\njets=5$";
-      abcd_title = "Signal + "+njets+"=5 ";
-    }
-    //////// Dilepton methods
-    if(method.Contains("2lonly")) {
-      abcdcuts = abcdcuts_2l;
-      caption += "two reconstructed leptons";
-      abcd_title = "Dilepton (ll)";
-    }
-    if(method.Contains("2lveto")) {
-      abcdcuts = abcdcuts_2lveto;
-      caption += "either two reconstructed leptons, or one lepton and one track";
-      abcd_title = "Dilepton (ll+lv)";
-    }
-    if(method.Contains("vetoonly")) {
-      abcdcuts = abcdcuts_veto;
-      caption += "one lepton and one track";
-      abcd_title = "Dilepton (lv)";
-    }
     //////// Single lepton methods, all use the standard ABCD plane and nleps==1&&nveto==0&&nbd>=1
     if(method.Contains("signal")) {
       metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
       doVBincuts = true;
-      vbincuts = vector<vector<TString>>{{c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
-                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
-                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
-                                         {c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
-                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
-                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
-                                         {c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj,
-                                         c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj,
-                                         c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj}};
+      vbincuts = vector<vector<TString>>{nbnj_lowmet, nbnj_lowmet, nbnj_higmet};
       caption = "Signal search regions";
       abcd_title = "Signal + low MET";
       firstSigBin = 0;
-      if(method.Contains("lowmet")) {
-				metcuts = vector<TString>{c_vvlowmet, c_vlowmet};
-				caption = "Low MET regions";
-				firstSigBin = -1;
-      } // allmetsignal
       if(method.Contains("met100")) {
 				metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
-      vbincuts = vector<vector<TString>>{{c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
-                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
-                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
-                                         {c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
-                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
-                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
-                                         {c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
-                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
-                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
-                                         {c_lownb+" && njets==7", c_lownb+" && "+c_hignj,
-                                         c_midnb+" && njets==7", c_midnb+" && "+c_hignj,
-                                         c_hignb+" && njets==7", c_hignb+" && "+c_hignj},
-                                         {c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj,
-                                         c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj,
-                                         c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj}};
+        vbincuts = vector<vector<TString>>{nbnj_lowmet, nbnj_lowmet, nbnj_lowmet, nbnj_lowmet, nbnj_higmet};
 				caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
 				firstSigBin = 2;
-      } // allmetsignal
-      if(method.Contains("onemet")) {
-        metcuts = vector<TString>{"met>200"};
-        caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
-        firstSigBin = 0;
-      } // allmetsignal
-      if(method.Contains("onebin")) bincuts = vector<TString>{"njets>=6"};
+      }
     } // signal
 
-    if(method.Contains("m5j")) {
-      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
-      bincuts = vector<TString>{c_lownb+" && njets==5", 
-                                c_midnb+" && njets==5",
-                                c_hignb+" && njets==5"};
-      caption = "Validation regions with $1\\ell, \\njets=5$";
-      abcd_title = njets+" = 5";
-      // if(only_mc) metcuts.push_back(c_higmet);     
+    //////// Dilepton methods
+    if(method.Contains("2l") || method.Contains("veto")) {
+      metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+      doVBincuts = true;
+      vbincuts = vector<vector<TString>>{{c_lownj_lowmet, c_hignj}, {c_lownj_lowmet, c_hignj},
+                                         {c_lownj_lowmet, c_hignj}, {c_lownj_lowmet, c_hignj},
+                                         {c_lownj_higmet, c_hignj}}; 
     }
 
-    if(method.Contains("m56j")) {
+    // 5-6 j CR methods
+    if(method.Contains("cr56j")) {
       metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet};
       doVBincuts = true;
-      vbincuts = vector<vector<TString>>{{c_lownb+" && njets>=5 && njets<=6", 
-                                c_midnb+" && njets>=5 && njets<=6",
-                                c_hignb+" && njets>=5 && njets<=6"},
-                                {c_lownb+" && njets>=5 && njets<=6", 
-                                c_midnb+" && njets>=5 && njets<=6",
-                                c_hignb+" && njets>=5 && njets<=6"},
-                                {"nbd>=1 && njets>=5 && njets<=6"}};
+      vbincuts = vector<vector<TString>>{{c_lownb+"&&"+c_njcr, c_midnb+"&&"+c_njcr, c_hignb+"&&"+c_njcr},
+                                         {c_lownb+"&&"+c_njcr, c_midnb+"&&"+c_njcr, c_hignb+"&&"+c_njcr},
+                                         {c_njcr}};
       caption = "Validation regions with $1\\ell, \\njets 5-6$";
-      abcd_title = njets+" 5-6";
-      // if(only_mc) metcuts.push_back(c_higmet);     
+      abcd_title = "5-6j CR"; 
+    }
+    /////// Methods to check Nb
+    if(method.Contains("check_nb")) {
+      metcuts = vector<TString>{c_vvlowmet+"&&"+c_njcr, c_vlowmet+"&&"+c_njcr, c_lowmidmet+"&&"+c_njcr, c_lowmidmet+"&&"+"njets>=7"};
+      firstSigBin = 2;
+      bincuts = vector<TString>{c_lownb, c_midnb, c_hignb};
+      caption = "Signal search regions + 5-6j CR";
+      abcd_title = "Signal + "+njets+"=5 ("+nbs+" bins)";
+    }
+    /////// Methods to check Njets
+    if(method.Contains("check_nj")) {
+      metcuts = vector<TString>{c_vvlowmet, c_vvlowmet,c_vlowmet, c_vlowmet,c_lowmidmet, c_lowmidmet};
+      vbincuts = vector<vector<TString>>();
+      for (size_t i(0); i<metcuts.size(); i++) {
+        vbincuts.push_back({c_njcr});
+        vbincuts.push_back({c_lownj_lowmet, c_hignj});
+      }
+      doVBincuts = true;
+      caption = njets+" bins";
+      abcd_title = njets+" bins";
     }
 
     //////// Pushing all cuts to then find the yields
@@ -536,7 +484,7 @@ int main(int argc, char *argv[]){
     }
 
     //// Plotting kappa comparison between MC and data
-      plotKappaMCData(abcds[imethod], kappas, kappas_mm, kmcdat);
+    plotKappaMCData(abcds[imethod], kappas, kappas_mm, kmcdat);
 
     //// Plotting MC kappa
     plotKappa(abcds[imethod], kappas);
@@ -1391,15 +1339,12 @@ void GetOptions(int argc, char *argv[]){
     static struct option long_options[] = {
       {"method", required_argument, 0, 'm'}, // Method to run on (if you just want one)
       {"correct",      no_argument, 0, 'c'}, // Apply correction
-      {"lumi",   required_argument, 0, 'l'}, // Luminosity to normalize MC with (no data)
       {"split_bkg",    no_argument, 0, 'b'}, // Prints Other, tt1l, tt2l contributions
       {"no_signal",    no_argument, 0, 'n'}, // Does not print signal columns
       {"do_leptons",   no_argument, 0, 'p'}, // Does tables for e/mu/emu as well
       {"unblind",      no_argument, 0, 'u'}, // Unblinds R4/D4
-      {"only_mc",      no_argument, 0, 'o'}, // Uses MC as data for the predictions
       {"only_kappa",   no_argument, 0, 'k'}, // Only plots kappa (no table)
       {"debug",        no_argument, 0, 'd'}, // Debug: prints yields and cuts used
-      {"only_dilepton",no_argument, 0, '2'}, // Makes tables only for dilepton tests
       {"year",     required_argument, 0, 'y'},   // 2016, 2017 or 2018
       {"mm",     required_argument, 0, 0},   // Mismeasurment scenario, 0 for data
       {"quick",        no_argument, 0, 0},   // Used inclusive ttbar for quick testing
@@ -1421,22 +1366,11 @@ void GetOptions(int argc, char *argv[]){
     case 'c':
       do_correction = true;
       break;
-    case 'l':
-      mc_lumi = optarg;
-      only_mc = true;
-      break;
     case 'k':
       only_kappa = true;
-      only_mc = true;
       break;
     case 'b':
       split_bkg = true;
-      break;
-    case 'o':
-      only_mc = true;
-      break;
-    case '2':
-      only_dilepton = true;
       break;
     case 'p':
       do_leptons = true;
