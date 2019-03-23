@@ -82,6 +82,10 @@ namespace Functions{
     }
   });
 
+  const NamedFunc fake_met("fake_met", [](const Baby &b) -> NamedFunc::ScalarType{
+    return 10*wnpv2017(b);
+  });
+
   const NamedFunc trig_run2("trig_run2", [](const Baby &b) -> NamedFunc::ScalarType{
     if (b.SampleType()>0) return 1.;
     

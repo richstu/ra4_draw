@@ -7,11 +7,12 @@ Repository for plotting and table-making utilities combining the flexibility of 
 
 Check kappa values in 5-6 jet CR, 2l+veto CR and SR+lowMET using MC in place of data:
 
-    ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm off -m cr56j -y 0
-    ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm off -m cr2lveto -y 0
+    ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm off -m cr56j --data_kappas -y 0
+    ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm off -m cr2lveto --data_kappas -y 0
     ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm off -m signal_met100 -y 0 -d
 
 Additional options:
+    * Use flag `--data_kappas` to make the kappa plots comparing mc to data or mc to mc w/ data stat
     * Add the flag `--debug` (or `-d`) to see the cuts for each region. 
     * Use `--mm data` to compare actual data to MC in the CRs.
     * Add the flag `--unblind` (or `-u`) to plot data in SRs as well.

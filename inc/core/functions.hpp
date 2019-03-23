@@ -34,6 +34,7 @@ namespace Functions{
   extern const NamedFunc nbd;
   extern const NamedFunc hem_veto;
   extern const NamedFunc wgt_run2;
+  extern const NamedFunc fake_met;
   extern const NamedFunc trig_run2;
   extern const NamedFunc eff_trig_run2;
 

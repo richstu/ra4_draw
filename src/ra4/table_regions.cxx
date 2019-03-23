@@ -58,15 +58,15 @@ int main(int argc, char *argv[]){
   map<int, string> foldermc, folderdata, foldersig;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
   foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
-  folderdata[2016] = bfolder+"";///cms2r0/babymaker/babies/2019_01_11/data/merged_database_stdnj5/";
+  folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
 
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
   foldersig[2017] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
-  folderdata[2017] = "";//bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_mcbase_stdnj5/";
+  folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
 
   foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/mc/merged_mcbase_stdnj5/";
   foldersig[2018] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/");
-  folderdata[2018] = "";//bfolder+"/cms2r0/babymaker/babies/2019_01_04/data/merged_mcbase_stdnj5/");
+  folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/data/merged_database_standard/";
   
   set<string> vnames_other = {
     "_WJetsToLNu_HT","_ST_","_TTW","_TTZ", "_DYJetsToLL_M-50_HT","_ZJet","_ttH",
@@ -86,32 +86,44 @@ int main(int argc, char *argv[]){
       
   }
 
-  NamedFunc baseline = "mj14>250 && st>500 && nleps==1 && nveto==0 && met>100 && njets>=6 && nbd>=1";
+  NamedFunc baseline = "mj14>250 && st>500 && nleps==1 && nveto==0 && met>100 && njets>=5 && nbd>=1";
   baseline = baseline && Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
 
   vector<shared_ptr<Process> > procs;
-  procs.push_back(Process::MakeShared<Baby_full>("t\\bar{t} (2\\ell)", Process::Type::background, 1, tt2l_files, 
-                  baseline && "pass && stitch_met"));
-  procs.push_back(Process::MakeShared<Baby_full>("t\\bar{t} (1\\ell)", Process::Type::background, 1, tt1l_files, 
-                  baseline && "pass && stitch_met"));
-  if (!only_tt)
-    procs.push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, 1, other_files, 
-                  baseline && "pass && stitch_met"));
-  procs.push_back(Process::MakeShared<Baby_full>("("+sig_nc.first+","+sig_nc.second+")", Process::Type::signal, 1, t1nc_files, baseline));
-  procs.push_back(Process::MakeShared<Baby_full>("("+sig_c.first+","+sig_c.second+")", Process::Type::signal, 1, t1c_files, baseline));
+  // procs.push_back(Process::MakeShared<Baby_full>("t\\bar{t} (2\\ell)", Process::Type::background, 1, tt2l_files, 
+  //                 baseline && "pass && stitch_met"));
+  // procs.push_back(Process::MakeShared<Baby_full>("t\\bar{t} (1\\ell)", Process::Type::background, 1, tt1l_files, 
+  //                 baseline && "pass && stitch_met"));
+  // if (!only_tt)
+  //   procs.push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, 1, other_files, 
+  //                 baseline && "pass && stitch_met"));
+  // procs.push_back(Process::MakeShared<Baby_full>("("+sig_nc.first+","+sig_nc.second+")", Process::Type::signal, 1, t1nc_files, baseline));
+  // procs.push_back(Process::MakeShared<Baby_full>("("+sig_c.first+","+sig_c.second+")", Process::Type::signal, 1, t1c_files, baseline));
   
+
+  procs.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
+    data_files, baseline && Functions::trig_run2 && "pass"));
   vector<string> met, mjl, mjh;
+  met.push_back("met>100 && met<=200"); mjl.push_back("350"); mjh.push_back("450");
   met.push_back("met>200 && met<=350"); mjl.push_back("400"); mjh.push_back("500");
   met.push_back("met>350 && met<=500"); mjl.push_back("450"); mjh.push_back("650");
-  met.push_back("met>500");             mjl.push_back("500"); mjh.push_back("800");
+  if (tag!="56j") {
+    met.push_back("met>500");             mjl.push_back("500"); mjh.push_back("800");
+  }
 
   vector<string> nbnj;
-  nbnj.push_back("nbd==1 && njets<=7");
-  nbnj.push_back("nbd==1 && njets>=8");
-  nbnj.push_back("nbd==2 && njets<=7");
-  nbnj.push_back("nbd==2 && njets>=8");
-  nbnj.push_back("nbd>=3 && njets<=7");
-  nbnj.push_back("nbd>=3 && njets>=8");
+  if (tag=="56j"){
+    nbnj.push_back("njets>=5 && njets<=6 && nbd==1");
+    nbnj.push_back("njets>=5 && njets<=6 && nbd==2");
+    nbnj.push_back("njets>=5 && njets<=6 && nbd>=3");
+  } else {
+    nbnj.push_back("nbd==1 && njets<=7");
+    nbnj.push_back("nbd==1 && njets>=8");
+    nbnj.push_back("nbd==2 && njets<=7");
+    nbnj.push_back("nbd==2 && njets>=8");
+    nbnj.push_back("nbd>=3 && njets<=7");
+    nbnj.push_back("nbd>=3 && njets>=8");
+  }
 
   vector<TString> abcd_lo  = {"mt<=140 && mj14<=MJ1X",
                               "mt<=140 && mj14> MJ1X && mj14<=MJ2X",
@@ -143,6 +155,7 @@ int main(int argc, char *argv[]){
           }
         } else {
           TString _cut = met[imet] + " && " + abcds[iabcd][ir];
+          if (tag=="56j") _cut += "&& njets>=5 && njets<=6";
           _cut.ReplaceAll("MJ1X", mjl[imet]).ReplaceAll("MJ2X", mjh[imet]);
           if (debug) cout<<"R"<<ir+1<<": "<<_cut<<endl;
           table_rows.push_back(TableRow("R"+to_string(ir+1), _cut,1,1, wgt));

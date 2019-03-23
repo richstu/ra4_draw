@@ -38,8 +38,8 @@ int main(){
   Palette colors("txt/colors.txt", "default");
 
 
-  NamedFunc baseline_1l = "nleps==1 && nveto==0 && njets>=5";
-  NamedFunc baseline_2l = "nleps==2 && njets>=5";
+  NamedFunc baseline_1l = "nleps==1 && nveto==0 && njets>=7";
+  NamedFunc baseline_2l = "nleps==2 && njets>=6";
 
   set<string> ttfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root"};
 
@@ -75,12 +75,11 @@ int main(){
   .Bottom(BottomType::ratio)
   .YAxis(YAxisType::log)
   .Stack(StackType::shapes)
-  .RatioMaximum(1.99)
-  .RatioMinimum(0.);
+  .RatioMaximum(1.5)
+  .RatioMinimum(0.5);
   PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
   vector<PlotOpt> plots = {lin_shapes};//.PrintVals(true)};
 
-  vector<string> mjcuts = {"mj14>250 && mj14<=400", "mj14>400 && mj14<=500","mj14>500"};
 
   vector<string> njcuts;
   njcuts.push_back("njets==5");
@@ -88,13 +87,11 @@ int main(){
   njcuts.push_back("njets==7");
   njcuts.push_back("njets>=8");
 
-  vector<string> metcuts;
-  // metcuts.push_back("met>100 && met<=150");
-  metcuts.push_back("met>150 && met<=200");
-  metcuts.push_back("met>200 && met<=300");
-  metcuts.push_back("met>300 && met<=400");
-  metcuts.push_back("met>400 && met<=500");
-  metcuts.push_back("met>500");
+  vector<string> metcuts, mjcuts;
+  metcuts.push_back("met>150 && met<=200"); mjcuts.push_back("mj14>450");
+  metcuts.push_back("met>200 && met<=350"); mjcuts.push_back("mj14>500");
+  metcuts.push_back("met>350 && met<=500"); mjcuts.push_back("mj14>650");
+  metcuts.push_back("met>500");             mjcuts.push_back("mj14>800");
 
   vector<string> nbcuts;
   nbcuts.push_back("nbd==1");
@@ -103,16 +100,26 @@ int main(){
 
   PlotMaker pm;
 
-  for (auto &imj:mjcuts) {
-    for (auto &inj:njcuts) {
-      pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),inj && imj, procs_1l, plots).Tag("1l");
-      // pm.Push<Hist1D>(Axis(4,-0.5,3.5,Functions::ntrub,"True N_{b}"),inj && imj, procs_1l, plots).Tag("1l");
-    }
-    for (auto &imet:metcuts) {
-      pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),imet && imj, procs_1l, plots).Tag("1l");
-      // pm.Push<Hist1D>(Axis(4,-0.5,3.5,Functions::ntrub,"True N_{b}"),imet && imj, procs_1l, plots).Tag("1l");
-    }
+  NamedFunc njets2("njets2",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.nleps()==1) return b.njets();
+    else return b.njets()+1;
+  });
 
+  // for (auto &imj:mjcuts) {
+    // for (auto &inj:njcuts) {
+    //   pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),inj && imj, procs_1l, plots).Tag("1l");
+    //   pm.Push<Hist1D>(Axis(4,-0.5,3.5,Functions::ntrub,"True N_{b}"),inj && imj, procs_1l, plots).Tag("1l");
+    // }
+  //   for (auto &imet:metcuts) {
+  //     pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),imet && imj, procs_1l, plots).Tag("1l");
+  //     pm.Push<Hist1D>(Axis(4,-0.5,3.5,Functions::ntrub,"True N_{b}"),imet && imj, procs_1l, plots).Tag("1l");
+  //   }
+  // }
+  for (size_t i(0); i<metcuts.size(); i++) {
+    pm.Push<Hist1D>(Axis(5,6.5,11.5,"njets","N_{jets}"),metcuts[i] && mjcuts[i], procs_1l, plots).Tag("1l");
+    pm.Push<Hist1D>(Axis(5,6.5,11.5,njets2,"N'_{jets}"),metcuts[i] && mjcuts[i], procs_2l, plots).Tag("2l");
+    // pm.Push<Hist1D>(Axis(25,0,1200,"mj14","M_{J} [GeV]"),metcuts[i], procs_1l, plots).Tag("1l");
+    // pm.Push<Hist1D>(Axis(25,0,1200,"mj14","M_{J} [GeV]"),metcuts[i], procs_2l, plots).Tag("2l");
   }
 
   pm.min_print_ = true;
