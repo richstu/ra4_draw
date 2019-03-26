@@ -27,7 +27,7 @@ using namespace PlotOptTypes;
 
 namespace{
   float lumi = 1.;
-  int year = 2018;
+  int year = 2017;
   bool only_tt = false;
   bool debug = false;
   string tag = "nbd";
@@ -113,9 +113,9 @@ int main(int argc, char *argv[]){
 
   vector<string> nbnj;
   if (tag=="56j"){
-    nbnj.push_back("njets>=5 && njets<=6 && nbd==1");
-    nbnj.push_back("njets>=5 && njets<=6 && nbd==2");
-    nbnj.push_back("njets>=5 && njets<=6 && nbd>=3");
+    nbnj.push_back("njets==5 && nbd==1");
+    nbnj.push_back("njets==5 && nbd==2");
+    nbnj.push_back("njets==5 && nbd>=3");
   } else {
     nbnj.push_back("nbd==1 && njets<=7");
     nbnj.push_back("nbd==1 && njets>=8");

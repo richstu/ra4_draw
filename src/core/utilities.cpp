@@ -194,15 +194,17 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>350&&met<=500", "350<met#leq 500");
   ReplaceAll(code, "met>400&&met<=500", "400<met#leq 500");
   ReplaceAll(code, "met>200&&met<=500", "200<met#leq 500");
-  ReplaceAll(code, "njets==5", "5j");
-  ReplaceAll(code, "njets==7", "7j");
-  ReplaceAll(code, "njets>=6", "#geq6j");
-  ReplaceAll(code, "njets>=7", "#geq7j");
   ReplaceAll(code, "njets>=4&&njets<=5", "4-5j");
   ReplaceAll(code, "njets>=5&&njets<=7", "5-7j");
   ReplaceAll(code, "njets>=5&&njets<=6", "5-6j");
   ReplaceAll(code, "njets>=6&&njets<=8", "6-8j");
   ReplaceAll(code, "njets>=6&&njets<=7", "6-7j");
+  ReplaceAll(code, "njets==5", "5j");
+  ReplaceAll(code, "njets==6", "6j");
+  ReplaceAll(code, "njets==7", "7j");
+  ReplaceAll(code, "njets>=5", "#geq5j");
+  ReplaceAll(code, "njets>=6", "#geq6j");
+  ReplaceAll(code, "njets>=7", "#geq7j");
   ReplaceAll(code, "njets>=8", "#geq8j");
   ReplaceAll(code, "nbd>=1", "#geq1b");
   ReplaceAll(code, "nbd==1", "1b");
@@ -705,7 +707,7 @@ double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
 // powers[Nobs] defines kappa = Product_obs{ Sum_sam{yields[sam][obs]*weights[sam][obs]}^powers[obs] }
 double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weights,
                  vector<float> &powers, float &mSigma, float &pSigma, bool do_data,
-                 bool verbose, double syst, bool do_plot, int nrep){
+                 bool verbose, double syst, bool do_plot, int nrep, int nSigma){
   TRandom3 rand(1234);
   int nbadk(0);
   vector<float> fKappas;
@@ -745,7 +747,7 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
   mean /= static_cast<double>(ntot);
 
   sort(fKappas.begin(), fKappas.end());
-  double gSigma = intGaus(0,1,0,1);
+  double gSigma = intGaus(0,1,0,nSigma);
   int iMedian((nrep-nbadk+1)/2-1);
   int imSigma(iMedian-static_cast<int>(gSigma*ntot)), ipSigma(iMedian+static_cast<int>(gSigma*ntot));
   float median(fKappas[iMedian]);
@@ -807,6 +809,8 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
   if(do_plot) {
     herr.SetLineColor(0);
     herr.SetFillColor(kGray);
+    if (nSigma==2) herr.SetFillColor(kAzure+1);
+    else if (nSigma==2) herr.SetFillColor(kMagenta+1);
     histo.SetTitleOffset(1.1, "X");
     histo.SetTitleOffset(1.5, "Y");
     // histo.Scale(1/histo.Integral());
@@ -834,7 +838,7 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
       }
       title += RoundNumber(observed,0);
     }
-    TString pName = "gamma_"+title+".pdf"; 
+    TString pName = "gamma_"+title+"_"+nSigma+"sigma.pdf"; 
     pName.ReplaceAll("/", "_d_"); pName.ReplaceAll("#times","_");
     pName.ReplaceAll(" ","");
     title += (" #rightarrow "+RoundNumber(stdval,2)+"^{+"+RoundNumber(pSigma,2)+"}_{-"+RoundNumber(mSigma,2)+"}");

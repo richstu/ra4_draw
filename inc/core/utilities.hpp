@@ -120,7 +120,7 @@ double deltaPhi(double phi1, double phi2);
 // powers[Nobs] defines kappa = Product_obs{ Sum_sam{yields[sam][obs]*weights[sam][obs]}^powers[obs] }
 double calcKappa(std::vector<std::vector<float> > &entries, std::vector<std::vector<float> > &weights,
 		 std::vector<float> &powers, float &mSigma, float &pSigma, bool do_data=false, 
-		 bool verbose=false, double syst=-1., bool do_plot=false, int nrep=100000);
+		 bool verbose=false, double syst=-1., bool do_plot=false, int nrep=100000, int nSigma = 1);
 
 std::set<std::string> attach_folder(std::string folder, std::set<std::string> &fileset);
 
