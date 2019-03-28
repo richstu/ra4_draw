@@ -38,7 +38,6 @@ namespace{
   bool debug = false;
   float lumi=1.;
   int year=2016;
-  bool only_tt = true;
   TString tag = "";
   enum Regions {r1, r2, r3, r4};
 
@@ -85,14 +84,14 @@ int main(int argc, char *argv[]){
 
   set<string> tt_files, all_files;
   for (auto &yr: years) {
+    // all_files.insert(foldermc[yr]+"*_TTJets_DiLept_T*.root");
     tt_files.insert(foldermc[yr]+"*_TTJets*Lept*.root");
     all_files.insert(tt_files.begin(), tt_files.end());
-    if (!only_tt)
-      for(auto name : vnames_other)
-        all_files.insert(foldermc[yr] + "*" + name + "*.root");
+    for(auto name : vnames_other)
+      all_files.insert(foldermc[yr] + "*" + name + "*.root");
   }
 
-  string baseline = "mj14>250 && st>500 && met>100 && njets>=5 && nbd>=1";
+  string baseline = "nleps==1 && nveto==0 && mj14>250 && st>500 && met>100 && njets>=5 && nbd>=1";
   NamedFunc baselinef = baseline && Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
 
   vector<string> nb;
@@ -101,51 +100,10 @@ int main(int argc, char *argv[]){
   nb.push_back("nbd>=3");
   vector<int>cols = {kBlue,kRed,kGreen+3};
 
-  NamedFunc wnb("wnb",[](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.met()>350 || (b.type()!=1100 && b.type()!=1101)) return 1.;
-    if (b.njets()<=6) {
-      if (b.mj14()<400){
-        if (b.nbdm()==0) return 0.964;
-        else if (b.nbdm()==1) return 0.975;
-        else if (b.nbdm()==2) return 1.028;
-        else return 1.180;
-      } else if (b.mj14()<500){
-        if (b.nbdm()==0) return 0.893;
-        else if (b.nbdm()==1) return 0.952;
-        else if (b.nbdm()==2) return 1.084;
-        else return 1.315;
-      } else {
-        if (b.nbdm()==0) return 0.814;
-        else if (b.nbdm()==1) return 0.971;
-        else if (b.nbdm()==2) return 1.101;
-        else return 1.607;
-      }
-    } else {
-      if (b.mj14()<400){
-        if (b.nbdm()==0) return 0.903;
-        else if (b.nbdm()==1) return 0.963;
-        else if (b.nbdm()==2) return 1.044;
-        else return 1.209;
-      } else if (b.mj14()<500){
-        if (b.nbdm()==0) return 0.894;
-        else if (b.nbdm()==1) return 0.938;
-        else if (b.nbdm()==2) return 1.049;
-        else return 1.269;
-      } else {
-        if (b.nbdm()==0) return 0.877;
-        else if (b.nbdm()==1) return 0.974;
-        else if (b.nbdm()==2) return 1.017;
-        else return 1.229;
-      }
-    }
-  });
-
-  string tt_mt = "(((type==1200 || type==1201) && mt>140) || mt<140)";
-
   vector<shared_ptr<Process> > procs;
   for (size_t inb(0); inb<nb.size(); inb++)
     procs.push_back(Process::MakeShared<Baby_full>(CodeToRootTex(nb[inb]), Process::Type::background, cols[inb], 
-      all_files, baselinef && "pass && stitch_met &&"+tt_mt+"&&"+nb[inb]));
+      all_files, baselinef && ("pass && stitch_met &&"+nb[inb])));
   
   vector<string> met, mjl, mjh;
   met.push_back("met>200 && met<=350"); mjl.push_back("400"); mjh.push_back("500");
@@ -161,25 +119,25 @@ int main(int argc, char *argv[]){
   //                               "mt<=140 && mj14> MJ2X",
   //                               "mt>140  && mj14<=MJ1X",
   //                               "mt>140  && mj14> MJ2X"};
-  abcdcuts  = {"mt<=140 && nleps==1 && nveto==0",
-                                "mt<=140 && nleps==1 && nveto==0",
-                                "mt>140 && nleps==2",
-                                "mt>140 && nleps==2"};
+  abcdcuts  = {"mt<=140",
+                                "mt<=140",
+                                "mt>140",
+                                "mt>140"};
 
   NamedFunc wgt = Functions::wgt_run2 * Functions::eff_trig_run2;// * wnb;
   size_t Nabcd = abcdcuts.size();
 
   // Makes a plot for each vector in plotcuts
   vector<oneplot> plotcuts;
-  plotcuts.push_back({tag+"_njets", "met>200 && met<=350", {"njets==5 && mj14<400", "njets==6 && mj14<400", "njets==7 && mj14<400", "njets==8 && mj14<400", "njets>=9 && mj14<400",
-                                                            "njets==5 && mj14>=400 && mj14<=500", "njets==6 && mj14>=400 && mj14<=500", "njets==7 && mj14>=400 && mj14<=500", "njets==8 && mj14>=400 && mj14<=500", "njets>=9 && mj14>=400 && mj14<=500",
-                                                            "njets==5 && mj14>500", "njets==6 && mj14>500", "njets==7 && mj14>500", "njets==8 && mj14>500", "njets>=9 && mj14>500"}});
-  plotcuts.push_back({tag+"_njets", "met>350 && met<=500", {"njets==5 && mj14<450", "njets==6 && mj14<450", "njets==7 && mj14<450", "njets==8 && mj14<450", "njets>=9 && mj14<450",
-                                                            "njets==5 && mj14>=450 && mj14<=650", "njets==6 && mj14>=450 && mj14<=650", "njets==7 && mj14>=450 && mj14<=650", "njets==8 && mj14>=450 && mj14<=650", "njets>=9 && mj14>=450 && mj14<=650",
-                                                            "njets==5 && mj14>650", "njets==6 && mj14>650", "njets==7 && mj14>650", "njets==8 && mj14>650", "njets>=9 && mj14>650"}});
-  plotcuts.push_back({tag+"_njets", "met>500"            , {"njets==5 && mj14<500", "njets==6 && mj14<500", "njets==7 && mj14<500", "njets==8 && mj14<500", "njets>=9 && mj14<500",
-                                                            "njets==5 && mj14>=650 && mj14<=800", "njets==6 && mj14>=650 && mj14<=800", "njets==7 && mj14>=650 && mj14<=800", "njets==8 && mj14>=650 && mj14<=800", "njets>=9 && mj14>=650 && mj14<=800",
-                                                            "njets==5 && mj14>800", "njets==6 && mj14>800", "njets==7 && mj14>800", "njets==8 && mj14>800", "njets>=9 && mj14>800"}});
+  plotcuts.push_back({tag+"_njets", "met>200 && met<=350", {"njets==5 && mj14<400", "njets==6 && mj14<400", "njets==7 && mj14<400", "njets>=8 && mj14<400",
+                                                            "njets==5 && mj14>=400 && mj14<=500", "njets==6 && mj14>=400 && mj14<=500", "njets==7 && mj14>=400 && mj14<=500", "njets>=8 && mj14>=400 && mj14<=500", 
+                                                            "njets==5 && mj14>500", "njets==6 && mj14>500", "njets==7 && mj14>500", "njets>=8 && mj14>500"}});
+  // plotcuts.push_back({tag+"_njets", "met>350 && met<=500", {"njets==5 && mj14<450", "njets==6 && mj14<450", "njets==7 && mj14<450", "njets==8 && mj14<450", "njets>=9 && mj14<450",
+  //                                                           "njets==5 && mj14>=450 && mj14<=650", "njets==6 && mj14>=450 && mj14<=650", "njets==7 && mj14>=450 && mj14<=650", "njets==8 && mj14>=450 && mj14<=650", "njets>=9 && mj14>=450 && mj14<=650",
+  //                                                           "njets==5 && mj14>650", "njets==6 && mj14>650", "njets==7 && mj14>650", "njets==8 && mj14>650", "njets>=9 && mj14>650"}});
+  // plotcuts.push_back({tag+"_njets", "met>500"            , {"njets==5 && mj14<500", "njets==6 && mj14<500", "njets==7 && mj14<500", "njets==8 && mj14<500", "njets>=9 && mj14<500",
+  //                                                           "njets==5 && mj14>=650 && mj14<=800", "njets==6 && mj14>=650 && mj14<=800", "njets==7 && mj14>=650 && mj14<=800", "njets==8 && mj14>=650 && mj14<=800", "njets>=9 && mj14>=650 && mj14<=800",
+  //                                                           "njets==5 && mj14>800", "njets==6 && mj14>800", "njets==7 && mj14>800", "njets==8 && mj14>800", "njets>=9 && mj14>800"}});
   
 
   PlotMaker pm;
@@ -304,18 +262,20 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   setPlotStyle(opts);
 
   //// Plotting kappas
-  TCanvas can("can","",1500,500);
+  TCanvas can("can","",1400,500);
   TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
   TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
 
-  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 0.16;
+  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 0.26;
   // if(maxy<0.26) maxy = 0.26;
   // if(maxy>6) maxy = 6;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
   histo.GetYaxis()->CenterTitle(true);
+  histo.GetYaxis()->SetTitleOffset(0.9);
   histo.GetXaxis()->SetLabelOffset(0.008);
+  histo.GetXaxis()->SetLabelSize(0.07);
   histo.SetYTitle(ytitle);
   histo.Draw();
 
@@ -323,7 +283,9 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   vector<vector<double> > vx(ngraphs), vexh(ngraphs), vexl(ngraphs);
   vector<vector<double> > vy(ngraphs), veyh(ngraphs), veyl(ngraphs);
   for(size_t ibin=0; ibin<nbins; ibin++){
-    histo.GetXaxis()->SetBinLabel(ibin+1, CodeToRootTex(plotdef.bincuts[ibin].Data()).c_str());
+    TString tmp = plotdef.bincuts[ibin];
+    tmp.ReplaceAll("&& mj14<400","").ReplaceAll(" && mj14>=400 && mj14<=500","").ReplaceAll("&& mj14>500","");
+    histo.GetXaxis()->SetBinLabel(ibin+1, CodeToRootTex(tmp.Data()).c_str());
     // xval is the x position of the first marker in the group
     double xval = ibin+1, minxb = 0.15, binw = 0;
     // If there is more than one point in the group, it starts minxb to the left of the center of the bin
@@ -388,7 +350,19 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
 
   line.SetLineStyle(3); line.SetLineWidth(1);
-  line.DrawLine(minx, 1, maxx, 1);
+  line.DrawLine(4.5, miny, 4.5, maxy);
+  line.DrawLine(8.5, miny, 8.5, maxy);
+
+  line.SetLineColor(kMagenta+1); line.SetLineStyle(2); line.SetLineWidth(1);
+  line.DrawLine(2.5, miny, 2.5, maxy-0.1);
+  line.DrawLine(6.5, miny, 6.5, maxy-0.1);
+  line.DrawLine(10.5, miny, 10.5, maxy-0.1);
+
+  TLatex mjlabel;
+  mjlabel.SetTextSize(0.06);
+  mjlabel.DrawLatex(1.65, maxy-0.07, "250 #leq M#lower[-0.1]{_{J}} #leq 400");
+  mjlabel.DrawLatex(5.65, maxy-0.07, "400 #leq M#lower[-0.1]{_{J}} #leq 500");
+  mjlabel.DrawLatex(10, maxy-0.07, "M#lower[-0.1]{_{J}} #geq 500");
 
   TString fname = "plots/ratio_"+CodeToPlainText(ytitle.Data())+"_"+plotdef.name+"_"
     +CodeToPlainText(plotdef.baseline.Data())+".pdf";

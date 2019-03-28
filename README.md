@@ -24,6 +24,14 @@ For partial kappa plots in the systematic section:
     ./compile.py && ./run/ra4/plot_partial_kappa.exe -t highmj -y 0 -n 1 -d 1 # plot wjets high-MJ
     ./compile.py && ./run/ra4/plot_partial_kappa.exe -t highmj -y 0 -n 2 -d 2 # plot ttjets high-MJ
 
+Plots showing that CRs mimic behavior of SRs:
+    ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm mismeas_kappa -m cr56j_metbins --data_kappas -y 0
+    ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm mismeas_kappa -m cr2lveto_metbins --data_kappas -y 0
+    ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm mismeas_kappa -m signal_metbins --data_kappas -y 0
+
+    ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm w_isr -m cr2lveto_njbins --data_kappas -y 0
+    ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm w_isr -m signal_njbins --data_kappas -y 0
+
 #### Code documentation
 Doxygen-based documentation is available at [Adam's UCSB-HEP webpage](http://hep.ucsb.edu/people/ald77/documentation/doc_ra4_draw/).
 
