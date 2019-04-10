@@ -11,7 +11,7 @@ namespace Functions{
 
   float wnpv2017(const Baby &b){
     if (b.SampleType()<0) return 1;
-    // if (b.event()%1000<675) return 1;
+    if (b.event()%1000<675) return 1;
     int _npv = b.npv();
     if(_npv <  2) return  0.621;// +- 0.058  
     else if(_npv <  4) return  0.706;// +- 0.032  
@@ -69,17 +69,123 @@ namespace Functions{
     if (b.SampleType()<0) return 1.;
 
     double wgt = b.weight();
+    if (b.SampleType()==2016){
+      return wgt*b.w_prefire()*35.9;
+    } else if (b.SampleType()==2017){
+      return wgt*b.w_prefire()*wnpv2017(b)*41.5;
+    } else {
+      return wgt*59.6;
+    }
+  });
+
+  const NamedFunc wgt_run2_partial("wgt_run2_partial", [](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.SampleType()==-2016) return 1.;
+    else if (b.SampleType()==-2017) {
+      if (b.run()>=297050 && b.run()<299370) return 1.;
+      else if (b.run()==299370 && b.lumiblock()<=442) return 1.;
+      else if (b.run()>=305044 && b.run()<305365) return 1.;
+      else if (b.run()==305365 && b.lumiblock()<=273) return 1.;
+      else return 0.;
+    } else if (b.SampleType()==-2018) {
+      if (b.run()>=315257 && b.run()<316202) return 1.;
+      else if (b.run()==316202 && b.lumiblock()<=134) return 1.;
+      else if (b.run()>=320673 && b.run()<321396) return 1.;
+      else if (b.run()==321396 && b.lumiblock()<=1152) return 1.;
+      else return 0.;
+    } 
+
+    double wgt = b.weight();
     if (b.type()>=100e3) {
-      return wgt*b.w_prefire()*137.;
+      return wgt*b.w_prefire()*59.9;
     } else {
       if (b.SampleType()==2016){
         return wgt*b.w_prefire()*35.9;
       } else if (b.SampleType()==2017){
-        return wgt*b.w_prefire()*wnpv2017(b)*41.5;
+        return wgt*b.w_prefire()*wnpv2017(b)*10.;
       } else {
-        return wgt*59.6;
+        return wgt*15.;
       }
     }
+  });
+
+  const NamedFunc wgt_run2_partial_2017BCDE("wgt_run2_partial_2017BCDE", [](const Baby &b) -> NamedFunc::ScalarType{
+    double wgt = b.weight();
+    if (b.SampleType()<0) {
+      if (b.run()>=297050 && b.run()<299370) return 1.;
+      else if (b.run()==299370 && b.lumiblock()<=442) return 1.;
+      else return 0.;
+    } else {
+      return wgt*b.w_prefire()*5.;
+    } 
+  });
+
+  const NamedFunc wgt_run2_partial_2017F("wgt_run2_partial_2017F", [](const Baby &b) -> NamedFunc::ScalarType{
+    double wgt = b.weight();
+    if (b.SampleType()<0) {
+      if (b.run()>=305044 && b.run()<305365) return 1.;
+      else if (b.run()==305365 && b.lumiblock()<=273) return 1.;
+      else return 0.;
+    } else {
+      return wgt*b.w_prefire()*wnpv2017(b)*5.;
+    } 
+  });
+
+  const NamedFunc wgt_run2_partial_2017("wgt_run2_partial_2017", [](const Baby &b) -> NamedFunc::ScalarType{
+    double wgt = b.weight();
+    if (b.SampleType()<0) {
+      if (b.run()>=297050 && b.run()<299370) return 1.;
+      else if (b.run()==299370 && b.lumiblock()<=442) return 1.;
+      else if (b.run()>=305044 && b.run()<305365) return 1.;
+      else if (b.run()==305365 && b.lumiblock()<=273) return 1.;
+      else return 0.;
+    } else {
+      return wgt*b.w_prefire()*wnpv2017(b)*10.;
+    } 
+  });
+
+  const NamedFunc wgt_run2_partial_2018AB("wgt_run2_partial_2018AB", [](const Baby &b) -> NamedFunc::ScalarType{
+    double wgt = b.weight();
+    if (b.SampleType()<0) {
+      if (b.run()>=315257 && b.run()<316202) return 1.;
+      else if (b.run()==316202 && b.lumiblock()<=134) return 1.;
+      else return 0.;
+    } else {
+      return wgt*7.5;
+    } 
+  });
+
+  const NamedFunc wgt_run2_partial_2018D("wgt_run2_partial_2018D", [](const Baby &b) -> NamedFunc::ScalarType{
+    double wgt = b.weight();
+    if (b.SampleType()<0) {
+      if (b.run()>=320673 && b.run()<321396) return 1.;
+      else if (b.run()==321396 && b.lumiblock()<=1152) return 1.;
+      else return 0.;
+    } else {
+      return wgt*7.5;
+    } 
+  });
+
+  const NamedFunc wgt_run2_partial_2018("wgt_run2_partial_2018", [](const Baby &b) -> NamedFunc::ScalarType{
+    double wgt = b.weight();
+    if (b.SampleType()<0) {
+      if (b.run()>=315257 && b.run()<316202) return 1.;
+      else if (b.run()==316202 && b.lumiblock()<=134) return 1.;
+      else if (b.run()>=320673 && b.run()<321396) return 1.;
+      else if (b.run()==321396 && b.lumiblock()<=1152) return 1.;
+      else return 0.;
+    } else {
+      return wgt*15.;
+    } 
+  });
+
+  const NamedFunc mht_ratio("mht_ratio", [](const Baby &b) -> NamedFunc::ScalarType{
+    double mht_px(0.), mht_py(0.);
+    for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
+      if (b.jets_pt()->at(ijet) <= 30. && fabs(b.jets_eta()->at(ijet))>2.4) continue;
+      mht_px -= b.jets_pt()->at(ijet)*cos(b.jets_phi()->at(ijet));
+      mht_py -= b.jets_pt()->at(ijet)*sin(b.jets_phi()->at(ijet));
+    }
+    return b.mht()/hypot(mht_px, mht_py);
   });
 
   const NamedFunc fake_met("fake_met", [](const Baby &b) -> NamedFunc::ScalarType{

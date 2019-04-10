@@ -838,7 +838,7 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
       }
       title += RoundNumber(observed,0);
     }
-    TString pName = "gamma_"+title+"_"+nSigma+"sigma.pdf"; 
+    TString pName = "gamma_"+title+"_"+RoundNumber(nSigma,0)+"sigma.pdf"; 
     pName.ReplaceAll("/", "_d_"); pName.ReplaceAll("#times","_");
     pName.ReplaceAll(" ","");
     title += (" #rightarrow "+RoundNumber(stdval,2)+"^{+"+RoundNumber(pSigma,2)+"}_{-"+RoundNumber(mSigma,2)+"}");

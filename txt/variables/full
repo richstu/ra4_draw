@@ -20,6 +20,7 @@ int npv
 int ntrupv
 float ntrupv_mean
 float ht
+float ht_ejets
 float st
 float ht_ra2
 float ht_clean
@@ -116,6 +117,21 @@ std::vector<int>   jets_hflavor
 std::vector<int>   jets_pflavor
 std::vector<bool>  jets_h1d
 std::vector<bool>  jets_h2d
+std::vector<float> jets_nemf
+std::vector<float> jets_cemf
+std::vector<int>   jets_npm
+std::vector<int> jets_cpm
+
+std::vector<float> ejets_pt
+std::vector<float> ejets_eta
+std::vector<float> ejets_phi
+std::vector<float> ejets_m
+std::vector<float> ejets_nhf
+std::vector<float> ejets_chf
+std::vector<float> ejets_nemf
+std::vector<float> ejets_cemf
+std::vector<int>   ejets_npm
+std::vector<int> ejets_cpm
 
 # DAK8
 int nak8jets

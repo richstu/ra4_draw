@@ -55,6 +55,7 @@ namespace{
   bool show_23sigma = false;
   TString only_method = "";
   TString mc_lumi = "";
+  TString xoption = "";
   string sys_wgts_file = "txt/sys_weights.cfg";
   string mm_scen = "";
   float lumi=1;
@@ -118,6 +119,14 @@ int main(int argc, char *argv[]){
   
   vector<string> scenarios;
   NamedFunc w = Functions::wgt_run2 * Functions::eff_trig_run2;
+  if (xoption=="partial") w = Functions::wgt_run2_partial * Functions::eff_trig_run2;
+  else if (xoption=="partial_2017BCDE") w = Functions::wgt_run2_partial_2017BCDE * Functions::eff_trig_run2;
+  else if (xoption=="partial_2017F") w = Functions::wgt_run2_partial_2017F * Functions::eff_trig_run2;
+  else if (xoption=="partial_2017") w = Functions::wgt_run2_partial_2017 * Functions::eff_trig_run2;
+  else if (xoption=="partial_2018AB") w = Functions::wgt_run2_partial_2018AB * Functions::eff_trig_run2;
+  else if (xoption=="partial_2018D") w = Functions::wgt_run2_partial_2018D * Functions::eff_trig_run2;
+  else if (xoption=="partial_2018") w = Functions::wgt_run2_partial_2018 * Functions::eff_trig_run2;
+
   map<string, NamedFunc> weights, corrections;
   auto central = Functions::Variation::central;
   weights.emplace("no_mismeasurement", w);
@@ -172,7 +181,7 @@ int main(int argc, char *argv[]){
 
   foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/mc/merged_mcbase_stdnj5/";
   foldersig[2018] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
-  folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/data/merged_database_standard/";
+  folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
   
 
   Palette colors("txt/colors.txt", "default");
@@ -384,8 +393,16 @@ int main(int argc, char *argv[]){
       doVBincuts = true;
       vbincuts = vector<vector<TString>>{nbnj_lowmet, nbnj_lowmet, nbnj_higmet};
       caption = "Signal search regions";
-      abcd_title = "Signal + low MET";
+      abcd_title = "Signal";
       firstSigBin = 0;
+      if(xoption.Contains("partial_201")){
+        metcuts = vector<TString>{c_lowmet};
+        doVBincuts = false;
+        bincuts = vector<TString>{"njets>=7 && nbd==1", "njets>=7 && nbd==2", "njets>=7 && nbd>=3"};
+        caption = "Signal search regions";
+        abcd_title = "Signal";
+        firstSigBin = 0;        
+      } 
       if(method.Contains("met100")) {
         metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
         vbincuts = vector<vector<TString>>{nbnj_lowmet, nbnj_lowmet, nbnj_lowmet, nbnj_lowmet, nbnj_higmet};
@@ -632,7 +649,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   int digits_lumi = 1;
   if(lumi < 1) digits_lumi = 3;
   TString lumi_s = RoundNumber(lumi, digits_lumi);
-  TString outname = "tables/table_pred_lumi"+lumi_s; outname.ReplaceAll(".","p");
+  TString outname = "tables/table_pred_lumi"+lumi_s+"_"+xoption; outname.ReplaceAll(".","p");
   if(unblind) outname += "_unblind";
   else outname += "_blind";
   outname += "_"+abcd.method+"_";
@@ -1231,7 +1248,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   //// Drawing legend and TGraphs
   int digits_lumi = 1;
   if(lumi < 1) digits_lumi = 3;
-  TString lumi_s = RoundNumber(lumi, digits_lumi);
+  TString lumi_s = RoundNumber(lumi, digits_lumi)+"_"+xoption;
   double legX(opts.LeftMargin()+0.005), legY(1-0.03), legSingle = 0.05;
   legX = 0.36;
   if (mm_scen!="data") legX = 0.2;
@@ -1292,8 +1309,17 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     TString data_s = (mm_scen=="data"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
     if (year==0) lumi_s ="137";
     else if (year==2016) lumi_s ="35.9";
-    else if (year==2017) lumi_s ="41.5";
-    else lumi_s ="59.6";
+    else if (year==2017) {
+      if (xoption=="partial_2017BCDE") lumi_s = "5.0";
+      else if (xoption=="partial_2017F") lumi_s = "5.0";
+      else if (xoption=="partial_2017") lumi_s = "10";
+      else lumi_s ="41.5";
+    } else {
+      if (xoption=="partial_2018AB") lumi_s = "7.5";
+      else if (xoption=="partial_2018D") lumi_s = "7.5";
+      else if (xoption=="partial_2018") lumi_s = "15";
+      else lumi_s ="59.6";
+    }
     leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1} (13 TeV)", "p");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
@@ -1325,7 +1351,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   TString fname="plots/dataKappa_" + abcd.method;
   lumi_s.ReplaceAll(".","p");
-  fname += "_lumi"+lumi_s+"_";
+  fname += "_lumi"+lumi_s+"_"+xoption+"_";
   fname += year;
   fname += ".pdf";
   can.SaveAs(fname);
@@ -1488,6 +1514,7 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"method", required_argument, 0, 'm'}, // Method to run on (if you just want one)
+      {"xoption", required_argument, 0, 'x'}, // Method to run on (if you just want one)
       {"correct",      no_argument, 0, 'c'}, // Apply correction
       {"split_bkg",    no_argument, 0, 'b'}, // Prints Other, tt1l, tt2l contributions
       {"no_signal",    no_argument, 0, 'n'}, // Does not print signal columns
@@ -1507,13 +1534,16 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "m:cl:bnpuokd2y:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "m:x:cl:bnpuokd2y:", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
     switch(opt){
     case 'm':
       only_method = optarg;
+      break;
+    case 'x':
+      xoption = optarg;
       break;
     case 'c':
       do_correction = true;

@@ -708,7 +708,7 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  int samp_type = 0;\n";
   file << "  if(filename.Contains(\"2017_01_27\") || filename.Contains(\"2019_01_11\"))     samp_type = 2016;\n";
   file << "  if(filename.Contains(\"2018_12_17\"))     samp_type = 2017;\n";
-  file << "  if(filename.Contains(\"2019_01_18\"))     samp_type = 2018;\n";
+  file << "  if(filename.Contains(\"2019_01_18\") || filename.Contains(\"2019_03_30\"))     samp_type = 2018;\n";
   file << "  if(filename.Contains(\"data\"))     samp_type *= -1;\n";
 //   file << "  if(filename.Contains(\"SMS\"))     samp_type = 10;\n";
 //   file << "  if(filename.Contains(\"_TTJets\")) samp_type = 20;\n";

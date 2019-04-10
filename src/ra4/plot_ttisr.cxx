@@ -1,9 +1,13 @@
+// Macro for deriving ISR weights for strong production
+
 #include <cmath>
 #include <algorithm>
 
 #include "TError.h"
 #include "TVector2.h"
 #include "TString.h"
+
+#include <getopt.h>
 
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
@@ -18,13 +22,15 @@ using namespace PlotOptTypes;
 
 namespace {
   const string isrtype = "ttisr";
-  bool do_tt1l = true;
-  string json = "";
-  bool single_thread = true;
-  bool quick = false; 
-  bool comptt = true;
+  bool do_tt1l = false;
+  int year = 2016;
 
-  double CSVMedium = 0.800;
+  // double CSVMedium = 0.800;
+  double DeepCSVMedium_2016 = 0.6324;
+  double DeepCSVMedium_2017 = 0.4941;
+
+  bool single_thread = false;
+  bool quick = false; 
 }
 
 void addSlices(PlotMaker &pm, const vector<double> slices, NamedFunc svar,
@@ -49,14 +55,15 @@ NamedFunc::ScalarType isrSystemPt(const Baby &b);
 NamedFunc::ScalarType nJetsWeights_ttisr(const Baby &b, bool use_baby_nisr, string wgtopt);
 NamedFunc::ScalarType nJetsWeights_visr(const Baby &b);
 
-int main(){
-  gErrorIgnoreLevel = 6000;
+void GetOptions(int argc, char *argv[]);
 
-  float lumi = 0.001;
-  if (json=="json4p0") lumi = 4.34;
-  else if (json=="json12p9") lumi = 12.9;
-  else if (json=="") {lumi = 36.2; json="1";}
-  else cout<<"ERROR: Unknown JSON!"<<endl;
+int main(int argc, char *argv[]){
+  gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
+  GetOptions(argc, argv);
+
+  float lumi = 41.5;
+  if (year==2016) lumi = 35.9;
+  cout<<"Running on "<<year<<" data."<<endl;
 
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
@@ -65,40 +72,32 @@ int main(){
 
   Palette colors("txt/colors.txt", "default");
 
-  // alternative ttbar samples
-  string dir_mc_isr_alt = bfolder+"/cms2r0/babymaker/babies/2016_11_29/mc/merged_isrmc_ttisr/";
-  if (do_tt1l) dir_mc_isr_alt = bfolder+"/cms2r0/babymaker/babies/2016_11_29/mc/merged_mcbase_standard/";
-  auto tt1l_amc = Process::MakeShared<Baby_full>("t#bar{t} aMC@NLO (Default)", Process::Type::background, kAzure-8, 
-    {dir_mc_isr_alt+"*TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX*root"});
-  auto tt1l_amc_alphas = Process::MakeShared<Baby_full>("t#bar{t} aMC@NLO(#alpha_{S}=0.118)", Process::Type::background, kAzure-8, 
-    {dir_mc_isr_alt+"*TTJets_TuneCUETP8M1_alphaS0118_13TeV-amcatnloFXFX*root"});
-  auto tt1l_powheg_alphas = Process::MakeShared<Baby_full>("t#bar{t} Powheg (#alpha_{S}=0.127)", Process::Type::background, kBlue-8, 
-    {dir_mc_isr_alt+"*TTTo*_TuneCUETP8M1_alphaS01273_13TeV-powheg*root"});
-  auto tt1l_powheg_tunev2 = Process::MakeShared<Baby_full>("t#bar{t} Powheg (CUETP8M2T4)", Process::Type::background, kBlue-8, 
-    {dir_mc_isr_alt+"*TT_TuneCUETP8M2T4_13TeV-powheg*root"});
-
   //// Processes for ISR skims
-  string dir_mc_isr = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_isrmc_"+isrtype+"/";
+  string dir_mc_isr = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_isrmc_"+isrtype+"/";
+  string dir_data_isr = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_isrdata_"+isrtype+"/";
+  if (year==2016) {
+    dir_mc_isr = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_isrmc_"+isrtype+"/";
+    dir_data_isr = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_isrdata_"+isrtype+"/";
+  }
   auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
-    {dir_mc_isr+"*_TTJets*SingleLept*.root", dir_mc_isr+"*_TTJets_HT*.root"}, "ntruleps<=1 && stitch");
+    {dir_mc_isr+"*_TTJets_SingleLeptFromT_Tune*.root", 
+    dir_mc_isr+"*_TTJets_SingleLeptFromTbar_Tune*.root", 
+    dir_mc_isr+"*_TTJets_HT*.root"}, "ntruleps<=1 && stitch");
   auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
-    {dir_mc_isr+"*_TTJets*DiLept*.root", dir_mc_isr+"*_TTJets_HT*.root"}, "ntruleps>=2 && stitch");
+    {dir_mc_isr+"*_TTJets_DiLept_Tune*.root", dir_mc_isr+"*_TTJets_HT*.root"}, "ntruleps>=2 && stitch");
   auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {dir_mc_isr+"*_ST_*.root"});
   auto dyjets = Process::MakeShared<Baby_full>("DY+jets", Process::Type::background, kOrange+1,
-    {dir_mc_isr+"*DYJetsToLL_M-50_*.root"},"stitch"); // Inclusive + HT-binned DY
+    {dir_mc_isr+"*DYJetsToLL_M-50_Tune*.root"}); // Inclusive DY only since stitch is wrong
   auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, kTeal-8,
     {dir_mc_isr+"*_TTWJets*.root", dir_mc_isr+"*_TTZTo*.root", dir_mc_isr+"*_TTGJets*.root"});
   auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {dir_mc_isr+"*DYJetsToLL*.root", dir_mc_isr+"*_ZJet*.root", 
+    {dir_mc_isr+"*_ZJet*.root", 
     dir_mc_isr+"*QCD_HT*0_Tune*.root", dir_mc_isr+"*QCD_HT*Inf_Tune*.root",
     dir_mc_isr+"*ggZH_HToBB*.root", dir_mc_isr+"*_ttHJetTobb*.root",
     dir_mc_isr+"*_TTTT*.root", dir_mc_isr+"*_WWTo*.root",
     dir_mc_isr+"*_WH_HToBB*.root",dir_mc_isr+"*_ZH_HToBB*.root",
     dir_mc_isr+"*_WZ*.root",dir_mc_isr+"*_ZZ_*.root"},"stitch");
-
-  if (quick) tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
-    {dir_mc_isr+"*_TTJets_Tu*.root"}, "ntruleps<=1");
   
   //// Only used for W+jets
   auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
@@ -111,36 +110,30 @@ int main(){
         dir_mc_isr+"*_WH_HToBB*.root", dir_mc_isr+"*_WZTo*.root",
         dir_mc_isr+"*_ZH_HToBB*.root", dir_mc_isr+"_ZZ_*.root"});
 
-  string dir_data_isr = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_isrdata_"+isrtype+"/";
-  // string dir_data_isr = bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/skim_"+isrtype+"/";
+  // 2016 trigs: 19 - IsoMu24, 20 - IsoMu27, 21 - Mu50, 40 - Ele27, 41 - Ele115
+  string trig = "(trig[19] || trig[20] || trig[21] || trig[24] || trig[40] || trig[41])";
+  // 2017 trigs: 19 - IsoMu24, 20 - IsoMu27, 21 - Mu50, 23 - Ele35, 24 - Ele115
+  if (year!=2016) trig = "(trig[19] || trig[20] || trig[21] || trig[23] || trig[24])";
   string lumi_label = RoundNumber(lumi,1).Data();
   auto data = Process::MakeShared<Baby_full>("Data "+lumi_label+" fb^{-1}", Process::Type::data, kBlack,
     {dir_data_isr+"*.root"},
-    "pass && (trig[19] || trig[40] || trig[21] || trig[24] || trig[41])");
-    // json + "&& pass && trig_ra4");
+    "pass &&" + trig);
 
   vector<shared_ptr<Process> > procs;
-  map<string, vector<shared_ptr<Process> > > procs_comptt;
   if (isrtype=="zisr") procs = {data, dyjets, tt2l, tt1l, single_t, ttv, other};
   else if (isrtype=="ttisr") {
     procs = {data, tt2l, tt1l, dyjets, single_t, ttv, other};
     if (quick) procs = {data,tt1l};
-    if (comptt) {
-      procs_comptt["amc"] = {data, tt1l_amc, dyjets, single_t, ttv, other};
-      procs_comptt["amc_als"] = {data, tt1l_amc_alphas, dyjets, single_t, ttv, other};
-      procs_comptt["pow"] = {data, tt1l_powheg_alphas, dyjets, single_t, ttv, other};
-      procs_comptt["powtune"] = {data, tt1l_powheg_tunev2, dyjets, single_t, ttv, other};
-    }
   } else if (isrtype=="wisr") procs = {data, wjets, tt1l, tt2l, single_t, ttv, other_w};
   else {cout<<isrtype<<" not supported, exiting"<<endl<<endl; return 0;}
 
   //// Processes for 1l ttbar closure
-  string dir_mc_std(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_standard/");
-  string dir_data_std(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_database_standard/");
+  string dir_mc_std(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_standard/");
+  string dir_data_std(bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_database_standard/");
 
   auto std_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {dir_data_std+"/*.root"},
-    json + "&& pass && trig_ra4");
+    "pass && trig_ra4");
 
   auto std_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
     {dir_mc_std+"*_TTJets*SingleLept*.root", dir_mc_std+"*_TTJets_HT*.root"},
@@ -155,7 +148,8 @@ int main(){
   auto std_ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {dir_mc_std+"*_TTWJets*.root", dir_mc_std+"*_TTZTo*.root"});
   auto std_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {dir_mc_std+"*DYJetsToLL*.root", dir_mc_std+"*_ZJet*.root", 
+    {dir_mc_std+"*DYJetsToLL*.root", 
+    dir_mc_std+"*_ZJet*.root", 
     dir_mc_std+"*QCD_HT*0_Tune*.root", dir_mc_std+"*QCD_HT*Inf_Tune*.root",
     dir_mc_std+"*ggZH_HToBB*.root", dir_mc_std+"*_ttHJetTobb*.root",
     dir_mc_std+"*_TTTT*.root", dir_mc_std+"*_WWTo*.root",
@@ -163,13 +157,6 @@ int main(){
     dir_mc_std+"*_WZ*.root",dir_mc_std+"*_ZZ_*.root"},"stitch");
 
   vector<shared_ptr<Process> > procs_1l = {std_data, std_tt1l, std_tt2l, std_wjets, std_singlet, std_ttv, std_other};
-  map<string, vector<shared_ptr<Process> > > procs_comptt_1l;
-  if (comptt) {
-    procs_comptt_1l["amc"] = {std_data, tt1l_amc, std_wjets, std_singlet, std_ttv, std_other};
-    procs_comptt_1l["amc_als"] = {std_data, tt1l_amc_alphas, std_wjets, std_singlet, std_ttv, std_other};
-    procs_comptt_1l["pow"] = {std_data, tt1l_powheg_alphas, std_wjets, std_singlet, std_ttv, std_other};
-    procs_comptt_1l["powtune"] = {std_data, tt1l_powheg_tunev2, std_wjets, std_singlet, std_ttv, std_other};
-  }
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::info)
@@ -181,7 +168,7 @@ int main(){
     .Bottom(BottomType::off)
     .ShowBackgroundError(false);
   PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
-  vector<PlotOpt> plot_types = {log_lumi, lin_lumi};
+  vector<PlotOpt> plot_types = {log_lumi};//, lin_lumi};
   vector<PlotOpt> plot_vals = {lin_lumi().PrintVals(true)};
   PlotMaker pm;
 
@@ -191,7 +178,7 @@ int main(){
   NamedFunc nreliso_els("nreliso_els",nRelIsoEls);
   NamedFunc nreliso_mus("nreliso_mus",nRelIsoMus);
   NamedFunc zcand("zcand", zCandidate);
-  NamedFunc baseline = "nleps==2" && nreliso_els+nreliso_mus>=1 && zcand<1;
+  NamedFunc baseline = "nleps==2" && zcand<1; // && nreliso_els+nreliso_mus>=1
   NamedFunc baseline_w = nreliso_els+nreliso_mus==1 && "ht>200&&met>100&&nbl==0";
   NamedFunc baseline_1l = "nleps==1 && ht>500 && met>200 && nbm>=1 && mt<140 && pass";
   if(isrtype=="wisr") baseline = baseline_w;
@@ -240,8 +227,8 @@ int main(){
     //reweight TTJets only according to nisr = b.nisr()
     weight_opts.push_back(NamedFunc("none", 
       [](const Baby &b) -> NamedFunc::ScalarType{return nJetsWeights_ttisr(b, true,"none");}));
-    weight_opts.push_back(NamedFunc("moriond", 
-      [](const Baby &b) -> NamedFunc::ScalarType{return nJetsWeights_ttisr(b, true,"moriond");}));
+    // weight_opts.push_back(NamedFunc("is2016", 
+    //   [](const Baby &b) -> NamedFunc::ScalarType{return nJetsWeights_ttisr(b, true,"is2016");}));
     //reweight TTJets only according to nisr = b.njets()-2 
     // weight_opts.push_back(NamedFunc("check", 
     //   [](const Baby &b) -> NamedFunc::ScalarType{return nJetsWeights_ttisr(b, false,"moriond");}));
@@ -260,76 +247,45 @@ int main(){
         baseline_1l, procs_1l, plot_types).Weight(iweight).Tag("tt1l");       
       pm.Push<Hist1D>(Axis(lepptbins, "leps_pt[0]", "Lepton p_{T} [GeV]"), 
         baseline_1l, procs_1l, plot_types).Weight(iweight).Tag("tt1l");
-
-      for (auto &ipr: procs_comptt_1l) {
-        pm.Push<Hist1D>(Axis(13, -0.5, 12.5, "njets", "Number of jets"), 
-          baseline_1l, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);
-        pm.Push<Hist1D>(Axis(20,200.,700., "met", "MET [GeV]"), 
-          baseline_1l, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);
-        pm.Push<Hist1D>(Axis(15,500.,2000., "ht", "H_{T} [GeV]"), 
-          baseline_1l, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);
-        pm.Push<Hist1D>(Axis(15,0.,1500., "mj14", "M_{J} [GeV]"), 
-          baseline_1l, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);    
-        pm.Push<Hist1D>(Axis(lepptbins, "leps_pt[0]", "Lepton p_{T} [GeV]"), 
-          baseline_1l, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);
-      }
     } else {
-      if (comptt) {
-        for (auto &ipr: procs_comptt) {
-          pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets, "ISR jet multiplicity"), 
-            baseline, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);
-          pm.Push<Hist1D>(Axis(isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]"), 
-            baseline, ipr.second, vector<PlotOpt>{log_lumi}).Weight(iweight).Tag(ipr.first);
-          pm.Push<Hist1D>(Axis(20,0.,500., "met", "MET [GeV]"), 
-            baseline, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);
-          pm.Push<Hist1D>(Axis(15,0.,1500., "ht", "H_{T} [GeV]"), 
-            baseline, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);
-          pm.Push<Hist1D>(Axis(15,0.,1500., "mj14", "M_{J} [GeV]"), 
-            baseline, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);
-          pm.Push<Hist1D>(Axis(15,0.,1500., "mj14", "M_{J} [GeV]"), 
-            baseline, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);   
-          pm.Push<Hist1D>(Axis(lepptbins, "leps_pt[0]", "Lepton p_{T} [GeV]"), 
-            baseline, ipr.second, plot_types).Weight(iweight).Tag(ipr.first);
-        }
-      } else {
-        addSlices(pm, isr_syspt_slices, isr_syspt, nisrjet_bins, nisrjets, "ISR jet multiplicity", 
-          baseline, iweight, procs, plot_types);
-        addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", 
-          baseline, iweight, procs, {log_lumi});
-        addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_ht, "ISR H_{T} [GeV]", 
-          baseline, iweight, procs, {log_lumi});
+      addSlices(pm, isr_syspt_slices, isr_syspt, nisrjet_bins, nisrjets, "ISR jet multiplicity", 
+        baseline, iweight, procs, plot_types);
+      addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", 
+        baseline, iweight, procs, {log_lumi});
+      addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_ht, "ISR H_{T} [GeV]", 
+        baseline, iweight, procs, {log_lumi});
 
-        //print ratio
-        pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets, "ISR jet multiplicity"), 
-          baseline, procs, plot_vals).Weight(iweight).Tag(isrtype+"_vals");
+      //print ratio
+      pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets, "ISR jet multiplicity"), 
+        baseline, procs, plot_vals).Weight(iweight).Tag(isrtype+"_vals");
 
-        pm.Push<Hist1D>(Axis(isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]"), 
-          baseline, procs, vector<PlotOpt>{log_lumi}).Weight(iweight).Tag(isrtype);
-        pm.Push<Hist1D>(Axis(isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]"), 
-          baseline && "ht>300", procs, vector<PlotOpt>{log_lumi}).Weight(iweight).Tag(isrtype);
-        pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[0.], "Leading ISR jet p_{T} [GeV]"), 
-          baseline && nisrjets>0., procs, plot_types).Weight(iweight).Tag(isrtype);
-        pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[1], "2^{nd} ISR jet p_{T} [GeV]"), 
-          baseline && nisrjets>1, procs, plot_types).Weight(iweight).Tag(isrtype);
-        pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[2], "3^{rd} ISR jet p_{T} [GeV]"), 
-          baseline && nisrjets>2, procs, plot_types).Weight(iweight).Tag(isrtype);
-        pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[3], "4^{th} ISR jet p_{T} [GeV]"), 
-          baseline && nisrjets>3, procs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]"), 
+        baseline, procs, vector<PlotOpt>{log_lumi}).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]"), 
+        baseline && "ht>300", procs, vector<PlotOpt>{log_lumi}).Weight(iweight).Tag(isrtype);
+      // pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[0.], "Leading ISR jet p_{T} [GeV]"), 
+      //   baseline && nisrjets>0., procs, plot_types).Weight(iweight).Tag(isrtype);
+      // pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[1], "2^{nd} ISR jet p_{T} [GeV]"), 
+      //   baseline && nisrjets>1, procs, plot_types).Weight(iweight).Tag(isrtype);
+      // pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[2], "3^{rd} ISR jet p_{T} [GeV]"), 
+      //   baseline && nisrjets>2, procs, plot_types).Weight(iweight).Tag(isrtype);
+      // pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[3], "4^{th} ISR jet p_{T} [GeV]"), 
+      //   baseline && nisrjets>3, procs, plot_types).Weight(iweight).Tag(isrtype);
 
-        pm.Push<Hist1D>(Axis(lepptbins, "leps_pt[0]", "Lepton p_{T} [GeV]"), 
-          baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
+      // pm.Push<Hist1D>(Axis(lepptbins, "leps_pt[0]", "Lepton p_{T} [GeV]"), 
+      //   baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
 
-        pm.Push<Hist1D>(Axis(20,0.,500., "met", "MET [GeV]"), 
-          baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
-        pm.Push<Hist1D>(Axis(15,0.,1500., "ht", "H_{T} [GeV]"), 
-          baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
-        pm.Push<Hist1D>(Axis(15,0.,1500., "mj14", "M_{J} [GeV]"), 
-          baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
-        pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets50, "Number of 50 GeV ISR jets"), 
-          baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
-        pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets75, "Number of 75 GeV ISR jets"), 
-          baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
-      }
+      // pm.Push<Hist1D>(Axis(20,0.,500., "met", "MET [GeV]"), 
+      //   baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
+      // pm.Push<Hist1D>(Axis(15,0.,1500., "ht", "H_{T} [GeV]"), 
+      //   baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
+      // pm.Push<Hist1D>(Axis(15,0.,1500., "mj14", "M_{J} [GeV]"), 
+      //   baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
+      // pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets50, "Number of 50 GeV ISR jets"), 
+      //   baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
+      // pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets75, "Number of 75 GeV ISR jets"), 
+      //   baseline, procs, plot_types).Weight(iweight).Tag(isrtype);
+      
       if(isrtype=="zisr"){
         pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets, "ISR jet multiplicity"), 
           baseline && "ht>200", procs, plot_types).Weight(iweight).Tag(isrtype);
@@ -428,7 +384,9 @@ NamedFunc::VectorType isrJetsPt(const Baby &b, float ptThresh){
   vector<double> isr_jetspt;
   for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
     if (!isGoodJet(b, ijet) || b.jets_pt()->at(ijet)<ptThresh) continue;
-    if (isrtype=="ttisr" && b.jets_csv()->at(ijet)>CSVMedium) continue;
+    float dcsv = DeepCSVMedium_2017;
+    if (year==2016) dcsv = DeepCSVMedium_2016;
+    if (isrtype=="ttisr" && b.jets_csvd()->at(ijet)>dcsv) continue;
     isr_jetspt.push_back(b.jets_pt()->at(ijet));
   }
   std::sort(isr_jetspt.begin(), isr_jetspt.end(), std::greater<double>());
@@ -450,7 +408,15 @@ NamedFunc::ScalarType nJetsWeights_ttisr(const Baby &b, bool use_baby_nisr, stri
   if (use_baby_nisr) nisrjets = b.nisr();
   
   float isr_wgt = 1.;
-  if (wgtopt=="ichep") {
+  if (wgtopt=="is2016") {
+         if (nisrjets==1) isr_wgt = 0.920; //  +- 0.014
+    else if (nisrjets==2) isr_wgt = 0.821; //  +- 0.020
+    else if (nisrjets==3) isr_wgt = 0.715; //  +- 0.031
+    else if (nisrjets==4) isr_wgt = 0.662; //  +- 0.051
+    else if (nisrjets==5) isr_wgt = 0.561; //  +- 0.088
+    else if (nisrjets>=6) isr_wgt = 0.511; //  +- 0.133
+    isr_wgt *= 1.090; //normalization factor
+  } else if (wgtopt=="is2017"){
          if (nisrjets==1) isr_wgt = 0.882; //  +- 0.014
     else if (nisrjets==2) isr_wgt = 0.792; //  +- 0.020
     else if (nisrjets==3) isr_wgt = 0.702; //  +- 0.031
@@ -458,14 +424,6 @@ NamedFunc::ScalarType nJetsWeights_ttisr(const Baby &b, bool use_baby_nisr, stri
     else if (nisrjets==5) isr_wgt = 0.601; //  +- 0.088
     else if (nisrjets>=6) isr_wgt = 0.515; //  +- 0.133
     isr_wgt *= 1.090; //normalization factor
-  } else if (wgtopt=="moriond"){
-         if (nisrjets==1) isr_wgt = 0.920;
-    else if (nisrjets==2) isr_wgt = 0.821;
-    else if (nisrjets==3) isr_wgt = 0.715;
-    else if (nisrjets==4) isr_wgt = 0.662;
-    else if (nisrjets==5) isr_wgt = 0.561;
-    else if (nisrjets>=6) isr_wgt = 0.511;
-    isr_wgt *= 1.071; //normalization factor
   }
 
   // if (use_baby_nisr) cout<<"Weight "<<b.type()<<" baby = "<<RoundNumber(b.weight(),6)<<" alg = "<<RoundNumber(wgt,6)<<endl;
@@ -490,4 +448,30 @@ NamedFunc::ScalarType nJetsWeights_visr(const Baby &b){
   else if (nisrjets==6) return 0.867*wgt; //  +- 0.048
   else if (nisrjets>=7) return 0.935*wgt; //  +- 0.088
   else return wgt;
+}
+
+void GetOptions(int argc, char *argv[]){
+  while(true){
+    static struct option long_options[] = {
+      {"year", required_argument, 0, 'y'},    
+      {0, 0, 0, 0}
+    };
+
+    char opt = -1;
+    int option_index;
+    opt = getopt_long(argc, argv, "y:", long_options, &option_index);
+    if(opt == -1) break;
+
+    string optname;
+    switch(opt){
+    case 'y':
+      year = atoi(optarg);
+      break;
+    case 0:
+      break;
+    default:
+      printf("Bad option! getopt_long returned character code 0%o\n", opt);
+      break;
+    }
+  }
 }

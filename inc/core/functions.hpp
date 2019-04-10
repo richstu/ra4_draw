@@ -34,6 +34,14 @@ namespace Functions{
   extern const NamedFunc nbd;
   extern const NamedFunc hem_veto;
   extern const NamedFunc wgt_run2;
+  extern const NamedFunc wgt_run2_partial;
+  extern const NamedFunc wgt_run2_partial_2017BCDE;
+  extern const NamedFunc wgt_run2_partial_2017F;
+  extern const NamedFunc wgt_run2_partial_2017;
+  extern const NamedFunc wgt_run2_partial_2018AB;
+  extern const NamedFunc wgt_run2_partial_2018D;
+  extern const NamedFunc wgt_run2_partial_2018;
+  extern const NamedFunc mht_ratio;
   extern const NamedFunc fake_met;
   extern const NamedFunc trig_run2;
   extern const NamedFunc eff_trig_run2;

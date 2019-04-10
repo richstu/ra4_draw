@@ -30,7 +30,7 @@ namespace{
   int year = 2017;
   bool only_tt = false;
   bool debug = false;
-  string tag = "nbd";
+  string tag = "nom";
   pair<string, string> sig_nc = make_pair("2100","100");
   pair<string, string> sig_c = make_pair("1900","1250");
 }
@@ -103,26 +103,29 @@ int main(int argc, char *argv[]){
 
   procs.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     data_files, baseline && Functions::trig_run2 && "pass"));
+
   vector<string> met, mjl, mjh;
-  met.push_back("met>100 && met<=200"); mjl.push_back("350"); mjh.push_back("450");
+  // met.push_back("met>100 && met<=200"); mjl.push_back("350"); mjh.push_back("450");
   met.push_back("met>200 && met<=350"); mjl.push_back("400"); mjh.push_back("500");
-  met.push_back("met>350 && met<=500"); mjl.push_back("450"); mjh.push_back("650");
-  if (tag!="56j") {
-    met.push_back("met>500");             mjl.push_back("500"); mjh.push_back("800");
-  }
+  // met.push_back("met>350 && met<=500"); mjl.push_back("450"); mjh.push_back("650");
+  // if (tag!="56j") {
+  //   met.push_back("met>500");             mjl.push_back("500"); mjh.push_back("800");
+  // }
 
   vector<string> nbnj;
   if (tag=="56j"){
-    nbnj.push_back("njets==5 && nbd==1");
-    nbnj.push_back("njets==5 && nbd==2");
-    nbnj.push_back("njets==5 && nbd>=3");
+    nbnj.push_back("njets>=5 && njets<=6 && nbd==1");
+    nbnj.push_back("njets>=5 && njets<=6 && nbd==2");
+    nbnj.push_back("njets>=5 && njets<=6 && nbd>=3");
+  } else if (tag=="njbins"){
+    nbnj.push_back("njets==5 && nbd>=1");
+    // nbnj.push_back("njets==6 && nbd>=1");
+    // nbnj.push_back("njets==7 && nbd>=1");
+    // nbnj.push_back("njets==8 && nbd>=1");
   } else {
-    nbnj.push_back("nbd==1 && njets<=7");
-    nbnj.push_back("nbd==1 && njets>=8");
-    nbnj.push_back("nbd==2 && njets<=7");
-    nbnj.push_back("nbd==2 && njets>=8");
-    nbnj.push_back("nbd>=3 && njets<=7");
-    nbnj.push_back("nbd>=3 && njets>=8");
+    nbnj.push_back("nbd==1 && njets>=7");
+    nbnj.push_back("nbd==2 && njets>=7");
+    nbnj.push_back("nbd>=3 && njets>=7");
   }
 
   vector<TString> abcd_lo  = {"mt<=140 && mj14<=MJ1X",
@@ -136,7 +139,7 @@ int main(int argc, char *argv[]){
   vector<vector<TString>> abcds = {abcd_lo, abcd_hi};
   vector<string> abcd_names = {"lowmj","highmj"};
 
-  NamedFunc wgt = Functions::wgt_run2 * Functions::eff_trig_run2;
+  NamedFunc wgt = Functions::wgt_run2_partial_2017 * Functions::eff_trig_run2;
 
   PlotMaker pm;
   vector<string> tabnames;
@@ -155,7 +158,12 @@ int main(int argc, char *argv[]){
           }
         } else {
           TString _cut = met[imet] + " && " + abcds[iabcd][ir];
-          if (tag=="56j") _cut += "&& njets>=5 && njets<=6";
+          _cut += " && (";
+          for (size_t ibj(0); ibj<nbnj.size(); ibj++){
+            _cut += nbnj[ibj];
+            if (ibj<(nbnj.size()-1)) _cut += "||";
+            else _cut +=")";
+          }
           _cut.ReplaceAll("MJ1X", mjl[imet]).ReplaceAll("MJ2X", mjh[imet]);
           if (debug) cout<<"R"<<ir+1<<": "<<_cut<<endl;
           table_rows.push_back(TableRow("R"+to_string(ir+1), _cut,1,1, wgt));
