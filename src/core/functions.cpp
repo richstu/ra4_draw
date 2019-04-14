@@ -65,6 +65,28 @@ namespace Functions{
     else return 11.175;// +- 1.443  
   }
 
+  // based on r136 of https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2
+  const NamedFunc pass_run2("pass_run2", [](const Baby &b) -> NamedFunc::ScalarType{
+    bool pass_ = (b.st()<10000) && b.pass_ra2_badmu() && (b.met()/b.met_calo()<5);
+    if (b.SampleType()<0) { // Data
+      pass_ = pass_ && b.pass_jets() && b.pass_goodv() && b.pass_cschalo_tight() && b.pass_hbhe() && 
+              b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu() && b.pass_eebadsc();
+      if (b.SampleType()!=-2016) pass_ = pass_ && b.pass_badcalib();
+    } else {
+      if (b.type()>=100e3) { // FastSim
+        pass_ = pass_ && b.pass_fsjets() && b.pass_goodv() && b.pass_hbhe() && 
+                b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu();
+        if (b.SampleType()!=2016) pass_ = pass_ && b.pass_badcalib();
+      } else { //FullSim
+        pass_ = pass_ && b.pass_jets() && b.pass_goodv() && b.pass_cschalo_tight() && b.pass_hbhe() && 
+                b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu();
+        if (b.SampleType()!=2016) pass_ = pass_ && b.pass_badcalib();
+      }
+    }
+    if (pass_) return 1.;
+    else return 0.;
+  });
+
   const NamedFunc wgt_run2("wgt_run2", [](const Baby &b) -> NamedFunc::ScalarType{
     if (b.SampleType()<0) return 1.;
 
@@ -76,106 +98,6 @@ namespace Functions{
     } else {
       return wgt*59.6;
     }
-  });
-
-  const NamedFunc wgt_run2_partial("wgt_run2_partial", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.SampleType()==-2016) return 1.;
-    else if (b.SampleType()==-2017) {
-      if (b.run()>=297050 && b.run()<299370) return 1.;
-      else if (b.run()==299370 && b.lumiblock()<=442) return 1.;
-      else if (b.run()>=305044 && b.run()<305365) return 1.;
-      else if (b.run()==305365 && b.lumiblock()<=273) return 1.;
-      else return 0.;
-    } else if (b.SampleType()==-2018) {
-      if (b.run()>=315257 && b.run()<316202) return 1.;
-      else if (b.run()==316202 && b.lumiblock()<=134) return 1.;
-      else if (b.run()>=320673 && b.run()<321396) return 1.;
-      else if (b.run()==321396 && b.lumiblock()<=1152) return 1.;
-      else return 0.;
-    } 
-
-    double wgt = b.weight();
-    if (b.type()>=100e3) {
-      return wgt*b.w_prefire()*59.9;
-    } else {
-      if (b.SampleType()==2016){
-        return wgt*b.w_prefire()*35.9;
-      } else if (b.SampleType()==2017){
-        return wgt*b.w_prefire()*wnpv2017(b)*10.;
-      } else {
-        return wgt*15.;
-      }
-    }
-  });
-
-  const NamedFunc wgt_run2_partial_2017BCDE("wgt_run2_partial_2017BCDE", [](const Baby &b) -> NamedFunc::ScalarType{
-    double wgt = b.weight();
-    if (b.SampleType()<0) {
-      if (b.run()>=297050 && b.run()<299370) return 1.;
-      else if (b.run()==299370 && b.lumiblock()<=442) return 1.;
-      else return 0.;
-    } else {
-      return wgt*b.w_prefire()*5.;
-    } 
-  });
-
-  const NamedFunc wgt_run2_partial_2017F("wgt_run2_partial_2017F", [](const Baby &b) -> NamedFunc::ScalarType{
-    double wgt = b.weight();
-    if (b.SampleType()<0) {
-      if (b.run()>=305044 && b.run()<305365) return 1.;
-      else if (b.run()==305365 && b.lumiblock()<=273) return 1.;
-      else return 0.;
-    } else {
-      return wgt*b.w_prefire()*wnpv2017(b)*5.;
-    } 
-  });
-
-  const NamedFunc wgt_run2_partial_2017("wgt_run2_partial_2017", [](const Baby &b) -> NamedFunc::ScalarType{
-    double wgt = b.weight();
-    if (b.SampleType()<0) {
-      if (b.run()>=297050 && b.run()<299370) return 1.;
-      else if (b.run()==299370 && b.lumiblock()<=442) return 1.;
-      else if (b.run()>=305044 && b.run()<305365) return 1.;
-      else if (b.run()==305365 && b.lumiblock()<=273) return 1.;
-      else return 0.;
-    } else {
-      return wgt*b.w_prefire()*wnpv2017(b)*10.;
-    } 
-  });
-
-  const NamedFunc wgt_run2_partial_2018AB("wgt_run2_partial_2018AB", [](const Baby &b) -> NamedFunc::ScalarType{
-    double wgt = b.weight();
-    if (b.SampleType()<0) {
-      if (b.run()>=315257 && b.run()<316202) return 1.;
-      else if (b.run()==316202 && b.lumiblock()<=134) return 1.;
-      else return 0.;
-    } else {
-      return wgt*7.5;
-    } 
-  });
-
-  const NamedFunc wgt_run2_partial_2018D("wgt_run2_partial_2018D", [](const Baby &b) -> NamedFunc::ScalarType{
-    double wgt = b.weight();
-    if (b.SampleType()<0) {
-      if (b.run()>=320673 && b.run()<321396) return 1.;
-      else if (b.run()==321396 && b.lumiblock()<=1152) return 1.;
-      else return 0.;
-    } else {
-      return wgt*7.5;
-    } 
-  });
-
-  const NamedFunc wgt_run2_partial_2018("wgt_run2_partial_2018", [](const Baby &b) -> NamedFunc::ScalarType{
-    double wgt = b.weight();
-    if (b.SampleType()<0) {
-      if (b.run()>=315257 && b.run()<316202) return 1.;
-      else if (b.run()==316202 && b.lumiblock()<=134) return 1.;
-      else if (b.run()>=320673 && b.run()<321396) return 1.;
-      else if (b.run()==321396 && b.lumiblock()<=1152) return 1.;
-      else return 0.;
-    } else {
-      return wgt*15.;
-    } 
   });
 
   const NamedFunc mht_ratio("mht_ratio", [](const Baby &b) -> NamedFunc::ScalarType{

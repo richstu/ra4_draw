@@ -706,7 +706,7 @@ void WriteBaseSource(const set<Variable> &vars){
 
   file << "int Baby::SetSampleType(const TString &filename){\n";
   file << "  int samp_type = 0;\n";
-  file << "  if(filename.Contains(\"2017_01_27\") || filename.Contains(\"2019_01_11\"))     samp_type = 2016;\n";
+  file << "  if(filename.Contains(\"2017_01_27\") || filename.Contains(\"2019_01_11\") || filename.Contains(\"2017_02_22\"))     samp_type = 2016;\n";
   file << "  if(filename.Contains(\"2018_12_17\"))     samp_type = 2017;\n";
   file << "  if(filename.Contains(\"2019_01_18\") || filename.Contains(\"2019_03_30\"))     samp_type = 2018;\n";
   file << "  if(filename.Contains(\"data\"))     samp_type *= -1;\n";

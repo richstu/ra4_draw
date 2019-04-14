@@ -119,13 +119,6 @@ int main(int argc, char *argv[]){
   
   vector<string> scenarios;
   NamedFunc w = Functions::wgt_run2 * Functions::eff_trig_run2;
-  if (xoption=="partial") w = Functions::wgt_run2_partial * Functions::eff_trig_run2;
-  else if (xoption=="partial_2017BCDE") w = Functions::wgt_run2_partial_2017BCDE * Functions::eff_trig_run2;
-  else if (xoption=="partial_2017F") w = Functions::wgt_run2_partial_2017F * Functions::eff_trig_run2;
-  else if (xoption=="partial_2017") w = Functions::wgt_run2_partial_2017 * Functions::eff_trig_run2;
-  else if (xoption=="partial_2018AB") w = Functions::wgt_run2_partial_2018AB * Functions::eff_trig_run2;
-  else if (xoption=="partial_2018D") w = Functions::wgt_run2_partial_2018D * Functions::eff_trig_run2;
-  else if (xoption=="partial_2018") w = Functions::wgt_run2_partial_2018 * Functions::eff_trig_run2;
 
   map<string, NamedFunc> weights, corrections;
   auto central = Functions::Variation::central;
@@ -172,23 +165,25 @@ int main(int argc, char *argv[]){
 
   map<int, string> foldermc, folderdata, foldersig;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
-  foldersig[2016] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
+  if (only_method=="signal") foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_abcd/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/T1tttt/unskimmed/";
   folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
 
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
+  if (only_method=="signal") foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_abcd/";
   foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/T1tttt/unskimmed/";
   folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
 
-  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/mc/merged_mcbase_stdnj5/";
-  foldersig[2018] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
+  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_stdnj5/";
+  if (only_method=="signal") foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_abcd/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/T1tttt/unskimmed/";
   folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
-  
 
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
   NamedFunc baseline = "mj14>250 && st>500 && nleps>=1 && met>100 && njets>=5";
-  baseline = baseline && Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
+  baseline = baseline && Functions::hem_veto && Functions::pass_run2 && "st<10e3";
 
   NamedFunc trigs = Functions::trig_run2;
   if(mc_lumi!="") lumi = mc_lumi.Atof();
@@ -237,19 +232,19 @@ int main(int argc, char *argv[]){
     t1c_files, baseline && "stitch_met");
 
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep",    Process::Type::background, colors("tt_1l"),  
-    tt1l_files, baseline && "stitch_met && pass");  
+    tt1l_files, baseline && "stitch_met");  
   auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep",    Process::Type::background, colors("tt_2l"),  
-    tt2l_files, baseline && "stitch_met && pass");
+    tt2l_files, baseline && "stitch_met");
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    other_files, baseline && "stitch_met && pass");
+    other_files, baseline && "stitch_met");
 
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    data_files, baseline && trigs && "pass");
+    data_files, baseline && trigs);
   //No bad muons: "pass && n_mus_bad==0. && n_mus_bad_dupl==0. && n_mus_bad_trkmu==0."
   
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_quick = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    quick_files, baseline && " pass");
+    quick_files, baseline);
 
   vector<shared_ptr<Process> > all_procs;
   if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l, proc_other};
@@ -395,14 +390,6 @@ int main(int argc, char *argv[]){
       caption = "Signal search regions";
       abcd_title = "Signal";
       firstSigBin = 0;
-      if(xoption.Contains("partial_201")){
-        metcuts = vector<TString>{c_lowmet};
-        doVBincuts = false;
-        bincuts = vector<TString>{"njets>=7 && nbd==1", "njets>=7 && nbd==2", "njets>=7 && nbd>=3"};
-        caption = "Signal search regions";
-        abcd_title = "Signal";
-        firstSigBin = 0;        
-      } 
       if(method.Contains("met100")) {
         metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
         vbincuts = vector<vector<TString>>{nbnj_lowmet, nbnj_lowmet, nbnj_lowmet, nbnj_lowmet, nbnj_higmet};
