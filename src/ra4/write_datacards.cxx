@@ -25,26 +25,16 @@
 
 using namespace std;
 namespace {
-  bool fake_PU = false;
-  bool unblind = false;
+  bool unblind = true;
   bool debug = false;
-  float lumi=1;
   int year = 2016;
-  int ibatch = -1;
-  int nfiles = 10;
   string model = "T1tttt";
-  string tag = "nominal";
+  string xoption = "nominal";
   string outfolder = getenv("PWD");
   string mass_pts_str = "";
   enum SysType {kConst, kWeight, kSmear, kCorr, kMetSwap, kPU};
-  TString syst = "all";
-
-  const vector<double> v_data_npv{6.540e-06, 2.294e-05, 6.322e-05, 8.558e-05, 1.226e-04, 1.642e-04, 1.917e-04, 3.531e-04, 9.657e-04, 2.155e-03, 4.846e-03, 9.862e-03, 1.651e-02, 2.401e-02, 3.217e-02, 4.078e-02, 4.818e-02, 5.324e-02, 5.612e-02, 5.756e-02, 5.841e-02, 5.886e-02, 5.831e-02, 5.649e-02, 5.376e-02, 5.044e-02, 4.667e-02, 4.257e-02, 3.833e-02, 3.406e-02, 2.982e-02, 2.567e-02, 2.169e-02, 1.799e-02, 1.464e-02, 1.170e-02, 9.178e-03, 7.058e-03, 5.306e-03, 3.884e-03, 2.757e-03, 1.890e-03, 1.247e-03, 7.901e-04, 4.795e-04, 2.783e-04, 1.544e-04, 8.181e-05, 4.141e-05, 2.004e-05, 9.307e-06, 4.178e-06, 1.846e-06, 8.350e-07, 4.150e-07, 2.458e-07, 1.779e-07, 1.488e-07, 1.339e-07, 1.238e-07, 1.153e-07, 1.071e-07, 9.899e-08, 9.095e-08, 8.301e-08, 7.527e-08, 6.778e-08, 6.063e-08, 5.387e-08, 4.753e-08, 4.166e-08, 3.627e-08, 3.136e-08, 2.693e-08, 2.297e-08};
-  TH1D h_data_npv("h_data_npv", "Data;N_{PV};P(N_{PV})", v_data_npv.size(), -0.5, v_data_npv.size()-0.5);
-  TH1D h_mc_npv("h_mc_npv", "MC;N_{PV};P(N_{PV})", v_data_npv.size(), -0.5, v_data_npv.size()-0.5);
-  double pu_low = 0.;
-  double pu_high = 0.;
   bool do_syst = true;
+  float lumi = 1.; // should not be changed, actual lumi assigned by the weight
 }
 
 class bindef {
@@ -78,10 +68,6 @@ public:
 TString nom2sys_bin(TString ibin, size_t shift_index);
 TString nom2genmet(TString ibin);
 void GetOptions(int argc, char *argv[]);
-void fillTtbarSys(ofstream &fsys);
-
-vector<double> getYields(Baby_full &baby, const NamedFunc &baseline, const vector<NamedFunc> &bincuts,
-                         vector<double> &yield, vector<double> &w2, double lumi);
 
 int main(int argc, char *argv[]){
   
@@ -119,36 +105,13 @@ int main(int argc, char *argv[]){
     _tmp = mass_pts_str.substr(start, found-start);
     mass_pts.push_back(make_pair(_tmp.substr(0,_tmp.find("_")), _tmp.substr(_tmp.find("_")+1)));
     cout<<"Adding mass point: mgluino = "<<mass_pts.back().first<<" mlsp = "<<mass_pts.back().second<<endl;
-  } else {
-    // FIX ME to run on full scan - maybe just transfer this functionality to the steering python script
-    // DIR *dir;
-    // struct dirent *ent;
-    // if ((dir = opendir (foldersig[0].c_str())) != NULL) {
-    //   int ifile = 0;
-    //   while ((ent = readdir (dir)) != NULL) {
-    //     if (Contains(ent->d_name,".root")){
-    //       if (ibatch==-1 || (ifile>=ibatch*nfiles && ifile<(ibatch+1)*nfiles)) {
-    //         string _tmp = ent->d_name;
-    //         string mglu = _tmp.substr(_tmp.find("ino-")+4,_tmp.find("_mLSP")-_tmp.find("ino-")-4);
-    //         string mlsp = _tmp.substr(_tmp.find("LSP-")+4,_tmp.find("_Tune")-_tmp.find("LSP-")-4);
-    //         mass_pts.push_back(make_pair(mglu, mlsp));
-    //         cout<<"Including mass point: "<<mglu<<" "<<mlsp<<endl;
-    //       }
-    //       ifile++;
-    //     }
-    //   }
-    //   closedir (dir);
-    // } else {
-    //   cout<<"Could not find directory with signal samples"<<endl;
-    //   exit(1);
-    // }
-  }
+  } 
 
   // --------------------------------------
   //            Processes
   //---------------------------------------
   TString baseline("st>500 && met>200 && mj14>250 && njets>=6 && nbd>=1 && nleps==1 && nveto==0");
-  NamedFunc filters = Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
+  NamedFunc filters = Functions::hem_veto && Functions::pass_run2;
   NamedFunc nom_wgt = Functions::wgt_run2 * Functions::eff_trig_run2; 
 
   set<int> years;
@@ -156,23 +119,21 @@ int main(int argc, char *argv[]){
   else years = {year};
 
   map<int, string> foldermc, folderdata, foldersig;
-  foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
-  foldersig[2016] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
-  folderdata[2016] = "";//bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
+  foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_abcd/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/T1tttt/skim_sys_abcd/";
+  folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
 
-  foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
-  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/T1tttt/unskimmed/";
-  folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_mcbase_stdnj5/";
+  foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_abcd/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/T1tttt/skim_sys_abcd/";
+  folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
 
-  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/mc/merged_mcbase_stdnj5/";
-  foldersig[2018] = "";//bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/";
-  folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/data/merged_mcbase_stdnj5/";
+  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_abcd/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/T1tttt/skim_sys_abcd/";
+  folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
 
   // Filling all other processes
   vector<string> vnames_other = {
-    "_WJetsToLNu_HT",
-    "_ST_",
-    "_TTW","_TTZ", 
+    "_WJetsToLNu_HT", "_ST_", "_TTW","_TTZ", 
     "_DYJetsToLL_M-50_HT","_ZJet","_ttH",
      "_TTGJets","_TTTT","_WH_HToBB","_ZH_HToBB","_WWTo","_WZ","_ZZ_","QCD_HT*0_Tune","QCD_HT*Inf_Tune"
     };
@@ -188,17 +149,17 @@ int main(int argc, char *argv[]){
   }
 
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt_1l",    Process::Type::background, 1,  
-    tt1l_files, filters && "stitch_met && pass");  
+    tt1l_files, filters && "stitch_met");  
   auto proc_tt2l = Process::MakeShared<Baby_full>("tt_2l",    Process::Type::background, 1,  
-    tt2l_files, filters && "stitch_met && pass");  
+    tt2l_files, filters && "stitch_met");  
   auto proc_other = Process::MakeShared<Baby_full>("other",    Process::Type::background, 1,  
-    other_files, filters && "stitch_met && pass");
+    other_files, filters && "stitch_met");
 
   vector<shared_ptr<Process> > bkg_procs = {proc_tt1l, proc_tt2l, proc_other};
 
   vector<shared_ptr<Process> > data_procs;
   data_procs.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    data_files, filters && Functions::trig_run2 && "pass"));
+    data_files, filters && Functions::trig_run2));
 
   vector<shared_ptr<Process> > sig_procs;
   for (auto &imass: mass_pts) {
@@ -218,28 +179,28 @@ int main(int argc, char *argv[]){
 
   // N.B.: currently, changing naming convention would break writing the closure systematics derived from CRs
   vector<string> vl_met, vc_met, vc_mj_r1;
-  vl_met.push_back("met200to350"); vc_met.push_back("met>200 && met<=350"); vc_mj_r1.push_back("mj14<=400");
-  vl_met.push_back("met350to500"); vc_met.push_back("met>350 && met<=500"); vc_mj_r1.push_back("mj14<=450");
-  vl_met.push_back("met500");      vc_met.push_back("met>500");             vc_mj_r1.push_back("mj14<=500");
+  vl_met.push_back("lmet"); vc_met.push_back("met>200 && met<=350"); vc_mj_r1.push_back("mj14<=400");
+  vl_met.push_back("mmet"); vc_met.push_back("met>350 && met<=500"); vc_mj_r1.push_back("mj14<=450");
+  vl_met.push_back("hmet"); vc_met.push_back("met>500");             vc_mj_r1.push_back("mj14<=500");
   unsigned nbins_met(vl_met.size());
 
   vector<string> vl_nb, vc_nb;
-  vl_nb.push_back("1b");     vc_nb.push_back("nbd==1");
-  vl_nb.push_back("2b");     vc_nb.push_back("nbd==2");
-  vl_nb.push_back("ge3b");   vc_nb.push_back("nbd>=3");
+  vl_nb.push_back("lnb");     vc_nb.push_back("nbd==1");
+  vl_nb.push_back("mnb");     vc_nb.push_back("nbd==2");
+  vl_nb.push_back("hnb");   vc_nb.push_back("nbd>=3");
   unsigned nbins_nb(vl_nb.size());
 
   vector<string> vl_nj; vector<vector<string>> vc_nj;
-  vl_nj.push_back("6to7j");  vc_nj.push_back({"njets>=6 && njets<=7", "njets>=6 && njets<=7","njets>=6 && njets<=7"});
-  vl_nj.push_back("ge8j");   vc_nj.push_back({"njets>=8", "njets>=8", "njets>=8"});
+  vl_nj.push_back("lnj");  vc_nj.push_back({"njets==7", "njets==7","njets>=6 && njets<=7"});
+  vl_nj.push_back("hnj");   vc_nj.push_back({"njets>=8", "njets>=8", "njets>=8"});
   unsigned nbins_nj(vl_nj.size());
 
   vector<string> vl_mj, vc_mj;
-  vl_mj.push_back("mj400toXXX");  vc_mj.push_back("mj14<=XXX");
-  vl_mj.push_back("mjXXX");  vc_mj.push_back("mj14>XXX");
+  vl_mj.push_back("lmj");  vc_mj.push_back("mj14<=XXX");
+  vl_mj.push_back("hmj");  vc_mj.push_back("mj14>XXX");
   unsigned nbins_mj(vl_mj.size());
   vector<string> v_metdep_midmj = {"500","650","800"};
-  if (v_metdep_midmj.size()!=vc_met.size()) {
+  if (v_metdep_midmj.size()<vc_met.size()) {
     cout<<"ERROR: Intermediate MJ thresholds not specified for each MET bin"<<endl;
     exit(1);
   }
@@ -247,10 +208,20 @@ int main(int argc, char *argv[]){
   vector<bindef> vbins; 
   for (unsigned imet(0); imet<nbins_met; imet++){
     string _label(""), _cut("");
-    if (!Contains(tag,"noabcd")) {
+    if (!Contains(xoption,"noabcd")) {
       _label = "r1_"+vl_met[imet];
-      _cut = vc_met[imet]+"&&"+c_mt_r1+"&&"+vc_mj_r1[imet];
+      _cut = vc_met[imet]+"&&"+c_mt_r1+"&&"+vc_mj_r1[imet]+"&&(";
+      for (unsigned inb(0); inb<nbins_nb; inb++){
+        if (inb!=0) _cut +="||";
+        for (unsigned inj(0); inj<nbins_nj; inj++){
+          if (inj!=0) _cut +="||";
+          _cut +="("+vc_nb[inb]+"&&"+vc_nj[inj][imet]+")";
+        }
+      }
+      _cut+=")";
       vbins.push_back(bindef(_label, _cut));
+      if (debug) cout<<_cut<<endl;
+
       for (unsigned inb(0); inb<nbins_nb; inb++){
         for (unsigned inj(0); inj<nbins_nj; inj++){
           for (unsigned imj(0); imj<nbins_mj; imj++){
@@ -261,13 +232,25 @@ int main(int argc, char *argv[]){
                    +vc_nb[inb]+"&&"+vc_nj[inj][imet];
             _cut += "&&"+CopyReplaceAll(vc_mj[imj],"XXX",v_metdep_midmj[imet]);
             vbins.push_back(bindef(_label, _cut));
+            if (debug) cout<<_cut<<endl;
           }
         }
       }
+
       _label = "r3_"+vl_met[imet];
-      _cut = vc_met[imet]+"&&"+CopyReplaceAll(c_mt_r1,"<=",">")+"&&"+vc_mj_r1[imet];
+      _cut = vc_met[imet]+"&&"+CopyReplaceAll(c_mt_r1,"<=",">")+"&&"+vc_mj_r1[imet]+"&&(";
+      for (unsigned inb(0); inb<nbins_nb; inb++){
+        if (inb!=0) _cut +="||";
+        for (unsigned inj(0); inj<nbins_nj; inj++){
+          if (inj!=0) _cut +="||";
+          _cut +="("+vc_nb[inb]+"&&"+vc_nj[inj][imet]+")";
+        }
+      }
+      _cut+=")";
       vbins.push_back(bindef(_label, _cut));
+      if (debug) cout<<_cut<<endl;
     }
+
     for (unsigned inb(0); inb<nbins_nb; inb++){
       for (unsigned inj(0); inj<nbins_nj; inj++){
         for (unsigned imj(0); imj<nbins_mj; imj++){
@@ -278,6 +261,7 @@ int main(int argc, char *argv[]){
                  +vc_nb[inb]+"&&"+vc_nj[inj][imet];
           _cut += "&&"+CopyReplaceAll(vc_mj[imj],"XXX",v_metdep_midmj[imet]);
           vbins.push_back(bindef(_label, _cut));
+          if (debug) cout<<_cut<<endl;
         }
       }
     }
@@ -312,25 +296,20 @@ int main(int argc, char *argv[]){
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_udsgtag_deep["+to_string(i)+"]/w_btag_deep");
     v_sys.push_back(sysdef("Jet energy corrections", "jec", kCorr));
     v_sys.back().shift_index = 1; // JEC Up index in sys_met, etc.
-    // v_sys.push_back(sysdef("Jet energy resolution", "jer", kSmear));
-    // v_sys.back().shift_index = 0; // JER index in sys_met, etc.
-    // v_sys.push_back(sysdef("PDFs", "pdf", kWeight));
-    // for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_pdf["+to_string(i)+"]");
-    // v_sys.push_back(sysdef("RMS PDFs", "rms_pdf", kWeight));
-    // for (size_t i = 0; i<100; ++i) v_sys.back().v_wgts.push_back("w_pdf["+to_string(i)+"]");
-    v_sys.push_back(sysdef("QCD scales", "murf",kWeight));
-    for (size_t i = 0; i<2; ++i) {
-      v_sys.back().v_wgts.push_back("sys_mur["+to_string(i)+"]");
-      v_sys.back().v_wgts.push_back("sys_muf["+to_string(i)+"]");
-      v_sys.back().v_wgts.push_back("sys_murf["+to_string(i)+"]");
-    }
+    // v_sys.push_back(sysdef("QCD scales", "murf",kWeight));
+    // for (size_t i = 0; i<2; ++i) {
+    //   v_sys.back().v_wgts.push_back("sys_mur["+to_string(i)+"]");
+    //   v_sys.back().v_wgts.push_back("sys_muf["+to_string(i)+"]");
+    //   v_sys.back().v_wgts.push_back("sys_murf["+to_string(i)+"]");
+    // }
     v_sys.push_back(sysdef("ISR", "isr", kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_isr["+to_string(i)+"]/w_isr");
     v_sys.push_back(sysdef("Jet ID FS", "jetid", kConst));
     v_sys.back().v_wgts.push_back("0.01");
-    // v_sys.push_back(sysdef("Pile up", "pu", kPU));
+    v_sys.push_back(sysdef("Pileup", "pu", kWeight));
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_pu["+to_string(i)+"]/w_isr");
     v_sys.push_back(sysdef("Luminosity", "lumi", kConst));
-    v_sys.back().v_wgts.push_back("0.026");
+    v_sys.back().v_wgts.push_back("0.025");
   } 
 
   //------------------------------------------------------------------------------------
@@ -372,14 +351,7 @@ int main(int argc, char *argv[]){
       for (auto &bin: vbins) {
         cuts.emplace_back(TableRow("", nom2genmet(baseline+"&&"+bin.cut),0,0,nom_wgt));
       }
-    } else if (sys.sys_type == kPU) {
-      for(const auto &bin: vbins){
-        cuts.emplace_back(TableRow("", baseline+"&&"+bin.cut+"&&"+"ntrupv<=20",0,0,nom_wgt));
-        cuts.emplace_back(TableRow("", "ntrupv<=20",0,0,nom_wgt));
-        cuts.emplace_back(TableRow("", baseline+"&&"+bin.cut+"&&"+"ntrupv>=21",0,0,nom_wgt));
-        cuts.emplace_back(TableRow("", "ntrupv>=21",0,0,nom_wgt));
-      }
-    }
+    } 
   }
 
   //------------------------------------------
@@ -404,7 +376,7 @@ int main(int argc, char *argv[]){
   // calculate kappas
   if (debug) cout<<"calculating kappas..."<<endl;
   vector<float> vkappas, vkappas_unc;
-  if (!Contains(tag,"noabcd")) {
+  if (!Contains(xoption,"noabcd")) {
     vector<float> powers = {1, -1, -1, 1};
     // order of for loops must match the one used to define cut vector, i.e. met, nb, nj, mj!
     for (unsigned imet(0); imet<nbins_met; imet++){
@@ -467,7 +439,6 @@ int main(int argc, char *argv[]){
           tmp_gps.SetYieldAndUncertainty(0.5*(sig_params[isig][sys.ind + ibin].Yield()+sig_params[isig][ibin].Yield()),
                         max(sig_params[isig][sys.ind + ibin].Uncertainty(), sig_params[isig][ibin].Uncertainty()));
           nom_met_avg.push_back(tmp_gps);
-          // nom_met_avg.push_back(0.5*(sig_params[isig][sys.ind + ibin]+sig_params[isig][ibin]));
         }
       }
     }
@@ -477,17 +448,18 @@ int main(int argc, char *argv[]){
     TString outpath = outfolder+"/datacard_SMS-"+model;
     outpath += "_mGluino-"+mass_pts[isig].first+"_mLSP-"+mass_pts[isig].second+"_";
     outpath += year;
-    outpath += "_"+RoundNumber(lumi,1).ReplaceAll(".","p")+"ifb_"+tag+".txt";
+    outpath += "_"+xoption;
+    if (!unblind) outpath +="_blind";
+    outpath +=".txt";
     if (!do_syst)  outpath.ReplaceAll(".txt*","_nosys.txt");
     cout<<"open "<<outpath<<endl;
-    unsigned wname(28), wdist(7), wbin(31);
+    unsigned wname(23), wdist(7), wbin(23);
     for (size_t ibin(0); ibin<nbins; ibin++) 
       if(vbins[ibin].tag.length() > wbin) wbin = vbins[ibin].tag.length();
     wbin+=1;
     unsigned digit = 2;
     if (unblind) digit = 0;
 
-    // --------- write header
     ofstream fcard(outpath);
     fcard<<"imax "<<nbins<<"  number of channels\n";
     fcard<<"jmax 1  number of backgrounds\n";
@@ -503,26 +475,24 @@ int main(int argc, char *argv[]){
     fcard<<endl<<endl<<setw(wname)<<"bin"<<setw(wdist)<<" ";
     for (size_t ibin(0); ibin<nbins; ibin++) 
       fcard<<setw(wbin)<<vbins[ibin].tag<<setw(wbin)<<vbins[ibin].tag;
+
     fcard<<endl<<setw(wname)<<"process"<<setw(wdist)<<" ";
     for (size_t ibin(0); ibin<nbins; ibin++) 
       fcard<<setw(wbin)<<"sig"<<setw(wbin)<<"bkg";
+
     fcard<<endl<<setw(wname)<<"process"<<setw(wdist)<<" ";
     for (size_t ibin(0); ibin<nbins; ibin++) 
       fcard<<setw(wbin)<<"0"<<setw(wbin)<<"1";
+
     fcard<<endl<<setw(wname)<<"rate"<<setw(wdist)<<" ";
-    if (!Contains(tag,"noabcd")) {
-      for (size_t ibin(0); ibin<nbins; ibin++) 
-        fcard<<setw(wbin)<<Form("%.2f",nom_met_avg[ibin].Yield())<<setw(wbin)<<"1";
-    } else {
-      for (size_t ibin(0); ibin<nbins; ibin++) 
-        fcard<<setw(wbin)<<Form("%.2f",nom_met_avg[ibin].Yield())<<setw(wbin)<<bkg_yields[ibin];     
-    }
+    for (size_t ibin(0); ibin<nbins; ibin++) 
+      fcard<<setw(wbin)<<Form("%.2f",nom_met_avg[ibin].Yield())<<setw(wbin)<<"1";
     fcard<<endl<<endl;
     cout<<"Wrote headers"<<endl;
 
     //--------- Signal statistical uncertainties ----------------------------
     for (size_t ibin(0); ibin<nbins; ibin++) {
-      fcard<<setw(wname)<<"statsig_"+vbins[ibin].tag<<setw(wdist)<<"lnN";
+      fcard<<setw(wname)<<"stat_"+vbins[ibin].tag<<setw(wdist)<<"lnN";
       TString sig_stat = Form("%.2f",1+nom_met_avg[ibin].Uncertainty()/nom_met_avg[ibin].Yield());
       for (size_t jbin(0); jbin<nbins; jbin++) {
         if (ibin==jbin) fcard<<setw(wbin)<<sig_stat<<setw(wbin)<<"-";
@@ -531,6 +501,7 @@ int main(int argc, char *argv[]){
       fcard<<endl;
     }
     cout<<"Wrote signal stat. uncertainties"<<endl;
+    
 
     // ------------ Closure uncertainties
     // ordered as: 2l lownj, 2l high nj, 5j lowmet, 5j mid met
@@ -573,7 +544,6 @@ int main(int argc, char *argv[]){
     //calculate uncertainties and write results to three files
     ofstream fsys(outpath.ReplaceAll("datacard_","sys_"));
     cout<<"Writing to "<<outpath<<endl;
-    fillTtbarSys(fsys);
     if(do_syst){
       for (auto &sys: v_sys) {
         if (sys.tag != "nominal") {
@@ -590,15 +560,6 @@ int main(int argc, char *argv[]){
           } else if (sys.sys_type == kWeight) {
             if (sys.tag == "nominal") {
               continue;
-            } else if (sys.tag == "rms_pdf") { 
-              // double sumw2(0), mean(0);
-              // for (size_t iwgt = 0; iwgt<nwgts; ++iwgt) {
-              //   sumw2 += pow(sig_params[isig][sys.ind + nwgts*ibin + iwgt],2);
-              //   mean += sig_params[isig][sys.ind + nwgts*ibin + iwgt];
-              // }
-              // mean = mean/nwgts;
-              // up = sqrt((sumw2-nwgts*pow(mean,2))/(nwgts-1))/nom_yield;  // RMS
-              // dn = -up;
             } else if (sys.tag == "murf") {
               //max/min of all weights mur_up, muf_up and murf_up
               // up = *max_element(sig_params[isig].begin() + sys.ind + nwgts*ibin, 
@@ -620,32 +581,7 @@ int main(int argc, char *argv[]){
           } else if (sys.sys_type == kCorr) {
             up = sig_params[isig][sys.ind + 2*ibin].Yield()/nom_yield - 1;
             dn = sig_params[isig][sys.ind + 2*ibin + 1].Yield()/nom_yield - 1;
-          } else if (sys.sys_type == kPU ) {
-            double eff_low  = sig_params[isig][sys.ind+4*ibin+0].Yield()/sig_params[isig][sys.ind+4*ibin+1].Yield();
-            double eff_high = sig_params[isig][sys.ind+4*ibin+2].Yield()/sig_params[isig][sys.ind+4*ibin+3].Yield();
-            double m = (eff_high-eff_low)/(pu_high-pu_low);
-            double b = (eff_low*pu_high-eff_high*pu_low)/(pu_high-pu_low);
-            double eff_data = 0., eff_mc = 0.;
-            for(size_t i = 0; i < v_data_npv.size(); ++i){
-              double fx = m*static_cast<double>(i)+b;
-              eff_data += fx*h_data_npv.GetBinContent(i+1);
-              eff_mc += fx*h_mc_npv.GetBinContent(i+1);
-            }
-            up = (eff_data-eff_mc)/eff_mc;
-            dn = -up;
-
-            //Temporary stand-in until better method available
-            if(fake_PU){
-              if((Contains(vbins.at(ibin).tag,"lowmet") || Contains(vbins.at(ibin).tag,"medmet"))
-                 && (Contains(vbins.at(ibin).tag,"lownj") || Contains(vbins.at(ibin).tag,"r1_") || Contains(vbins.at(ibin).tag,"r3_"))){
-                up = 0.1;
-                dn = 0.1;
-              }else{
-                up = 0.15;
-                dn = 0.15;
-              }
-            }
-          }
+          } 
           // convert to ra4_stats input and write to file
           double ln = (up>0 ? 1:-1)*max(up>0 ? up : (1/(1+up)-1), dn>0 ? dn : (1/(1+dn)-1));
           if (sys.sys_type == kConst) ln = up;
@@ -676,13 +612,14 @@ int main(int argc, char *argv[]){
 
     //   Writing datacard param section
     //---------------------------------------
-    if (!Contains(tag,"noabcd")) {
+    if (!Contains(xoption,"noabcd")) {
       unsigned iyield(0);
       wbin +=3; // to allow the label to fit even with "rp_" in front
       // order of for loops must match the one used to define cut vector, i.e. met, nb, nj!
       if(debug) cout <<endl<<left<<setw(wbin)<<"bin"
                      <<right<<setw(15)<<"Sig."
-                     <<right<<setw(15)<<"Sig. (MET avg)"
+                     <<right<<setw(15)<<"MET avg"
+                     <<right<<setw(15)<<"MET unc"
                      <<right<<setw(15)<<"Bkg. MC"
                      <<right<<setw(10)<<"Data"
                      <<endl;
@@ -695,7 +632,7 @@ int main(int argc, char *argv[]){
         if(debug) cout <<left<<setw(wbin)<<_label 
                        <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
                        <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
-                       <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
+                       <<right<<setw(15)<<RoundNumber(100*nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),1)
                        <<right<<setw(15)<<RoundNumber(bkg_yields[iyield],2)
                        <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
                        <<endl;
@@ -711,7 +648,7 @@ int main(int argc, char *argv[]){
               if(debug) cout <<left<<setw(wbin)<<_label
                              <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
                              <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
-                             <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
+                             <<right<<setw(15)<<RoundNumber(100*nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),1)
                              <<right<<setw(15)<<RoundNumber(bkg_yields[iyield],2)
                              <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
                              <<endl;
@@ -726,7 +663,7 @@ int main(int argc, char *argv[]){
         if(debug) cout <<left<<setw(wbin)<<_label
                        <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
                        <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
-                       <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
+                       <<right<<setw(15)<<RoundNumber(100*nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),1)
                        <<right<<setw(15)<<RoundNumber(bkg_yields[iyield],2)
                        <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
                        <<endl;
@@ -743,7 +680,7 @@ int main(int argc, char *argv[]){
               if(debug) cout <<left<<setw(wbin)<<_label
                              <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
                              <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
-                             <<right<<setw(15)<<RoundNumber(1+nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),2)
+                             <<right<<setw(15)<<RoundNumber(100*nom_met_avg[iyield].Uncertainty()/nom_met_avg[iyield].Yield(),1)
                              <<right<<setw(15)<<RoundNumber(bkg_yields[iyield],2)
                              <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
                              <<endl;
@@ -772,7 +709,7 @@ TString nom2sys_bin(TString ibin, size_t shift_index){
   ibin.ReplaceAll("st", "sys_st["+to_string(shift_index)+"]");
   ibin.ReplaceAll("mj14", "sys_mj14["+to_string(shift_index)+"]");
   ibin.ReplaceAll("njets", "sys_njets["+to_string(shift_index)+"]");
-  ibin.ReplaceAll("nbd", "sys_nbdm["+to_string(shift_index)+"]");
+  ibin.ReplaceAll("nbd", "sys_nbd["+to_string(shift_index)+"]");
   return ibin;
 }
 
@@ -783,136 +720,13 @@ TString nom2genmet(TString ibin){
 
 }
 
-void fillTtbarSys(ofstream &fsys){
-    fsys << "SYSTEMATIC dilep_lownj" << endl;
-    fsys << " PROCESSES ttbar,other" << endl;
-    fsys << "  r2_lowmet_lownj_1b    0.06" << endl;
-    fsys << "  r2_lowmet_lownj_2b    0.06" << endl;
-    fsys << "  r2_lowmet_lownj_3b    0.06" << endl;
-    fsys << "  r2_medmet_lownj_1b    0.06" << endl;
-    fsys << "  r2_medmet_lownj_2b    0.06" << endl;
-    fsys << "  r2_medmet_lownj_3b    0.06" << endl;
-    fsys << "  r2_highmet_lownj_1b   0.06" << endl;
-    fsys << "  r2_highmet_lownj_2b   0.06" << endl;
-    fsys << "  r2_highmet_lownj_3b   0.06" << endl;
-    fsys << endl;
-    fsys << "SYSTEMATIC dilep_highnj" << endl;
-    fsys << " PROCESSES ttbar,other" << endl;
-    fsys << "  r2_lowmet_highnj_1b   0.16" << endl;
-    fsys << "  r2_lowmet_highnj_2b   0.16" << endl;
-    fsys << "  r2_lowmet_highnj_3b   0.16" << endl;
-    fsys << "  r2_medmet_highnj_1b   0.16" << endl;
-    fsys << "  r2_medmet_highnj_2b   0.16" << endl;
-    fsys << "  r2_medmet_highnj_3b   0.16" << endl;
-    fsys << "  r2_highmet_highnj_1b  0.16" << endl;
-    fsys << "  r2_highmet_highnj_2b  0.16" << endl;
-    fsys << "  r2_highmet_highnj_3b  0.16" << endl;
-    fsys << endl;
-    fsys << "SYSTEMATIC fivejet_lowmet" << endl;
-    fsys << " PROCESSES ttbar,other" << endl;
-    fsys << "  r2_lowmet_lownj_1b    0.15" << endl;
-    fsys << "  r2_lowmet_lownj_2b    0.15" << endl;
-    fsys << "  r2_lowmet_lownj_3b    0.15" << endl;
-    fsys << "  r2_lowmet_highnj_1b   0.15" << endl;
-    fsys << "  r2_lowmet_highnj_2b   0.15" << endl;
-    fsys << "  r2_lowmet_highnj_3b   0.15" << endl;
-    fsys << endl;
-    fsys << "SYSTEMATIC fivejet_highmet" << endl;
-    fsys << " PROCESSES ttbar,other" << endl;
-    fsys << "  r2_medmet_lownj_1b    0.37" << endl;
-    fsys << "  r2_medmet_lownj_2b    0.37" << endl;
-    fsys << "  r2_medmet_lownj_3b    0.37" << endl;
-    fsys << "  r2_medmet_highnj_1b   0.37" << endl;
-    fsys << "  r2_medmet_highnj_2b   0.37" << endl;
-    fsys << "  r2_medmet_highnj_3b   0.37" << endl;
-    fsys << "  r2_highmet_lownj_1b   0.37" << endl;
-    fsys << "  r2_highmet_lownj_2b   0.37" << endl;
-    fsys << "  r2_highmet_lownj_3b   0.37" << endl;
-    fsys << "  r2_highmet_highnj_1b  0.37" << endl;
-    fsys << "  r2_highmet_highnj_2b  0.37" << endl;
-    fsys << "  r2_highmet_highnj_3b  0.37" << endl;
-    fsys << endl;
-}
-
-vector<double> getYields(Baby_full &baby, const NamedFunc &/*baseline*/, const vector<NamedFunc> &bincuts,
-                         vector<double> &yield, vector<double> &w2){
-  for(size_t i = 0; i <v_data_npv.size(); ++i){
-    h_data_npv.SetBinContent(i+1, v_data_npv.at(i));
-    h_data_npv.SetBinError(i+1, 0.);
-    h_mc_npv.SetBinContent(i+1, 0.);
-    h_mc_npv.SetBinError(i+1, 0.);
-  }
-  
-  vector<double> entries = vector<double>(bincuts.size(), 0);
-  yield = vector<double>(bincuts.size(), 0);
-  w2 = yield;
-  long nentries = baby.GetEntries();
-
-  bool isData(false), isBkg(false);
-  baby.GetEntry(0);
-  if (baby.type()<1000) isData = true;
-  else if (baby.type()<100e3) isBkg = true;
-  for(long entry = 0; entry < nentries; ++entry){
-    baby.GetEntry(entry);
-    
-    if (isBkg || isData) {
-      if(!baby.pass()) continue;
-    } else {
-      h_mc_npv.Fill(baby.ntrupv(), baby.weight()*baby.eff_trig());
-    }
-
-    if (isBkg && !baby.stitch_met()) continue;
-
-    if (isData && !baby.trig_ra4()) continue;
-    
-    for(size_t ind = 0; ind<bincuts.size(); ++ind){
-      float wgt = bincuts.at(ind).GetScalar(baby);
-      if(wgt != 0.){
-        ++entries.at(ind);
-        yield.at(ind) += wgt;
-        w2.at(ind) += wgt*wgt;
-      }
-    }
-  } // Loop over entries
-  if (!isData) {
-    for(size_t ind = 0; ind<bincuts.size(); ++ind){ 
-      yield.at(ind) *= lumi;
-      w2.at(ind) *= pow(lumi, 2);
-    }
-  }
-  if (!isData && !isBkg) {
-    h_data_npv.Scale(1./h_data_npv.Integral());
-    h_mc_npv.Scale(1./h_mc_npv.Integral());
-    pu_low = 0.;
-    pu_high = 0.;
-    double norm = 0.;
-    for(size_t npv = 0; npv <= 20 && npv < v_data_npv.size(); ++npv){
-      pu_low += npv*h_mc_npv.GetBinContent(npv+1);
-      norm += h_mc_npv.GetBinContent(npv+1);
-    }
-    pu_low /= norm;
-    norm = 0.;
-    for(size_t npv = 21; npv < v_data_npv.size(); ++npv){
-      pu_high += npv*h_mc_npv.GetBinContent(npv+1);
-      norm += h_mc_npv.GetBinContent(npv+1);
-    }
-    pu_high /= norm;
-  }
-  return entries;
-}
-
 void GetOptions(int argc, char *argv[]){
   string blah;
   while(true){
     static struct option long_options[] = {
-      {"syst", required_argument, 0, 's'},
       {"model", required_argument, 0, 'm'},
-      {"tag", required_argument, 0, 't'},
+      {"xoption", required_argument, 0, 'x'},
       {"mass_pts", required_argument, 0, 'p'},
-      {"lumi", required_argument, 0, 'l'},
-      {"ibatch", required_argument, 0, 'b'},
-      {"nfiles", required_argument, 0, 'n'},
-      {"fake_PU", no_argument, 0, 0},
       {"no_syst", no_argument, 0, 0},
       {"unblind", no_argument, 0, 'u'},
       {"year", no_argument, 0, 'y'},
@@ -922,27 +736,21 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s:m:t:o:p:l:b:n:uy:d", long_options, &option_index);
+    opt = getopt_long(argc, argv, "m:x:o:p:uy:d", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
     switch(opt){
-    case 's': syst = optarg; break;
     case 'm': model = optarg; break;
-    case 't': tag = optarg; break;
+    case 'x': xoption = optarg; break;
     case 'o': outfolder = optarg; break;
     case 'p': mass_pts_str = optarg; break;
-    case 'l': lumi = atof(optarg); break;
-    case 'b': ibatch = atoi(optarg); break;
-    case 'n': nfiles = atoi(optarg); break;
     case 'u': unblind = true; break;
     case 'y': year = atoi(optarg); break;
     case 'd': debug = true; break;
     case 0:
       optname = long_options[option_index].name;
-      if(optname == "fake_PU"){
-        fake_PU = true;
-      }else if(optname == "no_syst"){
+      if(optname == "no_syst"){
         do_syst = false;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
