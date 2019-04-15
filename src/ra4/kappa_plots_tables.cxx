@@ -634,8 +634,6 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   TString blind_s = "$\\spadesuit$";
 
   //// Setting output file name
-  int digits_lumi = 1;
-  if(lumi < 1) digits_lumi = 3;
   TString outname = "tables/table_pred_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if (xoption!="") outname +="_"+xoption;
   if(unblind) outname += "_unblind";
@@ -1234,8 +1232,6 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
-  int digits_lumi = 1;
-  if(lumi < 1) digits_lumi = 3;
   double legX(opts.LeftMargin()+0.005), legY(1-0.03), legSingle = 0.05;
   legX = 0.36;
   if (mm_scen!="data") legX = 0.2;

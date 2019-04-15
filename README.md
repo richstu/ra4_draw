@@ -42,6 +42,10 @@ Generate datacard:
 
     ./compile.py && ./run/ra4/write_datacards.exe --no_syst -p 2100_100 -y 0 -u -d
 
+Get limits, this also generates the datacards for the full scan:
+    
+    ./python/send_limits.py
+
 #### Code documentation
 Doxygen-based documentation is available at [Adam's UCSB-HEP webpage](http://hep.ucsb.edu/people/ald77/documentation/doc_ra4_draw/).
 
