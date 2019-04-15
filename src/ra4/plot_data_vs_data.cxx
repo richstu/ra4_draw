@@ -63,16 +63,16 @@ int main() {
 
     PlotMaker pm;
 
-    pm.Push<Hist1D>(Axis(30,0,600,    "met", "p_{T}^{miss} [GeV]",  {}),"njets>=5 && mj14>250 && nbd>=1",  procs, log_stack);
+    pm.Push<Hist1D>(Axis(30,0,600,    "met", "p_{T}^{miss} [GeV]",  {}),"njets>=5 && mj14>250 && nbdm>=1",  procs, log_stack);
     pm.Push<Hist1D>(Axis(20,0,1500,    "st", "S_{T} [GeV]",  {}),    "met>200",  procs, log_stack);
     pm.Push<Hist1D>(Axis(30,  0, 1200,  "mj14", "M_{J} [GeV]",      {}), "1", procs, log_stack);
-    pm.Push<Hist1D>(Axis(15,  0,  300,  "mt",   "m_{T} [GeV]",      {}), "met>100 && njets>=5 && mj14>250 && nbd>=1", procs, log_stack);
+    pm.Push<Hist1D>(Axis(15,  0,  300,  "mt",   "m_{T} [GeV]",      {}), "met>100 && njets>=5 && mj14>250 && nbdm>=1", procs, log_stack);
     pm.Push<Hist1D>(Axis(11,-0.5,10.5,    "njets","N_{jets}",         {}), "1", procs, log_stack);
-    pm.Push<Hist1D>(Axis(5,-0.5,  4.5,  "nbd",  "N_{b, Deep}",      {}), "1", procs, log_stack);
-    pm.Push<Hist1D>(Axis(16,0,800,  "jets_pt[0]",  "Jet p_{T} [GeV]",  {}), "met>200 && njets>=5 && mj14>250 && nbd>=1", procs, log_stack);
-    pm.Push<Hist1D>(Axis(16,0,800,  "jets_pt[1]",  "Jet p_{T} [GeV]",  {}), "met>200 && njets>=5 && mj14>250 && nbd>=1", procs, log_stack);
-    pm.Push<Hist1D>(Axis(16,0,800,  "jets_pt[2]",  "Jet p_{T} [GeV]",  {}), "met>200 && njets>=5 && mj14>250 && nbd>=1", procs, log_stack);
-    pm.Push<Hist1D>(Axis(16,0,800,  "jets_pt[3]",  "Jet p_{T} [GeV]",  {}), "met>200 && njets>=5 && mj14>250 && nbd>=1", procs, log_stack);
+    pm.Push<Hist1D>(Axis(5,-0.5,  4.5,  "nbdm",  "N_{b, Deep}",      {}), "1", procs, log_stack);
+    pm.Push<Hist1D>(Axis(16,0,800,  "jets_pt[0]",  "Jet p_{T} [GeV]",  {}), "met>200 && njets>=5 && mj14>250 && nbdm>=1", procs, log_stack);
+    pm.Push<Hist1D>(Axis(16,0,800,  "jets_pt[1]",  "Jet p_{T} [GeV]",  {}), "met>200 && njets>=5 && mj14>250 && nbdm>=1", procs, log_stack);
+    pm.Push<Hist1D>(Axis(16,0,800,  "jets_pt[2]",  "Jet p_{T} [GeV]",  {}), "met>200 && njets>=5 && mj14>250 && nbdm>=1", procs, log_stack);
+    pm.Push<Hist1D>(Axis(16,0,800,  "jets_pt[3]",  "Jet p_{T} [GeV]",  {}), "met>200 && njets>=5 && mj14>250 && nbdm>=1", procs, log_stack);
     pm.min_print_=true;
     pm.MakePlots(1);
 }

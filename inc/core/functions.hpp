@@ -31,7 +31,6 @@ namespace Functions{
   extern const NamedFunc ntop_med_nom;
   extern const NamedFunc ntop_tight_nom;
   extern const NamedFunc offshellw;
-  extern const NamedFunc nbd;
   extern const NamedFunc hem_veto;
   extern const NamedFunc pass_run2;
   extern const NamedFunc wgt_run2;

@@ -24,13 +24,13 @@ using namespace PlotOptTypes;
 
 NamedFunc BaselineCuts(string var = "", string extra = "1") {
 	NamedFunc cuts[6] = {"nleps == 1", "st > 500", "met > 200", 
-	                     "njets >= 6", "nbd >= 1", "nveto == 0"};
+	                     "njets >= 6", "nbdm >= 1", "nveto == 0"};
   int num_cuts(6);
 	if(extra == "2l") {
 		cuts[0] = "nleps == 2";
 		cuts[2] = "met > 200 && met < 500";
 		cuts[3] = "njets >= 5";
-		cuts[4] = "nbd <= 2";
+		cuts[4] = "nbdm <= 2";
 		num_cuts = 5;
 	}
 	else if(extra == "56j")
@@ -238,7 +238,7 @@ int main() {
 		                BaselineCuts(),        temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(16,-0.5,15.5, "njets","N_{jets}",{}),    
 		                BaselineCuts("njets"), temp, lin_stack).Weight(w_tot).Tag(tag);
-    pm.Push<Hist1D>(Axis(7,-0.5,  6.5, "nbd",  "N_{b, Deep}",{}),
+    pm.Push<Hist1D>(Axis(7,-0.5,  6.5, "nbdm",  "N_{b, Deep}",{}),
 		                BaselineCuts("nbm"),   temp, lin_stack).Weight(w_tot).Tag(tag);
 		// 2 lepton
 		tag = sample_label.at(i) + "_2l";
@@ -254,7 +254,7 @@ int main() {
 	                  BaselineCuts("","2l"),     temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(16,-0.5,15.5, "njets","N_{jets}",{}),
 	                  BaselineCuts("njets","2l"),temp, lin_stack).Weight(w_tot).Tag(tag);
-    pm.Push<Hist1D>(Axis(7,-0.5,  6.5,  "nbd","N_{b, Deep}",{}),
+    pm.Push<Hist1D>(Axis(7,-0.5,  6.5,  "nbdm","N_{b, Deep}",{}),
 	                  BaselineCuts("nbm","2l"),  temp, lin_stack).Weight(w_tot).Tag(tag);
 		// 5-jet
 		tag = sample_label.at(i) + "_56jet";
@@ -270,7 +270,7 @@ int main() {
 	                  BaselineCuts("","56j"),     temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(10,-0.5,9.5, "njets","N_{jets}",{}),
 	                  BaselineCuts("","56j"),  temp, lin_stack).Weight(w_tot).Tag(tag);
-    pm.Push<Hist1D>(Axis(7,-0.5,  6.5, "nbd", "N_{b, Deep}",{}),
+    pm.Push<Hist1D>(Axis(7,-0.5,  6.5, "nbdm", "N_{b, Deep}",{}),
 	                  BaselineCuts("nbm","56j"),  temp, lin_stack).Weight(w_tot).Tag(tag);
     pm.min_print_=true;
     pm.MakePlots(sample_lumi.at(i));

@@ -86,7 +86,7 @@ int main(){
         "1", procs, all_plot_types).Weight(weights[iw]).Tag("sig");
 
     pm.Push<Hist1D>(Axis(15, 100, 850., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
-        "nleps==1&&nveto==0&&st>500&&met>100&&njets>=6&&nbd>=1",
+        "nleps==1&&nveto==0&&st>500&&met>100&&njets>=6&&nbdm>=1",
        procs, all_plot_types).Weight(weights[iw]).Tag("sig");
     pm.Push<Hist1D>(Axis(15, 100, 850., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
         "1", procs, all_plot_types).Weight(weights[iw]).Tag("sig");
@@ -97,13 +97,13 @@ int main(){
         "1", procs, all_plot_types).Weight(weights[iw]).Tag("sig");
 
     pm.Push<Hist1D>(Axis(12, -0.5, 11.5, "njets", "N_{jets}", {5.5, 8.5}),
-        "nleps==1&&nveto==0&&st>500&&met>200&&nbd>=1",
+        "nleps==1&&nveto==0&&st>500&&met>200&&nbdm>=1",
        procs, all_plot_types).Weight(weights[iw]).Tag("sig");
     pm.Push<Hist1D>(Axis(12, -0.5, 11.5, "njets", "N_{jets}", {5.5, 8.5}),
         "1", procs, all_plot_types).Weight(weights[iw]).Tag("sig");
     
     pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nleps", "N_{leps}", {0.5}),
-        "st>500&&met>200&&njets>=6&&nbd>=1",
+        "st>500&&met>200&&njets>=6&&nbdm>=1",
        procs, all_plot_types).Weight(weights[iw]).Tag("sig");
     pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nleps", "N_{leps}", {0.5}),
         "1", procs, all_plot_types).Weight(weights[iw]).Tag("sig");
@@ -116,10 +116,10 @@ int main(){
     // pm.Push<Hist1D>(Axis(30, 0, 1500., "ht_isr_me", "True ISR H_{T} [GeV]", {600.}),
     //     "1", procs, all_plot_types).Weight(weights[iw]).Tag("sig");
 
-    // pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbd", "N_{b}", {-999}),
+    // pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbdm", "N_{b}", {-999}),
     //     "nleps==1&&nveto==0&&st>500&&met>200&&njets>=6",
     //    procs, all_plot_types).Weight(weights[iw]).Tag("sig");
-    // pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbd", "N_{b}", {-999}),
+    // pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbdm", "N_{b}", {-999}),
     //     "1", procs, all_plot_types).Weight(weights[iw]).Tag("sig");
 
     // pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nels", "N_{e}", {0.5}),
@@ -148,7 +148,7 @@ int main(){
     //     "1", procs, all_plot_types).Weight(weights[iw]).Tag("sig");
 
     // pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nveto", "N_{veto}", {0.5}),
-    //     "nleps==1&&st>500&&met>200&&njets>=6&&nbd>=1",
+    //     "nleps==1&&st>500&&met>200&&njets>=6&&nbdm>=1",
     //    procs, all_plot_types).Weight(weights[iw]).Tag("sig");
     // pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nveto", "N_{veto}", {0.5}),
     //     "1", procs, all_plot_types).Weight(weights[iw]).Tag("sig");

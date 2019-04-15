@@ -57,7 +57,7 @@ int main(){
   string folder_mc17(bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/");
 
   Palette colors("txt/colors.txt", "default");
-  NamedFunc baseline = "stitch_met && nleps==1 && nveto==0 && st>500 && met>100 && njets>=5 && nbd>=1 && weight<1";
+  NamedFunc baseline = "stitch_met && nleps==1 && nveto==0 && st>500 && met>100 && njets>=5 && nbdm>=1 && weight<1";
 
   auto proc_tt1l_mc16old = Process::MakeShared<Baby_full>("2016 MC bear", Process::Type::background, 
                    kBlue, {folder_mc16old+"*_TTJets*Lept*.root"}, baseline);

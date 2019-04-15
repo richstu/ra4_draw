@@ -91,13 +91,13 @@ int main(int argc, char *argv[]){
       all_files.insert(foldermc[yr] + "*" + name + "*.root");
   }
 
-  string baseline = "nleps==1 && nveto==0 && mj14>250 && st>500 && met>100 && njets>=5 && nbd>=1";
+  string baseline = "nleps==1 && nveto==0 && mj14>250 && st>500 && met>100 && njets>=5 && nbdm>=1";
   NamedFunc baselinef = baseline && Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
 
   vector<string> nb;
-  nb.push_back("nbd==1");
-  nb.push_back("nbd==2");
-  nb.push_back("nbd>=3");
+  nb.push_back("nbdm==1");
+  nb.push_back("nbdm==2");
+  nb.push_back("nbdm>=3");
   vector<int>cols = {kBlue,kRed,kGreen+3};
 
   vector<shared_ptr<Process> > procs;

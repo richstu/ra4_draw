@@ -94,9 +94,9 @@ int main(){
   metcuts.push_back("met>500");             mjcuts.push_back("mj14>800");
 
   vector<string> nbcuts;
-  nbcuts.push_back("nbd==1");
-  nbcuts.push_back("nbd==2");
-  nbcuts.push_back("nbd>=3");
+  nbcuts.push_back("nbdm==1");
+  nbcuts.push_back("nbdm==2");
+  nbcuts.push_back("nbdm>=3");
 
   PlotMaker pm;
 
@@ -107,11 +107,11 @@ int main(){
 
   // for (auto &imj:mjcuts) {
     // for (auto &inj:njcuts) {
-    //   pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),inj && imj, procs_1l, plots).Tag("1l");
+    //   pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbdm","N_{b}"),inj && imj, procs_1l, plots).Tag("1l");
     //   pm.Push<Hist1D>(Axis(4,-0.5,3.5,Functions::ntrub,"True N_{b}"),inj && imj, procs_1l, plots).Tag("1l");
     // }
   //   for (auto &imet:metcuts) {
-  //     pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),imet && imj, procs_1l, plots).Tag("1l");
+  //     pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbdm","N_{b}"),imet && imj, procs_1l, plots).Tag("1l");
   //     pm.Push<Hist1D>(Axis(4,-0.5,3.5,Functions::ntrub,"True N_{b}"),imet && imj, procs_1l, plots).Tag("1l");
   //   }
   // }

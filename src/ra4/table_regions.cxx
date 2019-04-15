@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
       
   }
 
-  NamedFunc baseline = "mj14>250 && st>500 && nleps==1 && nveto==0 && met>100 && njets>=5 && nbd>=1";
+  NamedFunc baseline = "mj14>250 && st>500 && nleps==1 && nveto==0 && met>100 && njets>=5 && nbdm>=1";
   baseline = baseline && Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
 
   vector<shared_ptr<Process> > procs;
@@ -114,18 +114,18 @@ int main(int argc, char *argv[]){
 
   vector<string> nbnj;
   if (tag=="56j"){
-    nbnj.push_back("njets>=5 && njets<=6 && nbd==1");
-    nbnj.push_back("njets>=5 && njets<=6 && nbd==2");
-    nbnj.push_back("njets>=5 && njets<=6 && nbd>=3");
+    nbnj.push_back("njets>=5 && njets<=6 && nbdm==1");
+    nbnj.push_back("njets>=5 && njets<=6 && nbdm==2");
+    nbnj.push_back("njets>=5 && njets<=6 && nbdm>=3");
   } else if (tag=="njbins"){
-    nbnj.push_back("njets==5 && nbd>=1");
-    // nbnj.push_back("njets==6 && nbd>=1");
-    // nbnj.push_back("njets==7 && nbd>=1");
-    // nbnj.push_back("njets==8 && nbd>=1");
+    nbnj.push_back("njets==5 && nbdm>=1");
+    // nbnj.push_back("njets==6 && nbdm>=1");
+    // nbnj.push_back("njets==7 && nbdm>=1");
+    // nbnj.push_back("njets==8 && nbdm>=1");
   } else {
-    nbnj.push_back("nbd==1 && njets>=7");
-    nbnj.push_back("nbd==2 && njets>=7");
-    nbnj.push_back("nbd>=3 && njets>=7");
+    nbnj.push_back("nbdm==1 && njets>=7");
+    nbnj.push_back("nbdm==2 && njets>=7");
+    nbnj.push_back("nbdm>=3 && njets>=7");
   }
 
   vector<TString> abcd_lo  = {"mt<=140 && mj14<=MJ1X",
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]){
   vector<vector<TString>> abcds = {abcd_lo, abcd_hi};
   vector<string> abcd_names = {"lowmj","highmj"};
 
-  NamedFunc wgt = Functions::wgt_run2_partial_2017 * Functions::eff_trig_run2;
+  NamedFunc wgt = Functions::wgt_run2 * Functions::eff_trig_run2;
 
   PlotMaker pm;
   vector<string> tabnames;

@@ -24,13 +24,13 @@ using namespace PlotOptTypes;
 
 NamedFunc BaselineCuts(string var = "", string extra = "1") {
 	NamedFunc cuts[6] = {"nleps == 1", "st > 500", "met > 200", 
-	                     "njets >= 6", "nbd >= 1", "nveto == 0"};
+	                     "njets >= 6", "nbdm >= 1", "nveto == 0"};
   int num_cuts(6);
 	if(extra == "2l") {
 		cuts[0] = "nleps == 2";
 		cuts[2] = "met > 200 && met < 500";
 		cuts[3] = "njets >= 5";
-		cuts[4] = "nbd <= 2";
+		cuts[4] = "nbdm <= 2";
 		num_cuts = 5;
 	}
 	else if(extra == "5j")

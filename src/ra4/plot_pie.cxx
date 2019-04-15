@@ -149,9 +149,9 @@ int main(int argc, char *argv[]){
   mjcuts.push_back(vector<string>({"mj14>250 && mj14<=500", "mj14>500 && mj14<=800","mj14>800"}));
 
   vector<string> nbcuts;
-  nbcuts.push_back("nbd==1");
-  nbcuts.push_back("nbd==2");
-  nbcuts.push_back("nbd>=3");  
+  nbcuts.push_back("nbdm==1");
+  nbcuts.push_back("nbdm==2");
+  nbcuts.push_back("nbdm>=3");  
 
   vector<string> njcuts;
   if (Contains(tag, "1l")) {
@@ -173,9 +173,9 @@ int main(int argc, char *argv[]){
   
   NamedFunc w = Functions::wgt_run2 * Functions::eff_trig_run2;
   
-  string regcuts = "nleps==1 && nveto==0 && nbd>=1";
-  if (Contains(tag, "2l")) regcuts = "nleps==2 && nbd<=1";
-  if (Contains(tag, "veto")) regcuts = "nleps==1 && nveto==1 && nbd==1";
+  string regcuts = "nleps==1 && nveto==0 && nbdm>=1";
+  if (Contains(tag, "2l")) regcuts = "nleps==2 && nbdm<=1";
+  if (Contains(tag, "veto")) regcuts = "nleps==1 && nveto==1 && nbdm==1";
 
   //// nleps = 1      
   vector<TableRow> table_cuts_1l;
@@ -206,10 +206,10 @@ int main(int argc, char *argv[]){
   // 2L CR pie charts
   // map<string, string> cuts_2lveto, njcuts_2lveto;
   
-  // cuts_2lveto["2l"] = "nleps==2 && nbd<=1";
+  // cuts_2lveto["2l"] = "nleps==2 && nbdm<=1";
   // njcuts_2lveto["2l"] = {"njets==6", "njets>=7"};
 
-  // cuts_2lveto["veto"] = "mt>140 && nleps==1 && nveto==1 && nbd==1";
+  // cuts_2lveto["veto"] = "mt>140 && nleps==1 && nveto==1 && nbdm==1";
   // njcuts_2lveto["veto"] = {"njets==7", "njets>=8"};
   
   // vector<TableRow> table_cuts_2l;

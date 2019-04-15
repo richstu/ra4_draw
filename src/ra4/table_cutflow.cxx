@@ -79,9 +79,9 @@ int main(){
 	vector<shared_ptr<Process> > samples_16  = {mc16_other, mc16_qcd, mc16_ttv, mc16_single_t, mc16_wjets, mc16_tt1l, mc16_tt2l};
 	vector<shared_ptr<Process> > samples_17  = {mc17_other, mc17_qcd, mc17_ttv, mc17_single_t, mc17_wjets, mc17_tt1l, mc17_tt2l};
 
-	vector<string> cuts= {"nleps==1 && st>500 && met>200", "nveto==0", "njets>=6", "nbd>=1",
-	                          "mj14>250","mt>140","mj14>400","nbd>=2","met>350","met>500","njets>=9"};
-	vector<string> cuts_2l = {"nleps>=1 && st>500 && met>200", "nleps==2", "njets>=6", "met<500", "nbd<=2"};
+	vector<string> cuts= {"nleps==1 && st>500 && met>200", "nveto==0", "njets>=6", "nbdm>=1",
+	                          "mj14>250","mt>140","mj14>400","nbdm>=2","met>350","met>500","njets>=9"};
+	vector<string> cuts_2l = {"nleps>=1 && st>500 && met>200", "nleps==2", "njets>=6", "met<500", "nbdm<=2"};
 	vector<NamedFunc> cutflow;
 	vector<NamedFunc> cutflow_2l;
 	NamedFunc cut("1");

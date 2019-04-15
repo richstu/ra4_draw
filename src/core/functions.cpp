@@ -297,19 +297,6 @@ namespace Functions{
       return n;
     });
 
-  const NamedFunc nbd("nbd", [](const Baby &b) -> NamedFunc::ScalarType{
-    if(abs(b.SampleType()) == 2018) {
-      int nb(0);
-      for(size_t i = 0; i < b.jets_pt()->size(); i++) {
-        if(IsGoodJet(b,i) && b.jets_csvd()->at(i) > 0.4184)
-          nb++;
-			}
-		return nb;
-		}
-    return b.nbdm();
-  });
-
-
   const NamedFunc n_isr_match("n_isr_match", NISRMatch);
 
   const NamedFunc njets_weights_ttisr("njets_weights_ttisr", [](const Baby &b){

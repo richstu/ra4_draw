@@ -24,13 +24,13 @@ using namespace PlotOptTypes;
 
 NamedFunc BaselineCuts(string var = "", string extra = "1") {
 	NamedFunc cuts[6] = {"nleps == 1", "st > 500", "met > 200", 
-	                     "njets >= 6", "nbd >= 1", "nveto == 0"};
+	                     "njets >= 6", "nbdm >= 1", "nveto == 0"};
   int num_cuts(6);
 	if(extra == "2l") {
 		cuts[0] = "nleps == 2";
 		cuts[2] = "met > 200 && met < 500";
 		cuts[3] = "njets >= 5";
-		cuts[4] = "nbd <= 2";
+		cuts[4] = "nbdm <= 2";
 		num_cuts = 5;
 	}
 	else if(extra == "5j")
@@ -218,7 +218,7 @@ int main() {
 	                  "nleps==1 && st>500 && met>100 && njets>=4", temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(8,3.5,11.5,   "njets","N_{jets}",{}),
 	                  "nleps>=1 && st>500 && met>100 && njets>=4", temp, lin_stack).Weight(w_tot).Tag(tag);
-    pm.Push<Hist1D>(Axis(5,-0.5,  4.5, "nbd",  "N_{b, Deep}",{}),
+    pm.Push<Hist1D>(Axis(5,-0.5,  4.5, "nbdm",  "N_{b, Deep}",{}),
 	                  "nleps>=1 && st>500 && met>100 && njets>=4", temp, lin_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(25,0,  1, "jets_csvd",  "DeepCSV discriminator",{}),
 	                  "nleps>=1 && st>500 && met>100 && njets>=4", temp, log_stack).Weight(w_tot).Tag(tag);
@@ -229,9 +229,9 @@ int main() {
     pm.Push<Hist1D>(Axis(30,500,  2000, "st",  "S_{T} [GeV]",{}), 
 		                BaselineCuts("st"),    temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), 
-		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbd >= 1 && nveto == 0", temp, log_stack).Weight(w_tot).Tag(tag);
+		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbdm >= 1 && nveto == 0", temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), 
-		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbd >= 1 && nveto == 0 && mj14 < 400", temp, log_stack).Weight(w_tot).Tag(tag);
+		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbdm >= 1 && nveto == 0 && mj14 < 400", temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), 
 		                BaselineCuts("mt"),        temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), 
@@ -240,7 +240,7 @@ int main() {
 		                BaselineCuts("mj"),        temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(8,3.5,11.5,   "njets","N_{jets}",{}),    
 		                BaselineCuts("njets"), temp, lin_stack).Weight(w_tot).Tag(tag);
-    pm.Push<Hist1D>(Axis(5,-0.5,  4.5, "nbd",  "N_{b, Deep}",{}),
+    pm.Push<Hist1D>(Axis(5,-0.5,  4.5, "nbdm",  "N_{b, Deep}",{}),
 		                BaselineCuts("nbm"),   temp, lin_stack).Weight(w_tot).Tag(tag);
 			// Electron variables
     pm.Push<Hist1D>(Axis(25,0, 500, "els_pt",  "electron p_{T} [GeV]",{}), 
@@ -258,15 +258,15 @@ int main() {
 		                BaselineCuts("","nmus==1"), temp, log_stack).Weight(w_tot).Tag(tag);
 			// mT-MJ bins
     pm.Push<Hist1D>(Axis(30,  0, 1200, "mj14", "M_{J} [GeV]",{}), 
-		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbd >= 1 && nveto == 0 && mt < 140", temp, log_stack).Weight(w_tot).Tag(tag+"_mt1_MJ");
+		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbdm >= 1 && nveto == 0 && mt < 140", temp, log_stack).Weight(w_tot).Tag(tag+"_mt1_MJ");
     pm.Push<Hist1D>(Axis(30,  0, 1200, "mj14", "M_{J} [GeV]",{}), 
-		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbd >= 1 && nveto == 0 && mt > 140", temp, log_stack).Weight(w_tot).Tag(tag+"_mt2_MJ");
+		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbdm >= 1 && nveto == 0 && mt > 140", temp, log_stack).Weight(w_tot).Tag(tag+"_mt2_MJ");
     pm.Push<Hist1D>(Axis(15,0, 300, "mt",      "m_{T} [GeV]",{}), 
-		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbd >= 1 && nveto == 0 && mj14>250 && mj14<400", temp, log_stack).Weight(w_tot).Tag(tag+"_MJ1_mt");
+		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbdm >= 1 && nveto == 0 && mj14>250 && mj14<400", temp, log_stack).Weight(w_tot).Tag(tag+"_MJ1_mt");
     pm.Push<Hist1D>(Axis(15,0, 300, "mt",      "m_{T} [GeV]",{}), 
-		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbd >= 1 && nveto == 0 && mj14>400 && mj14<600", temp, log_stack).Weight(w_tot).Tag(tag+"_MJ2_mt");
+		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbdm >= 1 && nveto == 0 && mj14>400 && mj14<600", temp, log_stack).Weight(w_tot).Tag(tag+"_MJ2_mt");
     pm.Push<Hist1D>(Axis(15,0, 300, "mt",      "m_{T} [GeV]",{}), 
-		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbd >= 1 && nveto == 0 && mj14>600", temp, log_stack).Weight(w_tot).Tag(tag+"_MJ3_mt");
+		                "nleps == 1 && st > 500 && met > 200 && njets >= 4 && nbdm >= 1 && nveto == 0 && mj14>600", temp, log_stack).Weight(w_tot).Tag(tag+"_MJ3_mt");
 		// 2 lepton
 		tag = sample_label.at(i) + "_2l";
     pm.Push<Hist1D>(Axis(30,100,  700, "met",  "p_{T}^{miss} [GeV]",{}), 
@@ -279,7 +279,7 @@ int main() {
 	                  BaselineCuts("","2l"),     temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(8,3.5,11.5,   "njets","N_{jets}",{}),
 	                  BaselineCuts("njets","2l"),temp, lin_stack).Weight(w_tot).Tag(tag);
-    pm.Push<Hist1D>(Axis(5,-0.5,  4.5, "nbd", "N_{b, Deep}",{}),
+    pm.Push<Hist1D>(Axis(5,-0.5,  4.5, "nbdm", "N_{b, Deep}",{}),
 	                  BaselineCuts("nbm","2l"),  temp, lin_stack).Weight(w_tot).Tag(tag);
 		// 5 jet
 		tag = sample_label.at(i) + "_5jet";
@@ -291,7 +291,7 @@ int main() {
 		                BaselineCuts("","5j"),     temp, log_stack).Weight(w_tot).Tag(tag);
     pm.Push<Hist1D>(Axis(30,  0, 1200, "mj14", "M_{J} [GeV]",{}),
 	                  BaselineCuts("","5j"),     temp, log_stack).Weight(w_tot).Tag(tag);
-    pm.Push<Hist1D>(Axis(5,-0.5,  4.5, "nbd", "N_{b, Deep}",{}),
+    pm.Push<Hist1D>(Axis(5,-0.5,  4.5, "nbdm", "N_{b, Deep}",{}),
 	                  BaselineCuts("nbm","5j"),  temp, lin_stack).Weight(w_tot).Tag(tag);
     pm.min_print_=true;
     pm.MakePlots(sample_lumi.at(i));

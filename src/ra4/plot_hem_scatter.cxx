@@ -42,7 +42,7 @@ int main(){
 	                                     .LogMinimum(2000)
 	                                     .CanvasWidth(600)
 	                                     .Title(TitleType::info)};
-  NamedFunc baseline = "nleps==1&&st>500&&met>150&&njets>=6&&nbd>=1&&nveto==0";
+  NamedFunc baseline = "nleps==1&&st>500&&met>150&&njets>=6&&nbdm>=1&&nveto==0";
   PlotMaker pm18;
 	pm18.Push<Hist2D>(Axis(60, -3, 3,   "leps_eta", "Lepton #eta", {}), 
 	                  Axis(64,-3.2, 3.2,"leps_phi", "Lepton #phi", {}),     baseline, data18, bkg_hist10).Tag("lep_2018");

@@ -25,11 +25,11 @@
 
 using namespace std;
 namespace {
-  bool unblind = true;
+  bool unblind = false;
   bool debug = false;
-  int year = 2016;
+  int year = 0;
   string model = "T1tttt";
-  string xoption = "nominal";
+  string xoption = "nom";
   string outfolder = getenv("PWD");
   string mass_pts_str = "";
   enum SysType {kConst, kWeight, kSmear, kCorr, kMetSwap, kPU};
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   if (do_syst) {
-    cout<<"INFO:: Systematics are ON. Make sure to run on unskimmed!!"<<endl;
+    cout<<"INFO:: Systematics are ON. Make sure to run on appropriate babies, i.e. unskimmed or skim_sys_abcd!!"<<endl;
   }
   gSystem->mkdir(outfolder.c_str(), kTRUE);
 
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]){
   // --------------------------------------
   //            Processes
   //---------------------------------------
-  TString baseline("st>500 && met>200 && mj14>250 && njets>=6 && nbd>=1 && nleps==1 && nveto==0");
+  TString baseline("st>500 && met>200 && mj14>250 && njets>=6 && nbdm>=1 && nleps==1 && nveto==0");
   NamedFunc filters = Functions::hem_veto && Functions::pass_run2;
   NamedFunc nom_wgt = Functions::wgt_run2 * Functions::eff_trig_run2; 
 
@@ -185,9 +185,9 @@ int main(int argc, char *argv[]){
   unsigned nbins_met(vl_met.size());
 
   vector<string> vl_nb, vc_nb;
-  vl_nb.push_back("lnb");     vc_nb.push_back("nbd==1");
-  vl_nb.push_back("mnb");     vc_nb.push_back("nbd==2");
-  vl_nb.push_back("hnb");   vc_nb.push_back("nbd>=3");
+  vl_nb.push_back("lnb");     vc_nb.push_back("nbdm==1");
+  vl_nb.push_back("mnb");     vc_nb.push_back("nbdm==2");
+  vl_nb.push_back("hnb");   vc_nb.push_back("nbdm>=3");
   unsigned nbins_nb(vl_nb.size());
 
   vector<string> vl_nj; vector<vector<string>> vc_nj;
@@ -307,7 +307,7 @@ int main(int argc, char *argv[]){
     v_sys.push_back(sysdef("Jet ID FS", "jetid", kConst));
     v_sys.back().v_wgts.push_back("0.01");
     v_sys.push_back(sysdef("Pileup", "pu", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_pu["+to_string(i)+"]/w_isr");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_pu["+to_string(i)+"]/w_pu");
     v_sys.push_back(sysdef("Luminosity", "lumi", kConst));
     v_sys.back().v_wgts.push_back("0.025");
   } 
@@ -491,9 +491,13 @@ int main(int argc, char *argv[]){
     cout<<"Wrote headers"<<endl;
 
     //--------- Signal statistical uncertainties ----------------------------
+    ofstream fsys(outpath.ReplaceAll("datacard_","sys_")); //start writing also in a sys file
+    fsys<<"\nSYSTEMATIC MC_stat\n  PROCESSES signal\n";
     for (size_t ibin(0); ibin<nbins; ibin++) {
-      fcard<<setw(wname)<<"stat_"+vbins[ibin].tag<<setw(wdist)<<"lnN";
       TString sig_stat = Form("%.2f",1+nom_met_avg[ibin].Uncertainty()/nom_met_avg[ibin].Yield());
+      fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag <<" "<<right<<setw(10)<<nom_met_avg[ibin].Yield()
+          <<" "<<right<<setw(10)<<sig_stat<<endl;
+      fcard<<setw(wname)<<"stat_"+vbins[ibin].tag<<setw(wdist)<<"lnN";
       for (size_t jbin(0); jbin<nbins; jbin++) {
         if (ibin==jbin) fcard<<setw(wbin)<<sig_stat<<setw(wbin)<<"-";
         else fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
@@ -504,45 +508,58 @@ int main(int argc, char *argv[]){
     
 
     // ------------ Closure uncertainties
-    // ordered as: 2l lownj, 2l high nj, 5j lowmet, 5j mid met
-    vector<float> cr_unc = {1.06, 1.16, 1.16, 1.4}; // nominal 35.9 ifb, based on data CR 
-    if (lumi>130) cr_unc = {1.03, 1.07, 1.08, 1.17}; // nominal 135 ifb, based on data CR 
-
     if (do_syst){
-      fcard<<endl<<setw(wname)<<"dilep_lownj"<<setw(wdist)<<"lnN";
-      for (size_t ibin(0); ibin<nbins; ibin++) {
-        if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,"6to8j")) 
-          fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc[0],2);
-        else 
-          fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+      vector<vector<float>> cr_unc_nj = {{1.09, 1.09}, {1.09, 1.09}}; 
+      vector<vector<float>> cr_unc_nb = {{1.10, 1.20, 1.25}, {1.10, 1.20, 1.25}}; 
+      vector<vector<float>> cr_unc_met = {{1.15, 1.21}, {1.18, 1.30}}; //with 9% unc on Njets already folded in 
+      for (unsigned imj(0); imj<vl_mj.size(); imj++){
+        fcard<<endl<<setw(wname)<<"cr_unc_nj_"+vl_mj[imj]<<setw(wdist)<<"lnN";
+        for (size_t ibin(0); ibin<nbins; ibin++) {
+          if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_mj[imj])) {
+            if(Contains(vbins[ibin].tag,"lnj")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nj[imj][0],2);
+            else 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nj[imj][1],2);
+          } else {
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+          }
+        }
       }
-      fcard<<endl<<setw(wname)<<"dilep_highnj"<<setw(wdist)<<"lnN";
-      for (size_t ibin(0); ibin<nbins; ibin++) {
-        if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,"ge9j")) 
-          fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc[1],2);
-        else 
-          fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+      for (unsigned imj(0); imj<vl_mj.size(); imj++){
+        fcard<<endl<<setw(wname)<<"cr_unc_nb_"+vl_mj[imj]<<setw(wdist)<<"lnN";
+        for (size_t ibin(0); ibin<nbins; ibin++) {
+          if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_mj[imj])) {
+            if (Contains(vbins[ibin].tag,"lnb")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nb[imj][0],2);
+            else if (Contains(vbins[ibin].tag,"mnb")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nb[imj][1],2);
+            else
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nb[imj][2],2);
+          } else {
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+          }
+        }
       }
-      fcard<<endl<<setw(wname)<<"fivejet_lowmet"<<setw(wdist)<<"lnN";
-      for (size_t ibin(0); ibin<nbins; ibin++) {
-        if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,"met200to350")) 
-          fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc[2],2);
-        else 
-          fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+      for (unsigned imj(0); imj<vl_mj.size(); imj++){
+        fcard<<endl<<setw(wname)<<"cr_unc_met_"+vl_mj[imj]<<setw(wdist)<<"lnN";
+        for (size_t ibin(0); ibin<nbins; ibin++) {
+          if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_mj[imj])) {
+            if (Contains(vbins[ibin].tag,"lmet")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+            else if (Contains(vbins[ibin].tag,"mmet")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_met[imj][0],2);
+            else
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_met[imj][1],2);
+          } else {
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+          }
+        }
       }
-      fcard<<endl<<setw(wname)<<"fivejet_highmet"<<setw(wdist)<<"lnN";
-      for (size_t ibin(0); ibin<nbins; ibin++) {
-        if(Contains(vbins[ibin].tag,"r2_") && 
-          (Contains(vbins[ibin].tag,"met350to500") || Contains(vbins[ibin].tag,"met500"))) 
-          fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc[3],2);
-        else 
-          fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-      }
+      fcard<<endl;
       cout<<"Wrote CR-based closure uncertainties"<<endl;
     }
 
     //calculate uncertainties and write results to three files
-    ofstream fsys(outpath.ReplaceAll("datacard_","sys_"));
     cout<<"Writing to "<<outpath<<endl;
     if(do_syst){
       for (auto &sys: v_sys) {
@@ -583,27 +600,21 @@ int main(int argc, char *argv[]){
             dn = sig_params[isig][sys.ind + 2*ibin + 1].Yield()/nom_yield - 1;
           } 
           // convert to ra4_stats input and write to file
-          double ln = (up>0 ? 1:-1)*max(up>0 ? up : (1/(1+up)-1), dn>0 ? dn : (1/(1+dn)-1));
-          if (sys.sys_type == kConst) ln = up;
-          if (sys.tag !="rms_pdf") {
-            if(sys.tag.Contains("trig")){
-              fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag <<" "<<right<<setw(10)<<Form("%.3f",ln) <<endl;
-            } else {
-              fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag <<" "<<right<<setw(10)<<Form("%.2f",ln) <<endl;
-            }
-          }
 
           // write systematics to datacard
-          ln = max(up>0 ? 1+up : 1/(up+1), dn>0 ? 1+dn : 1/(dn+1));
-          if (std::isnan(ln) || std::isinf(ln)) {
+          double unc = fabs(up)>fabs(dn) ? fabs(up) : fabs(dn);
+          unc = (up>0 ? 1:-1)*unc + 1.;
+
+          if (std::isnan(unc) || std::isinf(unc)) {
             cout <<" Found bad unc. set to 0 -> "<<left<<setw(10)<<sys.tag <<left<<setw(10)<<vbins[ibin].tag 
                  <<" "<<right<<setprecision(0)<<setw(25)<<sig_params[isig][ibin].NEffective() 
                  <<" "<<setprecision(5)<<setw(15)<<sig_params[isig][ibin].Yield() 
                  <<" "<<setprecision(10)<<setw(15)<<sig_params[isig][ibin].Weight()<<endl;  
-            ln = 0;
+            unc = 2; // put a 100% uncertainty, this is probably very poor stats bin for signal, i.e. 0
           } 
-          if (sys.sys_type == kConst) ln = 1+up;
-          fcard<<setw(wbin)<<Form("%.2f",ln)<<setw(wbin)<<"-";
+          fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag <<" "<<right<<setw(10)<<nom_met_avg[ibin].Yield()
+              <<" "<<right<<setw(10)<<Form("%.2f",unc-1) <<endl;
+          fcard<<setw(wbin)<<Form("%.2f",unc)<<setw(wbin)<<"-";
         } // loop over bins
         fcard<<endl;
       } // loop over systematics
@@ -709,7 +720,7 @@ TString nom2sys_bin(TString ibin, size_t shift_index){
   ibin.ReplaceAll("st", "sys_st["+to_string(shift_index)+"]");
   ibin.ReplaceAll("mj14", "sys_mj14["+to_string(shift_index)+"]");
   ibin.ReplaceAll("njets", "sys_njets["+to_string(shift_index)+"]");
-  ibin.ReplaceAll("nbd", "sys_nbd["+to_string(shift_index)+"]");
+  ibin.ReplaceAll("nbdm", "sys_nbdm["+to_string(shift_index)+"]");
   return ibin;
 }
 

@@ -187,9 +187,6 @@ void FunctionParser::ResolveVariables() const{
       else if(token.string_rep_ == "ntop_loose_decor"){
 	token = Functions::ntop_loose_decor;
       }
-      else if(token.string_rep_ == "nbd"){
-	token = Functions::nbd;
-      }
       else if(token.string_rep_ == "ntop_med_decor"){
 	token = Functions::ntop_med_decor;
       }

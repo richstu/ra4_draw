@@ -57,7 +57,7 @@ int main(){
   Palette colors("txt/colors.txt", "default");
 
 
-  NamedFunc baseline = "stitch_met && nleps==1 && nveto==0 && st>500 && met>100 && njets>=5 && nbd>=1 && weight<1";
+  NamedFunc baseline = "stitch_met && nleps==1 && nveto==0 && st>500 && met>100 && njets>=5 && nbdm>=1 && weight<1";
 
   set<string> ttfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root"};
 

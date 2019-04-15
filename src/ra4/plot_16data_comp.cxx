@@ -83,7 +83,7 @@ int main() {
 	pm.Push<Hist1D>(Axis(30,  0, 1200,  "mj14", "M_{J} [GeV]",      {}), baseline, data_16, log_shape).Tag(bef);
 	pm.Push<Hist1D>(Axis(15,  0,  300,  "mt",   "m_{T} [GeV]",      {}), baseline, data_16, log_shape).Tag(bef);
   pm.Push<Hist1D>(Axis(8,2.5,10.5,    "njets","N_{jets}",         {}), baseline, data_16, lin_shape).Tag(bef);
-  pm.Push<Hist1D>(Axis(5,-0.5,  4.5,  "nbd",  "N_{b, Deep}",      {}), baseline, data_16, lin_shape).Tag(bef);
+  pm.Push<Hist1D>(Axis(5,-0.5,  4.5,  "nbdm",  "N_{b, Deep}",      {}), baseline, data_16, lin_shape).Tag(bef);
   pm.Push<Hist1D>(Axis(16,0,800,  "jets_pt",  "Jet p_{T} [GeV]",  {}), baseline, data_16, log_shape).Tag(bef);
   pm.Push<Hist1D>(Axis(20,0,1,  "jets_csvd",  "Jet Deep CSV",     {}), baseline, data_16, log_shape).Tag(bef);
   pm.min_print_=true;

@@ -83,13 +83,13 @@ int main(){
   NamedFunc wgt = "weight";
 
   PlotMaker pm;
-  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),"njets==5 && met>200 && met<350 && mj14>250 && mj14<400", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
-  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),"njets==5 && met>200 && met<350 && mj14>400 && mj14<500", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
-  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),"njets==5 && met>200 && met<350 && mj14>500", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
+  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbdm","N_{b}"),"njets==5 && met>200 && met<350 && mj14>250 && mj14<400", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
+  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbdm","N_{b}"),"njets==5 && met>200 && met<350 && mj14>400 && mj14<500", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
+  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbdm","N_{b}"),"njets==5 && met>200 && met<350 && mj14>500", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
 
-  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),"njets>=7 && met>200 && met<350 && mj14>250 && mj14<400", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
-  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),"njets>=7 && met>200 && met<350 && mj14>400 && mj14<500", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
-  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbd","N_{b}"),"njets>=7 && met>200 && met<350 && mj14>500", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
+  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbdm","N_{b}"),"njets>=7 && met>200 && met<350 && mj14>250 && mj14<400", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
+  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbdm","N_{b}"),"njets>=7 && met>200 && met<350 && mj14>400 && mj14<500", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
+  pm.Push<Hist1D>(Axis(4,-0.5,3.5,"nbdm","N_{b}"),"njets>=7 && met>200 && met<350 && mj14>500", ttnb_procs, plot_types).Weight(wgt).Tag("ttnb");
 
 
   pm.min_print_ = true;
