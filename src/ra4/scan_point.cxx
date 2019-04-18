@@ -27,7 +27,7 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   string file_name = "";
-  bool do_signif = true;
+  bool do_signif = false;
 }
 
 int main(int argc, char *argv[]){
@@ -46,39 +46,35 @@ int main(int argc, char *argv[]){
   else if(model == "TChiHH") xsec::higgsinoCrossSection(mglu, xsec, xsec_unc);
   string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
 
-  string workdir = MakeDir("scan_point_"+glu_lsp);
+  string workdir = MakeDir("scan_point_"+glu_lsp+"_");
  
   ostringstream command;
   string done = " < /dev/null &> /dev/null; ";
   done = "; ";
-  //Need to get modify these file names
-  // string up_file_name = file_name;
-  // if (!do_cards) ReplaceAll(up_file_name, "xsecNom", "xsecUp");
-  // string down_file_name = file_name;
-  // if (!do_cards) ReplaceAll(down_file_name, "xsecNom", "xsecDown");
   command
-    // << "export origdir=$(pwd); "
-    // << "cd ~/code/CMSSW_8_1_0/src/; "
-    // << "eval `scramv1 runtime -sh`; "
-    // << "cd $origdir; "
     << "ln -s $(readlink -f " << file_name << ") " << workdir << done
-    // << "ln -s $(readlink -f " << up_file_name << ") " << workdir << done
-    // << "ln -s $(readlink -f " << down_file_name << ") " << workdir << done
-    << "cd " << workdir << done
-    << "combine -M Asymptotic " << GetBaseName(file_name) << done;
-    // << "combine -M Asymptotic --run observed --name Up " << GetBaseName(up_file_name) << done
-    // << "combine -M Asymptotic --run observed --name Down " << GetBaseName(down_file_name) << done;
+    << "cd " << workdir << done;
+  if (mglu < 801)
+    command << "combine -M AsymptoticLimits --rMax 0.1 " << GetBaseName(file_name) << done;
+  else if (mglu < 901)
+    command << "combine -M AsymptoticLimits --rMax 0.5 " << GetBaseName(file_name) << done;
+  else if (mglu < 1151)
+    command << "combine -M AsymptoticLimits --rMax 2 " << GetBaseName(file_name) << done;
+  else 
+    command << "combine -M AsymptoticLimits " << GetBaseName(file_name) << done;
   if(do_signif){
     command
-      << "combine -M ProfileLikelihood --significance --expectSignal=1 --verbose=999999 --rMin=-10. --uncapped=1 " << GetBaseName(file_name)
+      << "combine -M ProfileLikelihood --significance --expectSignal=1 " 
+      "--verbose=999999 --rMin=-10. --uncapped=1 " << GetBaseName(file_name)
       << " < /dev/null &> signif_obs.log; "
-      << "combine -M ProfileLikelihood --significance --expectSignal=1 -t -1 --verbose=999999 --rMin=-10. --uncapped=1 --toysFreq " << GetBaseName(file_name)
+      << "combine -M ProfileLikelihood --significance --expectSignal=1 -t -1 "
+      "--verbose=999999 --rMin=-10. --uncapped=1 --toysFreq " << GetBaseName(file_name)
       << " < /dev/null &> signif_exp.log; ";
   }
   command << flush;
   execute(command.str());
   
-  string limits_file_name = workdir+"/higgsCombineTest.Asymptotic.mH120.root";
+  string limits_file_name = workdir+"/higgsCombineTest.AsymptoticLimits.mH120.root";
   TFile limits_file(limits_file_name.c_str(), "read");
   if(!limits_file.IsOpen()) ERROR("Could not open limits file "+limits_file_name);
   TTree *tree = static_cast<TTree*>(limits_file.Get("limit"));
@@ -101,7 +97,7 @@ int main(int argc, char *argv[]){
   double obs = limit;
   limits_file.Close();
 
-  // string up_limits_file_name = workdir+"/higgsCombineUp.Asymptotic.mH120.root";
+  // string up_limits_file_name = workdir+"/higgsCombineUp.AsymptoticLimits.mH120.root";
   // TFile up_limits_file(up_limits_file_name.c_str(), "read");
   // if(!up_limits_file.IsOpen()) ERROR("No \"up\" file "+up_limits_file_name);
   // tree = static_cast<TTree*>(up_limits_file.Get("limit"));
@@ -113,7 +109,7 @@ int main(int argc, char *argv[]){
   // double obs_up = limit;
   // up_limits_file.Close();
 
-  // string down_limits_file_name = workdir+"/higgsCombineDown.Asymptotic.mH120.root";
+  // string down_limits_file_name = workdir+"/higgsCombineDown.AsymptoticLimits.mH120.root";
   // TFile down_limits_file(down_limits_file_name.c_str(), "read");
   // if(!down_limits_file.IsOpen()) ERROR("No \"down\" file "+down_limits_file_name);
   // tree = static_cast<TTree*>(down_limits_file.Get("limit"));

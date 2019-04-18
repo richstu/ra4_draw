@@ -485,27 +485,34 @@ int main(int argc, char *argv[]){
       fcard<<setw(wbin)<<"0"<<setw(wbin)<<"1";
 
     fcard<<endl<<setw(wname)<<"rate"<<setw(wdist)<<" ";
-    for (size_t ibin(0); ibin<nbins; ibin++) 
-      fcard<<setw(wbin)<<Form("%.2f",nom_met_avg[ibin].Yield())<<setw(wbin)<<"1";
+    if (xoption!="noabcd") {
+      for (size_t ibin(0); ibin<nbins; ibin++) 
+        fcard<<setw(wbin)<<Form("%.2f",nom_met_avg[ibin].Yield())<<setw(wbin)<<"1";
+    } else {
+      for (size_t ibin(0); ibin<nbins; ibin++) 
+        fcard<<setw(wbin)<<Form("%.2f",nom_met_avg[ibin].Yield())<<setw(wbin)<<RoundNumber(bkg_yields[ibin]*0.7,2);
+    }
     fcard<<endl<<endl;
     cout<<"Wrote headers"<<endl;
 
     //--------- Signal statistical uncertainties ----------------------------
     ofstream fsys(outpath.ReplaceAll("datacard_","sys_")); //start writing also in a sys file
-    fsys<<"\nSYSTEMATIC MC_stat\n  PROCESSES signal\n";
-    for (size_t ibin(0); ibin<nbins; ibin++) {
-      TString sig_stat = Form("%.2f",1+nom_met_avg[ibin].Uncertainty()/nom_met_avg[ibin].Yield());
-      fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag <<" "<<right<<setw(10)<<nom_met_avg[ibin].Yield()
-          <<" "<<right<<setw(10)<<sig_stat<<endl;
-      fcard<<setw(wname)<<"stat_"+vbins[ibin].tag<<setw(wdist)<<"lnN";
-      for (size_t jbin(0); jbin<nbins; jbin++) {
-        if (ibin==jbin) fcard<<setw(wbin)<<sig_stat<<setw(wbin)<<"-";
-        else fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+    if (do_syst) {
+      fsys<<"\nSYSTEMATIC MC_stat\n  PROCESSES signal\n";
+      for (size_t ibin(0); ibin<nbins; ibin++) {
+        TString sig_stat = Form("%.2f",1+nom_met_avg[ibin].Uncertainty()/nom_met_avg[ibin].Yield());
+        TString sig_stat_fsys = Form("%.2f",nom_met_avg[ibin].Uncertainty()/nom_met_avg[ibin].Yield());
+        fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag 
+            <<" "<<right<<setw(10)<<sig_stat_fsys<<endl;
+        fcard<<setw(wname)<<"stat_"+vbins[ibin].tag<<setw(wdist)<<"lnN";
+        for (size_t jbin(0); jbin<nbins; jbin++) {
+          if (ibin==jbin) fcard<<setw(wbin)<<sig_stat<<setw(wbin)<<"-";
+          else fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+        }
+        fcard<<endl;
       }
-      fcard<<endl;
+      cout<<"Wrote signal stat. uncertainties"<<endl;
     }
-    cout<<"Wrote signal stat. uncertainties"<<endl;
-    
 
     // ------------ Closure uncertainties
     if (do_syst){
@@ -612,7 +619,8 @@ int main(int argc, char *argv[]){
                  <<" "<<setprecision(10)<<setw(15)<<sig_params[isig][ibin].Weight()<<endl;  
             unc = 2; // put a 100% uncertainty, this is probably very poor stats bin for signal, i.e. 0
           } 
-          fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag <<" "<<right<<setw(10)<<nom_met_avg[ibin].Yield()
+          if (unc<0) unc = 0.;
+          fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag 
               <<" "<<right<<setw(10)<<Form("%.2f",unc-1) <<endl;
           fcard<<setw(wbin)<<Form("%.2f",unc)<<setw(wbin)<<"-";
         } // loop over bins

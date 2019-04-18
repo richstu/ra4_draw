@@ -83,8 +83,8 @@ void ReadPoints(vector<double> &vmx,
     if(Contains(model_, "T1") || Contains(model_, "T5")) vxsec.push_back(xsec);
     else vxsec.push_back(pxsec);
     vobs.push_back(pobs);
-    vobsup.push_back(pobsup);
-    vobsdown.push_back(pobsdown);
+    vobsup.push_back(pobs/(1+pxsecunc));
+    vobsdown.push_back(pobs/(1-pxsecunc));
     vexp.push_back(pexp);
     vup.push_back(pup);
     vdown.push_back(pdown);
@@ -131,7 +131,7 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
   g.GetHistogram()->SetTitle(title.c_str());
   g.GetHistogram()->SetTickLength(0., "Z");
 
-  TCanvas c;
+  TCanvas c("can","can", 800, 900);
   c.cd();
 
   TLatex ltitle(c.GetLeftMargin(), 1.-0.5*c.GetTopMargin(),
@@ -284,8 +284,9 @@ void MakeLimitPlot(vector<double> vmx,
   l.SetTextSize(0.05);
   l.SetBorderSize(0);
   
-  TCanvas c;
+  TCanvas c("","",1200, 950);
   c.cd();
+  c.SetRightMargin(0.15);
 
   TLatex ltitle(c.GetLeftMargin(), 1.-0.5*c.GetTopMargin(),
                 "#font[62]{CMS}#scale[0.76]{#font[52]{ Supplementary}}");
@@ -303,8 +304,8 @@ void MakeLimitPlot(vector<double> vmx,
   TGraph cup = DrawContours(gup, 2, 2, 5, num_smooth_);
   TGraph cdown = DrawContours(gdown, 2, 2, 5, num_smooth_);
   TGraph cexp = DrawContours(gexp, 2, 1, 5, num_smooth_, 1.);
-  // TGraph cobsup = DrawContours(gobsup, 1, 2, 5, num_smooth_);
-  // TGraph cobsdown = DrawContours(gobsdown, 1, 2, 5, num_smooth_);
+  TGraph cobsup = DrawContours(gobsup, 1, 2, 5, num_smooth_);
+  TGraph cobsdown = DrawContours(gobsdown, 1, 2, 5, num_smooth_);
   TGraph cobs = DrawContours(gobs, 1, 1, 5, num_smooth_, 1.);
 
   l.AddEntry(&cexp, "Expected", "l");
@@ -326,8 +327,8 @@ void MakeLimitPlot(vector<double> vmx,
   TFile file((filebase+".root").c_str(), "recreate");
   glim.GetHistogram()->Write((model_+"ObservedExcludedXsec").c_str());
   cobs.Write((model_+"ObservedLimit").c_str());
-  // cobsup.Write((model_+"ObservedLimitUp").c_str());
-  // cobsdown.Write((model_+"ObservedLimitDown").c_str());
+  cobsup.Write((model_+"ObservedLimitUp").c_str());
+  cobsdown.Write((model_+"ObservedLimitDown").c_str());
   cexp.Write((model_+"ExpectedLimit").c_str());
   cup.Write((model_+"ExpectedLimitUp").c_str());
   cdown.Write((model_+"ExpectedLimitDown").c_str());

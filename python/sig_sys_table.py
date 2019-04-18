@@ -41,12 +41,13 @@ def printHeader(out_file):
     print("  \\renewcommand{\\arraystretch}{1.2}", file=out_file)
     print("  \\begin{tabular}[tbp!]{l||ccc|ccc||ccc|ccc||ccc|ccc}\\hline\\hline", file=out_file)
     print("  \\multirow{3}{*}{Uncertainty [\\%]} & \\multicolumn{6}{c||}{$200<\\MET\\leq350$} & \\multicolumn{6}{c||}{$350<\\MET\\leq500$} & \\multicolumn{6}{c}{$\\MET>500$}\\\\", file=out_file)
-    print("  \\cline{2-19} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c||}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c||}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c}{$\\njets\\geq9$}\\\\", file=out_file)
+    print("  \\cline{2-19} & \\multicolumn{3}{c|}{ Low $\\njets$} & \\multicolumn{3}{c||}{High $\\njets$} & \\multicolumn{3}{c|}{ Low $\\njets$} & \\multicolumn{3}{c||}{High $\\njets$} & \\multicolumn{3}{c|}{ Low $\\njets$} & \\multicolumn{3}{c}{High $\\njets$}\\\\", file=out_file)
     print("  \\cline{2-19} & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$\\\\", file=out_file)
 
 def prettySysName(sys_name):
     sys_name = sys_name.strip()
-    if   sys_name == "lepeff":     return "Lepton efficiency"
+    if   sys_name == "MC_stat":    return "MC sample statistics"
+    elif sys_name == "lepeff":     return "Lepton efficiency"
     elif sys_name == "fs_lepeff":  return "FastSim lepton efficiency"
     elif sys_name == "trig":       return "Trigger efficiency"
     elif sys_name == "bctag":      return "\\cPqb{}-tag efficiency"
@@ -76,7 +77,7 @@ def printSystematic(out_file, sys_name, values):
 
     return [[[ None for i in range(3) ] for j in range(2) ] for k in range(3) ]
 
-def recordValue(line, values):
+def recordValue(line, values, lowmj):
     try:
         name, value = line.split()
     except ValueError as e:
@@ -87,23 +88,26 @@ def recordValue(line, values):
     if region != "r4":
         return
 
-    met, njets, nb = bin_name.split("_")
+    met, nb, njets, mj = bin_name.split("_")
+
+    if (lowmj and mj =="hmj") or ((not lowmj) and mj =="lmj"):
+        return
 
     imet = None
-    if   met == "lowmet":  imet = 0
-    elif met == "medmet":  imet = 1
-    elif met == "highmet": imet = 2
+    if   met == "lmet":  imet = 0
+    elif met == "mmet":  imet = 1
+    elif met == "hmet": imet = 2
     else: raise Exception("Bad MET: {}".format(met))
 
     injets = None
-    if   njets == "lownj":  injets = 0
-    elif njets == "highnj": injets = 1
+    if   njets == "lnj":  injets = 0
+    elif njets == "hnj": injets = 1
     else: raise Exception("Bad Njets: {}".format(njets))
 
     inb = None
-    if   nb == "1b": inb = 0
-    elif nb == "2b": inb = 1
-    elif nb == "3b": inb = 2
+    if   nb == "lnb": inb = 0
+    elif nb == "mnb": inb = 1
+    elif nb == "hnb": inb = 2
     else: raise Exception("Bad Nb: {}".format(nb))
 
     value = int(round(100.*float(value)))
@@ -111,7 +115,10 @@ def recordValue(line, values):
     if value == 0:
         values[imet][injets][inb] = "$<1$"
     else:
-        values[imet][injets][inb] = "${}$".format(str(value))
+        if (value==100):
+           values[imet][injets][inb] = "$-$"
+        else:            
+            values[imet][injets][inb] = "${}$".format(str(value))
 
 def modelName(path):
     name = os.path.basename(path)
@@ -122,7 +129,7 @@ def modelName(path):
     else:
         return name
 
-def printModel(out_file, input_file):
+def printModel(out_file, input_file, lowmj):
     model_name = modelName(input_file.name)
     print("  \\hline", file=out_file)
     print("  & \\multicolumn{{18}}{{c}}{{Signal model: {} }}\\\\".format(model_name), file=out_file)
@@ -146,7 +153,7 @@ def printModel(out_file, input_file):
             continue
         else:
             syst_written = False
-            recordValue(line, values)
+            recordValue(line, values, lowmj)
             
     if sys_name is not None and is_signal and not syst_written:
         values = printSystematic(out_file, sys_name, values)
@@ -166,14 +173,14 @@ def compileLaTeX(output_path):
     os.chdir(cwd)
     print("\nCompiled {}\n".format(output_path))
 
-def sigSysTable(output_path, input_paths, do_compile):
+def sigSysTable(output_path, input_paths, do_compile, lowmj):
     output_path = fullPath(output_path)
     input_paths = [ fullPath(f) for sublist in input_paths for f in glob.glob(sublist) if os.path.isfile(f) ]
     with open(output_path, "w") as out_file:
         printHeader(out_file)
         for input_path in input_paths:
             with open(input_path, "r") as input_file:
-                printModel(out_file, input_file)
+                printModel(out_file, input_file, lowmj)
         printFooter(out_file)
 
     print("\nWrote signal systematics table to {}\n".format(output_path))
@@ -187,6 +194,7 @@ if __name__ == "__main__":
     parser.add_argument("output_file", help="Output LaTeX file containing table")
     parser.add_argument("input_files", nargs="*", help="Input text file(s) containing systematics")
     parser.add_argument("--no_compile", action="store_true", help="Do not run pdflatex on resulting .tex file")
+    parser.add_argument("--lowmj", action="store_true", help="Do the lowmj")
     args = parser.parse_args()
 
-    sigSysTable(args.output_file, args.input_files, not args.no_compile)
+    sigSysTable(args.output_file, args.input_files, not args.no_compile, args.lowmj)
