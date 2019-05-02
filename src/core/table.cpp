@@ -332,7 +332,7 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
   }
 
   if(row.is_data_row_){
-    file << "    " << setw(50) << row.label_;
+    file << "    " << setw(52) << row.label_;
     if(backgrounds_.size() > 1){
       double totyield = luminosity*GetYield(backgrounds_, irow);
       for(size_t i = 0; i < backgrounds_.size(); ++i){
@@ -344,13 +344,14 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
 	  if(irow==0)
 	    file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow);
 	  else{
-	    double eff = backgrounds_.at(i)->sumw_.at(irow)/backgrounds_.at(i)->sumw_.at(irow-1);
+	    double eff = 100*backgrounds_.at(i)->sumw_.at(irow)/backgrounds_.at(i)->sumw_.at(irow-1);
 	    double eff_relUnc = hypot(sqrt(backgrounds_.at(i)->sumw2_.at(irow))/backgrounds_.at(i)->sumw_.at(irow),sqrt(backgrounds_.at(i)->sumw2_.at(irow-1))/backgrounds_.at(i)->sumw_.at(irow-1));
 	    if(do_unc_){
 	      if(eff != eff || eff_relUnc != eff_relUnc)
-		file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}";
+// 		file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}";
+		file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
 	      else
-		file << " & \\num{" << eff << "}$\\pm$\\num{" << eff*eff_relUnc << "}";
+		file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
 	    }
 	    else
 	      file << " & " << eff;
@@ -363,20 +364,22 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
 	if(irow==0)
 	  file << " & " << totyield;
 	else{
-	  double eff = totyield / (luminosity*GetYield(backgrounds_, irow-1));
+	  double eff = 100*totyield / (luminosity*GetYield(backgrounds_, irow-1));
 	  double eff_relUnc = hypot(luminosity*GetError(backgrounds_,irow)/totyield, GetError(backgrounds_,irow-1)/GetYield(backgrounds_,irow-1));
 	  if(do_unc_){
 	    if(eff != eff || eff_relUnc != eff_relUnc)
-	      file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}"; 
+		    file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
+// 	      file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}"; 
 	    else
-	      file << " & \\num{" << eff << "}$\\pm$\\num{" << eff*eff_relUnc << "}";
+		    file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
+// 	      file << " & \\num{" << eff << "}$\\pm$\\num{" << eff*eff_relUnc << "}";
 	  }
 	  else
 	    file << " & " << eff;
 	}
       }
       else
-	file << " & " << totyield; // << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
+	file << " & " << setw(10) << totyield; // << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
     }else if(backgrounds_.size() == 1){
       file << " & " << luminosity*GetYield(backgrounds_, irow) << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
     }
@@ -395,9 +398,9 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
 	if(irow==0)
 	  file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
 	else if(irow<=3)
-	  file << " & " << signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
+	  file << " & " << setprecision(1) << 100*signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
 	else
-	  file << " & " << signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
+	  file << " & " << setprecision(1) << 100*signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
       }
       else
 	file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);

@@ -2,10 +2,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <string.h>
 
-#include <unistd.h>
-#include <getopt.h>
-
+#include "TMath.h"
 #include "TError.h"
 #include "TColor.h"
 
@@ -15,25 +14,54 @@
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
-#include "core/table.hpp"
+#include "core/hist1d.hpp"
+#include "core/event_scan.hpp"
 #include "core/utilities.hpp"
 #include "core/functions.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
 
-int main(){
-  gErrorIgnoreLevel = 6000;
-	Process::Type back = Process::Type::background;
-	Process::Type sig = Process::Type::signal;
+NamedFunc BaselineCuts(string var = "", string extra = "1") {
+	NamedFunc cuts[6] = {"nleps == 1", "st > 500", "met > 200", 
+	                     "njets >= 7", "nbdm >= 1", "nveto == 0"};
+  int num_cuts(6);
+	if(extra == "2l") {
+		cuts[0] = "nleps == 2";
+		cuts[2] = "met > 200 && met < 500";
+		cuts[3] = "njets >= 5";
+		cuts[4] = "nbdm <= 2";
+		num_cuts = 5;
+	}
+	else if(extra == "56j")
+		cuts[3] = "njets >= 5 && njets <= 6";
+	int out(-1);
+	if     (var == "nleps") cuts[0] = "nleps >= 1";
+	else if(var == "met")   cuts[2] = "met > 100";
+	else if(var == "njets") out = 3;
+// 	else if(var == "njets") cuts[3] = "njets >= 4";
+	else if(var == "nbm")   out = 4;
+	NamedFunc baseline(cuts[0]);
+	for(int i = 1; i < num_cuts; i++) 
+		if(i != out) baseline = baseline && cuts[i];
+// 	if(extra == "1") { 
+// 		if(var == "mt") baseline = baseline && "mj14 < 400";
+// 		else if(var == "mt") baseline = baseline && "mt > 140";
+// 		else baseline = baseline && "(mj14 < 400 || mt < 140)";
+// 	}
+	if(extra != "1" && extra != "2l" && extra != "56j") {
+	  NamedFunc temp = extra;
+	  baseline = baseline && temp;
+	}
+	return baseline;
+}
 
+int main() {
+  gErrorIgnoreLevel = 6000;
   Palette colors("txt/colors.txt", "default");
-	bool old16(false);
-	// MC samples
-  string mc16_path("/net/cms2/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_standard/");
-  string mc17_path("/net/cms2/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_standard/");
-  string mc18_path("/net/cms2/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_standard/");
-	NamedFunc q_cuts(Functions::pass_run2);
+	Process::Type back = Process::Type::background;
+	Process::Type data = Process::Type::data;
+
   const NamedFunc w_run2("w_run2", [](const Baby &b) -> NamedFunc::ScalarType{
     if (b.SampleType()<0) return 1.;
     double wgt = b.weight();
@@ -44,7 +72,29 @@ int main(){
     else 
       return wgt;
   });
-	if(old16) mc16_path = "/net/cms2/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_standard/";
+
+  // Data
+  string data16_path("/net/cms2/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/");
+  string data17_path("/net/cms2/cms2r0/babymaker/babies/2018_12_17/data/merged_database_standard/");
+  string data18_path("/net/cms2/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/");
+// 	NamedFunc q_cuts("met/met_calo < 5 && pass_ra2_badmu && st < 10000");
+	NamedFunc q_cuts(Functions::pass_run2);
+
+	auto data_2016 = Process::MakeShared<Baby_full>("2016 Data",data,kBlack,  
+	                 {data16_path+"*.root"},q_cuts && Functions::trig_run2);
+	auto data_2017 = Process::MakeShared<Baby_full>("2017 Data",data,kBlack,
+	                 {data17_path+"*.root"},q_cuts && Functions::trig_run2);
+	auto data_2018 = Process::MakeShared<Baby_full>("2018 Data",data,kBlack,
+	                 {data18_path+"*.root"},q_cuts && Functions::hem_veto && Functions::trig_run2);
+	auto data_RunII = Process::MakeShared<Baby_full>("Run II Data",data,kBlack,
+	                 {data16_path+"*.root",
+	                  data17_path+"*.root",
+	                  data18_path+"*.root"},q_cuts && Functions::hem_veto && Functions::trig_run2);
+
+	// MC samples
+  string mc16_path("/net/cms2/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_standard/");
+  string mc17_path("/net/cms2/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_standard/");
+  string mc18_path("/net/cms2/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_standard/");
 
   auto mc16_tt1l     = Process::MakeShared<Baby_full>("t#bar{t} (1l)", back, colors("tt_1l"), 
 	                     {mc16_path+"*_TTJets*SingleLept*.root"}, "stitch_met" && q_cuts);
@@ -55,11 +105,12 @@ int main(){
   auto mc16_single_t = Process::MakeShared<Baby_full>("Single t",  back, colors("single_t"), 
 	                     {mc16_path+"*_ST_*.root"},"stitch_met" && q_cuts);
   auto mc16_ttv      = Process::MakeShared<Baby_full>("t#bar{t}V",      back, colors("ttv"), 
-	                     {mc16_path+"*_TTWJets*.root", mc16_path+"*_TTZ*.root", mc16_path+"*_TTGJets*.root"}, "stitch_met" && q_cuts);
-  auto mc16_qcd      = Process::MakeShared<Baby_full>("QCD", back, colors("qcd"), 
-	                     {mc16_path+"*QCD_HT*0_Tune*.root", mc16_path+"*QCD_HT*Inf_Tune*.root"},"stitch_met" && q_cuts);
+	                     {mc16_path+"*_TTWJets*.root", 
+											  mc16_path+"*_TTZ*.root", 
+												mc16_path+"*_TTGJets*.root"}, "stitch_met" && q_cuts);
   auto mc16_other    = Process::MakeShared<Baby_full>("Other",        back, colors("other"),
-                       {mc16_path+"*DYJetsToLL*.root", 
+	                     {mc16_path+"*QCD_HT*0_Tune*.root", mc16_path+"*QCD_HT*Inf_Tune*.root",
+                        mc16_path+"*DYJetsToLL*.root", 
                         mc16_path+"*_ZJet*.root", mc16_path+"*_ttHTobb_M125_*.root",
                         mc16_path+"*_TTTT_*.root",
                         mc16_path+"*_WH_HToBB*.root", mc16_path+"*_ZH_HToBB*.root", 
@@ -73,21 +124,21 @@ int main(){
 	                     {mc17_path+"*_TTJets*DiLept*.root"}, "stitch_met" && q_cuts);
   auto mc17_wjets    = Process::MakeShared<Baby_full>("W+jets", back, colors("wjets"), 
 	                     {mc17_path+"*_WJetsToLNu_*.root"},
-											 "pass && met/met_calo < 5 && pass_ra2_badmu && st < 10000 && ((stitch_met && type!=2000) || (type==2000 && ht_isr_me<100))");
+											 q_cuts && "((stitch_met && type!=2000) || (type==2000 && ht_isr_me<100))");
   auto mc17_single_t = Process::MakeShared<Baby_full>("Single t", back, colors("single_t"), 
 	                     {mc17_path+"*_ST_*.root"}, "stitch_met" && q_cuts);
   auto mc17_ttv      = Process::MakeShared<Baby_full>("t#bar{t}V", back, colors("ttv"), 
 	                     {mc17_path+"*_TTWJets*.root", mc17_path+"*_TTZ*.root", mc17_path+"*_TTGJets*.root"}, "stitch_met" && q_cuts);
-  auto mc17_qcd      = Process::MakeShared<Baby_full>("QCD", back, colors("qcd"), 
-	                     {mc17_path+"*QCD_HT*0_Tune*.root", mc17_path+"*QCD_HT*Inf_Tune*.root"},"stitch_met" && q_cuts);
   auto mc17_other    = Process::MakeShared<Baby_full>("Other", back, colors("other"),
-                       {mc17_path+"*DYJetsToLL_M-50_HT*.root", 
+	                     {mc17_path+"*QCD_HT*0_Tune*.root", mc17_path+"*QCD_HT*Inf_Tune*.root",
+                        mc17_path+"*DYJetsToLL_M-50_HT*.root", 
                         mc17_path+"*_ZJet*.root",              mc17_path+"*_ttHTobb_M125_*.root",
                         mc17_path+"*_TTTT_*.root",
                         mc17_path+"*_WH_HToBB*.root",          mc17_path+"*_ZH_HToBB*.root", 
                         mc17_path+"*_WWTo*.root",           
                         mc17_path+"*_WZ*.root",
-                        mc17_path+"_ZZ_*.root"}, "stitch_met" && q_cuts);
+                        mc17_path+"_ZZ_*.root"}, "((stitch_met && type!=6000) || (type==6000 && ht_isr_me<100))" && q_cuts);
+
 
   auto mc18_tt1l     = Process::MakeShared<Baby_full>("t#bar{t} (1l)", back, colors("tt_1l"), 
 	                     {mc18_path+"*_TTJets*SingleLept*.root"}, "stitch_met" && q_cuts && Functions::hem_veto);
@@ -100,16 +151,16 @@ int main(){
 	                     {mc18_path+"*_ST_*.root"}, "stitch_met" && q_cuts && Functions::hem_veto);
   auto mc18_ttv      = Process::MakeShared<Baby_full>("t#bar{t}V", back, colors("ttv"), 
 	                     {mc18_path+"*_TTWJets*.root", mc18_path+"*_TTZ*.root", mc18_path+"*_TTGJets*.root"}, "stitch_met" && q_cuts && Functions::hem_veto);
-  auto mc18_qcd      = Process::MakeShared<Baby_full>("QCD", back, colors("qcd"), 
-	                     {mc18_path+"*QCD_HT*0_Tune*.root", mc18_path+"*QCD_HT*Inf_Tune*.root"},"stitch_met" && q_cuts);
   auto mc18_other    = Process::MakeShared<Baby_full>("Other", back, colors("other"),
-                       {mc18_path+"*DYJetsToLL_M-50_HT*.root", 
+	                     {mc18_path+"*QCD_HT*0_Tune*.root", mc18_path+"*QCD_HT*Inf_Tune*.root",
+                        mc18_path+"*DYJetsToLL_M-50_HT*.root", 
                         mc18_path+"*_ZJet*.root",              mc18_path+"*_ttHTobb_M125_*.root",
                         mc18_path+"*_TTTT_*.root",
                         mc18_path+"*_WH_HToBB*.root",          mc18_path+"*_ZH_HToBB*.root", 
                         mc18_path+"*_WWTo*.root",           
                         mc18_path+"*_WZ*.root",
                         mc18_path+"_ZZ_*.root"}, "(stitch_met && type!=6000) || (type==6000 && ht_isr_me<100)" && q_cuts && Functions::hem_veto);
+
 
   auto mcRunII_tt1l     = Process::MakeShared<Baby_full>("t#bar{t} (1l)", back, colors("tt_1l"), 
 	                        {mc16_path+"*_TTJets*SingleLept*.root",
@@ -132,18 +183,16 @@ int main(){
 	                        {mc16_path+"*_TTWJets*.root", mc16_path+"*_TTZ*.root", mc16_path+"*_TTGJets*.root",
 	                         mc17_path+"*_TTWJets*.root", mc17_path+"*_TTZ*.root", mc17_path+"*_TTGJets*.root",
 	                         mc18_path+"*_TTWJets*.root", mc18_path+"*_TTZ*.root", mc18_path+"*_TTGJets*.root"}, "stitch_met" && q_cuts && Functions::hem_veto);
-  auto mcRunII_qcd      = Process::MakeShared<Baby_full>("QCD", back, colors("qcd"), 
-	                        {mc16_path+"*QCD_HT*0_Tune*.root", mc16_path+"*QCD_HT*Inf_Tune*.root",
-	                         mc17_path+"*QCD_HT*0_Tune*.root", mc17_path+"*QCD_HT*Inf_Tune*.root",
-	                         mc18_path+"*QCD_HT*0_Tune*.root", mc18_path+"*QCD_HT*Inf_Tune*.root"},"stitch_met" && q_cuts && Functions::hem_veto);
   auto mcRunII_other    = Process::MakeShared<Baby_full>("Other", back, colors("other"),
-                          {mc16_path+"*DYJetsToLL_M-50_HT*.root", 
+	                        {mc16_path+"*QCD_HT*0_Tune*.root", mc16_path+"*QCD_HT*Inf_Tune*.root",
+                           mc16_path+"*DYJetsToLL_M-50_HT*.root", 
                            mc16_path+"*_ZJet*.root",              mc16_path+"*_ttHTobb_M125_*.root",
                            mc16_path+"*_TTTT_*.root",
                            mc16_path+"*_WH_HToBB*.root",          mc16_path+"*_ZH_HToBB*.root", 
                            mc16_path+"*_WWTo*.root",           
                            mc16_path+"*_WZ*.root",
                            mc16_path+"_ZZ_*.root",
+	                         mc17_path+"*QCD_HT*0_Tune*.root", mc17_path+"*QCD_HT*Inf_Tune*.root",
                            mc17_path+"*DYJetsToLL_M-50_HT*.root", 
                            mc17_path+"*_ZJet*.root",              mc17_path+"*_ttHTobb_M125_*.root",
                            mc17_path+"*_TTTT_*.root",
@@ -151,6 +200,7 @@ int main(){
                            mc17_path+"*_WWTo*.root",           
                            mc17_path+"*_WZ*.root",
                            mc17_path+"_ZZ_*.root",
+	                         mc18_path+"*QCD_HT*0_Tune*.root", mc18_path+"*QCD_HT*Inf_Tune*.root",
                            mc18_path+"*DYJetsToLL_M-50_HT*.root", 
                            mc18_path+"*_ZJet*.root",              mc18_path+"*_ttHTobb_M125_*.root",
                            mc18_path+"*_TTTT_*.root",
@@ -158,87 +208,55 @@ int main(){
                            mc18_path+"*_WWTo*.root",           
                            mc18_path+"*_WZ*.root",
                            mc18_path+"_ZZ_*.root"}, "(stitch_met && type!=6000) || (type==6000 && ht_isr_me<100)" && q_cuts && Functions::hem_veto);
-  string sig16_path("/net/cms27/cms27r0/babymaker/babies/2019_01_11/T1tttt/unskimmed/");
-  string sig17_path("/net/cms2/cms2r0/babymaker/babies/2018_12_17/T1tttt/unskimmed/");
-  string sig18_path("/net/cms2/cms2r0/babymaker/babies/2019_03_30/T1tttt/unskimmed/");
 
-  auto sig16_NC = Process::MakeShared<Baby_full>("NC",sig, colors("t1tttt"), {sig16_path+"*mGluino-2100_mLSP-100_*.root"},q_cuts);
-  auto sig16_C  = Process::MakeShared<Baby_full>( "C",sig, colors("t1tttt"), {sig16_path+"*mGluino-1900_mLSP-1250*.root"},q_cuts);
-  auto sig17_NC = Process::MakeShared<Baby_full>("NC",sig, colors("t1tttt"), {sig17_path+"*mGluino-2100_mLSP-100_*.root"},q_cuts);
-  auto sig17_C  = Process::MakeShared<Baby_full>( "C",sig, colors("t1tttt"), {sig17_path+"*mGluino-1900_mLSP-1250*.root"},q_cuts);
-  auto sig18_NC = Process::MakeShared<Baby_full>("NC",sig, colors("t1tttt"), {sig18_path+"*mGluino-2100_mLSP-100_*.root"},q_cuts && Functions::hem_veto);
-  auto sig18_C  = Process::MakeShared<Baby_full>( "C",sig, colors("t1tttt"), {sig18_path+"*mGluino-1900_mLSP-1250*.root"},q_cuts && Functions::hem_veto);
-  auto sigRunII_NC = Process::MakeShared<Baby_full>("NC",sig, colors("t1tttt"), 
-                     {sig16_path+"*mGluino-2100_mLSP-100_*.root",
-                      sig17_path+"*mGluino-2100_mLSP-100_*.root",
-                      sig18_path+"*mGluino-2100_mLSP-100_*.root"},q_cuts && Functions::hem_veto);
-  auto sigRunII_C  = Process::MakeShared<Baby_full>( "C",sig, colors("t1tttt"), 
-                     {sig16_path+"*mGluino-1900_mLSP-1250*.root",
-                      sig17_path+"*mGluino-1900_mLSP-1250*.root",
-                      sig18_path+"*mGluino-1900_mLSP-1250*.root"},q_cuts && Functions::hem_veto);
+	vector<shared_ptr<Process> > data16_mc16  = {data_2016, mc16_tt1l, mc16_tt2l, mc16_wjets, mc16_single_t, mc16_ttv, mc16_other};
+	vector<shared_ptr<Process> > data17_mc17  = {data_2017, mc17_tt1l, mc17_tt2l, mc17_wjets, mc17_single_t, mc17_ttv, mc17_other};
+	vector<shared_ptr<Process> > data18_mc18  = {data_2018, mc18_tt1l, mc18_tt2l, mc18_wjets, mc18_single_t, mc18_ttv, mc18_other};
+	vector<shared_ptr<Process> > data18_mc17  = {data_2018, mc17_tt1l, mc17_tt2l, mc17_wjets, mc17_single_t, mc17_ttv, mc17_other};
+	vector<shared_ptr<Process> > data_mc_RunII  = {data_RunII, mcRunII_tt1l, mcRunII_tt2l, mcRunII_wjets, mcRunII_single_t, mcRunII_ttv, mcRunII_other};
+	vector<vector<shared_ptr<Process> >> data_mc = {data16_mc16, data17_mc17, data18_mc18, /*data18_mc17,*/ data_mc_RunII};
 
-	vector<shared_ptr<Process> > samples_16  = {mc16_other, mc16_qcd, mc16_ttv, mc16_single_t, mc16_wjets, mc16_tt1l, mc16_tt2l, sig16_NC, sig16_C};
-	vector<shared_ptr<Process> > samples_17  = {mc17_other, mc17_qcd, mc17_ttv, mc17_single_t, mc17_wjets, mc17_tt1l, mc17_tt2l, sig17_NC, sig17_C};
-	vector<shared_ptr<Process> > samples_18  = {mc18_other, mc18_qcd, mc18_ttv, mc18_single_t, mc18_wjets, mc18_tt1l, mc18_tt2l, sig18_NC, sig18_C};
-	vector<shared_ptr<Process> > samples_RunII  = {mcRunII_other, mcRunII_qcd, mcRunII_ttv, mcRunII_single_t, mcRunII_wjets, mcRunII_tt1l, mcRunII_tt2l, sigRunII_NC, sigRunII_C};
+  PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
+  PlotOpt log_ratios("txt/plot_styles.txt", "CMSPaper");
+	log_lumi.Title(TitleType::info)
+					.YAxis(YAxisType::log)
+					.Stack(StackType::data_norm)
+	        .Bottom(BottomType::ratio)
+					.FileExtensions({"pdf"});
+  PlotOpt lin_stack_info = log_lumi().YAxis(YAxisType::linear); 
+	vector<PlotOpt> lin_stack = {lin_stack_info};
+	vector<PlotOpt> log_stack = {log_lumi};
 
-	vector<string> cuts= {"nleps==1 && st>500 && met>200",
-                        "nveto==0",
-                        "(njets>=7 && met<500) || (njets>=6 && met>500)",
-                        "nbdm>=1",
-	                      "mj14>250",
-                        "mt>140",
-                        "mj14>400",
-                        "nbdm>=2",
-                        "met>350 && mj14>450",
-                        "met>500 && mj14>500",
-                        "njets>=8"};
-	vector<string> cuts_2l = {"nleps>=1 && st>500 && met>200", "nleps==2", "njets>=6", "met<500", "nbdm<=2"};
-	vector<NamedFunc> cutflow;
-	vector<NamedFunc> cutflow_2l;
-	NamedFunc cut("1");
-	for(size_t i = 0; i < cuts.size(); i++) {
-	  cut = cut && cuts.at(i);
-		cutflow.push_back(cut);
-	}
-	cut = "1";
-	for(size_t i = 0; i < cuts_2l.size(); i++) {
-	  cut = cut && cuts_2l.at(i);
-		cutflow_2l.push_back(cut);
-	}
-  vector<string> label = {"RunII", "2018", "2017", "2016"};
-  vector<double> lumi  = {137,       59.6,   41.5,   35.9};
-  vector<vector<shared_ptr<Process> > > sample = {samples_RunII, samples_18, samples_17, samples_16};
+	vector<shared_ptr<Process> > temp;
+	vector<string> sample_label = {"2016", "2017", "2018","RunII"};
+	vector<double> sample_lumi = {35.9, 41.5, 60, 1};
+	string tag;
   NamedFunc w_fr2(Functions::wgt_run2 * Functions::eff_trig_run2);
-  for(int i = 0; i < 4; i++) {
+  w_fr2.Name("w_fr2");
+  NamedFunc w_tot(w_run2 * Functions::eff_trig_run2);
+  NamedFunc base("nleps==1 && st>500 && mj14>250 && nbdm>=1 && nveto==0");
+  vector<NamedFunc> nj = {"njets>=7", "njets>=5 && njets<=6","njets>=5"};
+  vector<string> tnj = {"7pj","56j","5pj"};
+  vector<NamedFunc> met = {"met>200&&met<=350","met>350&&met<=500","met>500"};
+  vector<string> tmet = {"LowMET","MidMET","HighMET"};
+  vector<string> low_abcd_mj = {"mj14 < 400", "mj14 > 400 && mj14 < 500", "mj14 > 500"};
+  vector<string> mid_abcd_mj = {"mj14 < 450", "mj14 > 450 && mj14 < 650", "mj14 > 650"};
+  vector<string> hig_abcd_mj = {"mj14 < 500", "mj14 > 500 && mj14 < 800", "mj14 > 800"};
+  vector<vector<string>> abcd_mj = {low_abcd_mj, mid_abcd_mj, hig_abcd_mj};
+  vector<string> tmj = {"loMJ","midMJ","hiMJ"};
+	for(size_t i = 0; i < 4; i++) {
     PlotMaker pm;
-    pm.Push<Table>(label.at(i) + "_cutflow", vector<TableRow>{
-        TableRow("$1\\ell, S_{T} > 500$ GeV, MET $> 200$ GeV",               cutflow.at(0) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("Track veto",                                               cutflow.at(1) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$N_{\\rm jets} \\geq$ 7(6 if \\ptmiss $>$500) GeV",        cutflow.at(2) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$N_{\\rm b} \\geq 1$",                                     cutflow.at(3) ,0,1,w_fr2/lumi.at(i)),
-  	    TableRow("$M_{J} > 250$ GeV",                                        cutflow.at(4) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$m_{T} > 140$ GeV",                                        cutflow.at(5) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$M_{J} > 400$ GeV",                                        cutflow.at(6) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$N_{\\rm b} \\geq 2$",                                     cutflow.at(7) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("MET $> 350$ GeV and $M_{J} > 450$ GeV",                    cutflow.at(8) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("MET $> 500$ GeV and $M_{J} > 500$ GeV",                    cutflow.at(9) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$N_{\\rm jets} \\geq 8$",                                  cutflow.at(10),0,0,w_fr2/lumi.at(i))
-  	    },sample.at(i),false,true,false,false);
-    pm.Push<Table>(label.at(i)+"_cutflow_eff", vector<TableRow>{
-        TableRow("$1\\ell, S_{T} > 500$ GeV, MET $> 200$ GeV",               cutflow.at(0) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("Track veto",                                               cutflow.at(1) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$N_{\\rm jets} \\geq$ 7(6 if \\ptmiss $>$500) GeV",        cutflow.at(2) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$N_{\\rm b} \\geq 1$",                                     cutflow.at(3) ,0,1,w_fr2/lumi.at(i)),
-  	    TableRow("$M_{J} > 250$ GeV",                                        cutflow.at(4) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$m_{T} > 140$ GeV",                                        cutflow.at(5) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$M_{J} > 400$ GeV",                                        cutflow.at(6) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$N_{\\rm b} \\geq 2$",                                     cutflow.at(7) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("MET $> 350$ GeV and $M_{J} > 450$ GeV",                    cutflow.at(8) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("MET $> 500$ GeV and $M_{J} > 500$ GeV",                    cutflow.at(9) ,0,0,w_fr2/lumi.at(i)),
-  	    TableRow("$N_{\\rm jets} \\geq 8$",                                  cutflow.at(10),0,0,w_fr2/lumi.at(i))
-  	    },sample.at(i),false,true,false,false,true,true);
-    pm.min_print_ = true;
-    pm.MakePlots(lumi.at(i));
+	  temp = data_mc.at(i);
+    if(i == 3) w_tot = w_fr2;
+		tag = sample_label.at(i) + "_mTcheck_";
+    for(int b = 0; b < 3; b++) 
+      for(int j = 0; j < 3; j++)
+        for(int m = 0; m < 3; m++) 
+          pm.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), 
+		                      base && nj[j] && abcd_mj[b][m] && met[b],temp,log_stack).Weight(w_tot)
+                          .Tag(tag+tmet.at(b)+"_"+tnj.at(j)+"_"+tmj.at(m));
+    pm.min_print_=true;
+    pm.MakePlots(sample_lumi.at(i));
   }
 }
+

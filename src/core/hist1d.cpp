@@ -1349,11 +1349,10 @@ vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
     auto &leg = legends.at(GetLegendIndex(entries_added, n_entries, legends.size()));
     ostringstream label;
     if(luminosity_ != 1.0) label << fixed << setprecision(1) << "L=" << luminosity_ << " fb^{-1}";
-    else label << fixed << setprecision(1);
+    else label << fixed << "L=137 fb^{-1}";
     //else label << fixed << setprecision(1) << "L=" << 36.8 << " fb^{-1}";
     if(this_opt_.Stack() == StackType::data_norm && datas_.size() > 0){
-      if(luminosity_ != 1.0) label << ", (" << 100.*mc_scale_ << "#pm" << 100.*mc_scale_error_ << ")%";
-      else label << "Norm. ratio = " << 100.*mc_scale_ << "#pm" << 100.*mc_scale_error_ << "%";
+      label << ", (" << 100.*mc_scale_ << "#pm" << 100.*mc_scale_error_ << ")%";
     }
     auto entry = leg->AddEntry(&blank_, label.str().c_str(), "f");
     entry->SetFillStyle(0);
