@@ -107,8 +107,8 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> bkg_hist = {style().Stack(StackType::data_norm).Title(TitleType::supplementary)};
   vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::simulation_supplementary)};
 
-  vector<NamedFunc> met_bins = {"met>350&&met<=500 && njets>=7", "met>500 && njets>=6"};
-  vector<set<double>> mj_lines = {{250, 450, 650},{250, 500, 800}};
+  vector<NamedFunc> met_bins = {"met>200 && njets>=7", "met>200&&met<=350 && njets>=7", "met>350&&met<=500 && njets>=7", "met>500 && njets>=6"};
+  vector<set<double>> mj_lines = {{250, 400},{250, 400, 500},{250, 450, 650},{250, 500, 800}};
   vector<NamedFunc> nb_bins = {"nbdm>=2"};
 
   PlotMaker pm;

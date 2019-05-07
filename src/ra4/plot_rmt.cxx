@@ -37,7 +37,7 @@ using namespace Functions;
 namespace{
   bool debug = false;
   float lumi=1.;
-  int year=2016;
+  int year=0;
   TString tag = "";
   enum Regions {r1, r2, r3, r4};
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
   map<int, string> foldermc;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
-  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/mc/merged_mcbase_stdnj5/"; 
+  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_stdnj5/"; 
 
   set<string> vnames_other = {
     "_WJetsToLNu_HT","_ST_","_TTW","_TTZ", "_DYJetsToLL_M-50_HT","_ZJet","_ttH",
@@ -132,9 +132,9 @@ int main(int argc, char *argv[]){
   plotcuts.push_back({tag+"_njets", "met>200 && met<=350", {"njets==5 && mj14<400", "njets==6 && mj14<400", "njets==7 && mj14<400", "njets>=8 && mj14<400",
                                                             "njets==5 && mj14>=400 && mj14<=500", "njets==6 && mj14>=400 && mj14<=500", "njets==7 && mj14>=400 && mj14<=500", "njets>=8 && mj14>=400 && mj14<=500", 
                                                             "njets==5 && mj14>500", "njets==6 && mj14>500", "njets==7 && mj14>500", "njets>=8 && mj14>500"}});
-  // plotcuts.push_back({tag+"_njets", "met>350 && met<=500", {"njets==5 && mj14<450", "njets==6 && mj14<450", "njets==7 && mj14<450", "njets==8 && mj14<450", "njets>=9 && mj14<450",
-  //                                                           "njets==5 && mj14>=450 && mj14<=650", "njets==6 && mj14>=450 && mj14<=650", "njets==7 && mj14>=450 && mj14<=650", "njets==8 && mj14>=450 && mj14<=650", "njets>=9 && mj14>=450 && mj14<=650",
-  //                                                           "njets==5 && mj14>650", "njets==6 && mj14>650", "njets==7 && mj14>650", "njets==8 && mj14>650", "njets>=9 && mj14>650"}});
+  plotcuts.push_back({tag+"_njets", "met>350 && met<=500", {"njets==5 && mj14<450", "njets==6 && mj14<450", "njets==7 && mj14<450", "njets==8 && mj14<450", "njets>=9 && mj14<450",
+                                                            "njets==5 && mj14>=450 && mj14<=650", "njets==6 && mj14>=450 && mj14<=650", "njets==7 && mj14>=450 && mj14<=650", "njets==8 && mj14>=450 && mj14<=650", "njets>=9 && mj14>=450 && mj14<=650",
+                                                            "njets==5 && mj14>650", "njets==6 && mj14>650", "njets==7 && mj14>650", "njets==8 && mj14>650", "njets>=9 && mj14>650"}});
   // plotcuts.push_back({tag+"_njets", "met>500"            , {"njets==5 && mj14<500", "njets==6 && mj14<500", "njets==7 && mj14<500", "njets==8 && mj14<500", "njets>=9 && mj14<500",
   //                                                           "njets==5 && mj14>=650 && mj14<=800", "njets==6 && mj14>=650 && mj14<=800", "njets==7 && mj14>=650 && mj14<=800", "njets==8 && mj14>=650 && mj14<=800", "njets>=9 && mj14>=650 && mj14<=800",
   //                                                           "njets==5 && mj14>800", "njets==6 && mj14>800", "njets==7 && mj14>800", "njets==8 && mj14>800", "njets>=9 && mj14>800"}});

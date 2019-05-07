@@ -15,7 +15,7 @@ example_dir = "/net/cms2/cms2r0/babymaker/babies/2018_12_17/T1tttt/skim_sys_abcd
 release = 'CMSSW_8_1_0'
 card = 'cards/datacard_SMS-T1tttt_mGluino-XXX_mLSP-YYY_0_nom.txt'
 
-only_missed = True
+only_missed = False
 
 runfolder = "batch_"+model+"/" 
 if not os.path.exists(runfolder):

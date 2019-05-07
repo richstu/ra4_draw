@@ -502,6 +502,10 @@ int main(int argc, char *argv[]){
       for (size_t ibin(0); ibin<nbins; ibin++) {
         TString sig_stat = Form("%.2f",1+nom_met_avg[ibin].Uncertainty()/nom_met_avg[ibin].Yield());
         TString sig_stat_fsys = Form("%.2f",nom_met_avg[ibin].Uncertainty()/nom_met_avg[ibin].Yield());
+        if (sig_stat.Contains("-nan") || sig_stat.Contains("nan")) {
+          sig_stat = "2.00";
+          sig_stat_fsys = "1.00";
+        }
         fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag 
             <<" "<<right<<setw(10)<<sig_stat_fsys<<endl;
         fcard<<setw(wname)<<"stat_"+vbins[ibin].tag<<setw(wdist)<<"lnN";
@@ -613,7 +617,7 @@ int main(int argc, char *argv[]){
           unc = (up>0 ? 1:-1)*unc + 1.;
 
           if (std::isnan(unc) || std::isinf(unc)) {
-            cout <<" Found bad unc. set to 0 -> "<<left<<setw(10)<<sys.tag <<left<<setw(10)<<vbins[ibin].tag 
+            cout <<" Found bad unc. -> "<<left<<setw(10)<<sys.tag <<left<<setw(10)<<vbins[ibin].tag
                  <<" "<<right<<setprecision(0)<<setw(25)<<sig_params[isig][ibin].NEffective() 
                  <<" "<<setprecision(5)<<setw(15)<<sig_params[isig][ibin].Yield() 
                  <<" "<<setprecision(10)<<setw(15)<<sig_params[isig][ibin].Weight()<<endl;  
@@ -645,9 +649,12 @@ int main(int argc, char *argv[]){
       for (unsigned imet(0); imet<nbins_met; imet++){
         ostringstream kappas; kappas.clear();
         string _label = "r1_"+vl_met[imet];
+        double rp1_min(0.5*data_yields[iyield]), rp1_max(2.*data_yields[iyield]);
+        if (rp1_min<50) rp1_min = 0;
+        if (rp1_max<50) rp1_max = 50;
         fcard<<"rp_"<<left<<setw(wbin)<<_label<<setw(10)<<"rateParam"<<left<<setw(wbin)<<_label<<"bkg "
              <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
-             <<(data_yields[iyield]<50 ? " [0,100]":"")<<endl;
+             <<" ["<<RoundNumber(rp1_min,0)<<","<<RoundNumber(rp1_max,0)<<"]"<<endl;
         if(debug) cout <<left<<setw(wbin)<<_label 
                        <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
                        <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
@@ -661,9 +668,12 @@ int main(int argc, char *argv[]){
             for (unsigned imj(0); imj<nbins_mj; imj++){
               _label = "r2_"+vl_met[imet]+'_'+vl_nb[inb]+'_'+vl_nj[inj];
               _label += '_'+CopyReplaceAll(vl_mj[imj],"XXX",v_metdep_midmj[imet]);
+              double rp2_min(0.5*data_yields[iyield]), rp2_max(2.*data_yields[iyield]);
+              if (rp2_min<50) rp2_min = 0;
+              if (rp2_max<50) rp2_max = 50;
               fcard<<"rp_"<<left<<setw(wbin)<<_label<<setw(10)<<"rateParam"<<left<<setw(wbin)<<_label<<"bkg "
                    <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
-                   <<(data_yields[iyield]<50 ? " [0,100]":"")<<endl;
+                   <<" ["<<RoundNumber(rp2_min,0)<<","<<RoundNumber(rp2_max,0)<<"]"<<endl;
               if(debug) cout <<left<<setw(wbin)<<_label
                              <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
                              <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)
@@ -676,9 +686,12 @@ int main(int argc, char *argv[]){
           }
         }
         _label = "r3_"+vl_met[imet];
+        double rp3_min(0.5*data_yields[iyield]), rp3_max(2.*data_yields[iyield]);
+        if (rp3_min<50) rp3_min = 0;
+        if (rp3_max<50) rp3_max = 50;
         fcard<<"rp_"<<left<<setw(wbin)<<_label<<setw(10)<<"rateParam"<<left<<setw(wbin)<<_label<<"bkg "
              <<right<<setw(10)<<RoundNumber(data_yields[iyield],digit)
-             <<(data_yields[iyield]<50 ? " [0,100]":"")<<endl;
+             <<" ["<<RoundNumber(rp3_min,0)<<","<<RoundNumber(rp3_max,0)<<"]"<<endl;
         if(debug) cout <<left<<setw(wbin)<<_label
                        <<right<<setw(15)<<RoundNumber(sig_params[0][iyield].Yield(),2)
                        <<right<<setw(15)<<RoundNumber(nom_met_avg[iyield].Yield(),2)

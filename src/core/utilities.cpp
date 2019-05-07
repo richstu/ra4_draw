@@ -210,6 +210,10 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nbd==1", "1b");
   ReplaceAll(code, "nbd==2", "2b");
   ReplaceAll(code, "nbd>=3", "#geq3b");
+  ReplaceAll(code, "nbdm==1", "1b");
+  ReplaceAll(code, "nbdm==2", "2b");
+  ReplaceAll(code, "nbdm>=3", "#geq3b");
+  ReplaceAll(code, "nbdm>=1", "#geq1b");
 
   ReplaceAll(code, "1==1", "Full Sample");
   ReplaceAll(code, "el_tks_chg*lep_charge<0", "OS");
@@ -279,9 +283,9 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "npv", "N_{PV}");
   ReplaceAll(code, "mumu_pt1", "p_{T}^{#mu}");
   ReplaceAll(code, "elel_pt1", "p_{T}^{e}");
-  ReplaceAll(code, "mj14>=400 && mj14<=500", "M_{J} 400-500");
-  ReplaceAll(code, "mj14>=450 && mj14<=650", "M_{J} 450-650");
-  ReplaceAll(code, "mj14>=500 && mj14<=800", "M_{J} 500-800");
+  ReplaceAll(code, "mj14>400&&mj14<=500", "M_{J} 400-500");
+  ReplaceAll(code, "mj14>450&&mj14<=650", "M_{J} 450-650");
+  ReplaceAll(code, "mj14>500&&mj14<=800", "M_{J} 500-800");
 
   ReplaceAll(code, "abs(mc_id)==1000006", "stop");
   ReplaceAll(code, "abs(mc_id)==1000022", "LSP");
@@ -320,6 +324,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nbm_moriond","N_{b}");
   ReplaceAll(code, "nbm","N_{b}");
   ReplaceAll(code, "nbd","N_{b}");
+  ReplaceAll(code, "nbdm","N_{b}");
   ReplaceAll(code, "nbl","N_{b,l}");
   ReplaceAll(code, "mj14", " M_{J}");
   ReplaceAll(code, "mj", " M_{J}");

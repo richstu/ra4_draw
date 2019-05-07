@@ -41,12 +41,66 @@ int main(){
   string nj8 = "N#kern[-0.1]{#scale[1.15]{#lower[-0.15]{_{jets}}}}#kern[0.2]{#geq}#kern[0.2]{8}";
   string nj7 = "N#kern[-0.1]{#scale[1.15]{#lower[-0.15]{_{jets}}}}#kern[0.2]{#geq}#kern[0.2]{7}";
   string nj6 = "N#kern[-0.1]{#scale[1.15]{#lower[-0.15]{_{jets}}}}#kern[0.2]{#geq}#kern[0.2]{6}";
-  string nb3 = "N#kern[-0.15]{#scale[1.15]{#lower[-0.15]{_{b}}}}#kern[0.2]{#geq}#kern[0.2]{3}";
+  string nb1 = "N#kern[-0.15]{#scale[1.15]{#lower[-0.15]{_{b}}}}#kern[0.2]{#geq}#kern[0.2]{1}";
   string nb2 = "N#kern[-0.15]{#scale[1.15]{#lower[-0.15]{_{b}}}}#kern[0.2]{#geq}#kern[0.2]{2}";
 
   TString baseline("st>500 && met>200 && njets>=6 && nbdm>=1 && nleps==1 && nveto==0");
   NamedFunc filters = Functions::hem_veto && Functions::pass_run2;
-  NamedFunc nom_wgt = Functions::wgt_run2 * Functions::eff_trig_run2; 
+
+  NamedFunc kappa_wgt("kappa_wgt", [](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.met()>200 && b.met()<=350) {
+      if (b.mt()>140) {
+        return 1.;
+      } else {
+        if (b.mj14()<=400) {
+          return 1.;
+        } else if (b.mj14()>400 && b.mj14()<=500) {
+          if (b.nbdm()==1)         return (b.njets()==7 ? 1.05 : 0.84);
+          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.03 : 0.96);
+          else                     return (b.njets()==7 ? 1.33 : 1.04);
+        } else {
+          if (b.nbdm()==1)         return (b.njets()==7 ? 1.32 : 1.22);
+          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.33 : 1.23);
+          else                     return (b.njets()==7 ? 1.47 : 1.33);
+        }
+      } 
+    } else if (b.met()>350 && b.met()<=500) {
+      if (b.mt()>140) {
+        return 1.;
+      } else {
+        if (b.mj14()<=450) {
+          return 1.;
+        } else if (b.mj14()>450 && b.mj14()<=650) {
+          if (b.nbdm()==1)         return (b.njets()==7 ? 1.04 : 0.94);
+          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.11 : 0.84);
+          else                     return (b.njets()==7 ? 1.35 : 1.25);
+        } else {
+          if (b.nbdm()==1)         return (b.njets()==7 ? 1.59 : 1.27);
+          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.23 : 1.00);
+          else                     return (b.njets()==7 ? 1.30 : 1.56);
+        }
+      } 
+    } else {
+      if (b.mt()>140) {
+        return 1.;
+      } else {
+        if (b.mj14()<=500) {
+          return 1.;
+        } else if (b.mj14()>500 && b.mj14()<=800) {
+          if (b.nbdm()==1)         return (b.njets()==7 ? 0.92 : 0.80);
+          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.02 : 0.96);
+          else                     return (b.njets()==7 ? 0.94 : 1.30);
+        } else {
+          if (b.nbdm()==1)         return (b.njets()==7 ? 1.18 : 1.01);
+          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.27 : 0.69);
+          else                     return (b.njets()==7 ? 1.45 : 2.69);
+        } 
+      } 
+    }
+    return 0.;
+  });
+
+  NamedFunc nom_wgt = Functions::wgt_run2 * Functions::eff_trig_run2 * kappa_wgt; 
 
   set<int> years = {2016, 2017, 2018};
 
@@ -69,7 +123,7 @@ int main(){
 
   auto data_highmt = Process::MakeShared<Baby_full>(" Data, "+mt+" > 140 GeV", Process::Type::data, kBlack,
     data_files, baseline && filters && Functions::trig_run2 && "mt>140");
-  auto data_lowmt = Process::MakeShared<Baby_full>(" Data, "+mt+" #leq 140 GeV", Process::Type::background, kAzure+10,
+  auto data_lowmt = Process::MakeShared<Baby_full>(" Weighted data, "+mt+" #leq 140 GeV", Process::Type::background, kAzure+10,
     data_files, baseline && filters && Functions::trig_run2 && "mt<=140");
   data_lowmt->SetFillColor(kWhite);
   data_lowmt->SetLineColor(kAzure+10);
@@ -116,36 +170,36 @@ int main(){
   vector<string> metbins = { "met>200 && met<=350", "met>350 && met<=500", "met>500"};
   vector<set<double>> mj_lines = {{250, 400, 500}, {250, 450, 650}, {250, 500, 800}};
   for (unsigned imet(0); imet<metbins.size(); imet++){
-    if (paper) {
-      string metlabel = CodeToRootTex(metbins[imet]);
-      ReplaceAll(metlabel,"E_{T}^{miss}",etmiss);
-      if (metbins[imet]=="met>500") {
-        pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-          metbins[imet] + "&&nbdm>=2&&njets>=6", data1l_procs, lin).Tag("2b_6j").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-        .RightLabel({metlabel+" GeV, "+nj6+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);        
-      } else {
-        // pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-        //   metbins[imet] + "&&nbdm>=3&&njets==7", data1l_procs, lin).Tag("3b_7j").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-        // .RightLabel({metlabel+" GeV, "+nj7+", "+nb3}).YAxisZoom(0.85).Weight(nom_wgt);
-         pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-          metbins[imet] + "&&nbdm>=2&&njets>=7", data1l_procs, lin).Tag("2b_7j").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-        .RightLabel({metlabel+" GeV, "+nj7+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);
-        // pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-        //   metbins[imet] + "&&nbdm>=3&&njets>=8", data1l_procs, lin).Tag("3b_8j").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-        // .RightLabel({metlabel+" GeV, "+nj8+", "+nb3}).YAxisZoom(0.85).Weight(nom_wgt);
-      }
+    string metlabel = CodeToRootTex(metbins[imet]);
+    ReplaceAll(metlabel,"E_{T}^{miss}",etmiss);
+    if (metbins[imet]=="met>500") {
       pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-        metbins[imet] + "&&nbdm>=2&&njets>=8", data1l_procs, lin).Tag("2b_8j").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-      .RightLabel({metlabel+" GeV, "+nj8+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);
+        metbins[imet] + "&&nbdm>=2&&njets>=6", data1l_procs, lin).Tag("2b_lnj")
+      .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+      .RightLabel({metlabel+" GeV, "+nj6+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);        
+      pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+        metbins[imet] + "&&nbdm>=1&&njets>=6", data1l_procs, lin).Tag("1b_lnj")
+      .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+      .RightLabel({metlabel+" GeV, "+nj6+", "+nb1}).YAxisZoom(0.85).Weight(nom_wgt);        
 
     } else {
-      pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]",{250.,400.}),
-		      metbins[imet] + "&&nbdm==1", data1l_procs, lin).Tag("data1l1b").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-      .RightLabel({CodeToRootTex(metbins[imet])+" GeV",CodeToRootTex("njets>=6&&nbdm==1")}).YAxisZoom(0.93).Weight(nom_wgt);
-      pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]",{250.,400.}),
-		      metbins[imet] + "&&nbdm>=2", data1l_procs, lin).Tag("data1l2b").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-      .RightLabel({CodeToRootTex(metbins[imet])+" GeV",CodeToRootTex("njets>=6&&nbdm>=2")}).YAxisZoom(0.93).Weight(nom_wgt);
+       pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+        metbins[imet] + "&&nbdm>=2&&njets>=7", data1l_procs, lin).Tag("2b_lnj")
+       .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+      .RightLabel({metlabel+" GeV, "+nj7+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);
+       pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+        metbins[imet] + "&&nbdm>=1&&njets>=7", data1l_procs, lin).Tag("1b_lnj")
+       .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+      .RightLabel({metlabel+" GeV, "+nj7+", "+nb1}).YAxisZoom(0.85).Weight(nom_wgt);
     }
+    pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+      metbins[imet] + "&&nbdm>=2&&njets>=8", data1l_procs, lin).Tag("2b_hnj")
+    .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+    .RightLabel({metlabel+" GeV, "+nj8+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);    
+    pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+      metbins[imet] + "&&nbdm>=1&&njets>=8", data1l_procs, lin).Tag("1b_hnj")
+    .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+    .RightLabel({metlabel+" GeV, "+nj8+", "+nb1}).YAxisZoom(0.85).Weight(nom_wgt);    
   } 
 
 

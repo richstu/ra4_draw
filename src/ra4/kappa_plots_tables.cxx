@@ -53,6 +53,7 @@ namespace{
   bool do_correction = false;
   bool table_preview = true;
   bool show_23sigma = false;
+  bool cleanup = false;
   TString only_method = "";
   TString mc_lumi = "";
   TString xoption = "";
@@ -163,6 +164,11 @@ int main(int argc, char *argv[]){
   set<int> years;
   if (year==0) years = {2016, 2017, 2018};
   else years = {year};
+
+  if (year==0) lumi_s ="137";
+  else if (year==2016) lumi_s ="35.9";
+  else if (year==2017) lumi_s ="41.5";
+  else lumi_s ="59.6";
 
   map<int, string> foldermc, folderdata, foldersig;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
@@ -326,11 +332,8 @@ int main(int argc, char *argv[]){
   PlotMaker pm;
 
   ///// Running over these methods
-  vector<TString> methods_all = {"m2lveto", "m2lonly", "mvetoonly", "signal"};
- 
-  vector<TString> methods = methods_all;
-
-  if(only_method!="") methods = vector<TString>({only_method+"_highmj_abcd", only_method+"_lowmj_abcd"});
+  vector<TString> methods = {only_method};
+  if(only_method!="" && !quick_test) methods = vector<TString>({only_method+"_highmj_abcd", only_method+"_lowmj_abcd"});
   if(do_leptons){
     for(auto name: methods){
       name += "_el";
@@ -437,15 +440,18 @@ int main(int argc, char *argv[]){
 
     //////// Dilepton methods
     if(method.Contains("2l") || method.Contains("veto")) {
-      metcuts = vector<TString>{"met>100 && met<=200", c_lowmet, c_midmet, c_higmet};
       doVBincuts = true;
-      vbincuts = vector<vector<TString>>{{c_lownj_lowmet, c_hignj},
-                                         {c_lownj_lowmet, c_hignj}, 
-                                         // {c_lownj_lowmet, c_hignj}, 
-                                         // {c_highnj_lowmet, c_hignj}};
+      metcuts = vector<TString>{"met>100 && met<=200", c_lowmet, c_midmet, c_higmet};
+      vbincuts = vector<vector<TString>>{{c_lownj_lowmet, c_hignj}, {c_lownj_lowmet, c_hignj}, 
                                          {"njets>=7"}, {"njets>=6"}};
+
       caption = "Control and validation regions with $2\\ell$+veto";
       abcd_title = "2l+lv ("+njets+" + "+ptmiss+" bins)"; 
+      if (cleanup) {
+        metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
+        vbincuts = vector<vector<TString>>{{c_lownj_lowmet, c_hignj},{"njets>=7"}, {"njets>=6"}};
+        abcd_title = "2l+lv CR"; 
+      }
       if(method.Contains("metbins")) {
         metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
         doVBincuts = false;
@@ -464,11 +470,19 @@ int main(int argc, char *argv[]){
 
     // 5-6 j CR methods
     if(method.Contains("cr56j")) {
-      metcuts = vector<TString>{"met>100&&met<=200", c_lowmet, c_midmet};
       doVBincuts = true;
+      metcuts = vector<TString>{"met>100&&met<=200", c_lowmet, c_midmet};
       vbincuts = vector<vector<TString>>{{c_lownb+"&&"+c_njcr, c_midnb+"&&"+c_njcr, c_hignb+"&&"+c_njcr},
                                          {c_lownb+"&&"+c_njcr, c_midnb+"&&"+c_njcr, c_hignb+"&&"+c_njcr},
                                          {"nbdm>=1 &&"+c_njcr}};
+      caption = "Validation regions with $1\\ell, \\njets 5-6$";
+      abcd_title = "5-6j ("+ptmiss+" bins)"; 
+      if (cleanup) {                                   
+        metcuts = vector<TString>{c_lowmet, c_midmet};
+        vbincuts = vector<vector<TString>>{{c_lownb+"&&"+c_njcr, c_midnb+"&&"+c_njcr, c_hignb+"&&"+c_njcr},
+                                         {"nbdm>=1 &&"+c_njcr}};
+        abcd_title = "5-6j CR"; 
+      }
       if(method.Contains("metbins")) {
         metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
         doVBincuts = false;
@@ -614,15 +628,14 @@ string GetScenario(const string &method){
 //// Prints table with results
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
 // if split_bkg: [2/4] Other, [3/5] tt1l, [4/6] tt2l
-TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
-                   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
-		   vector<vector<float> > yieldsPlane){
+TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields, vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds,  vector<vector<float> > yieldsPlane){
   //cout<<endl<<"Printing table (significance estimation can take a bit)"<<endl;
   //// Table general parameters
   int digits = 2;
+  if (cleanup) digits = 1;
   TString ump = " & ";
   bool do_zbi = true;
-  if(!unblind) do_zbi = false;
+  if(!unblind || !abcd.method.Contains("signal")) do_zbi = false;
   size_t Ncol = 6;
   if(do_zbi) Ncol++;
   if(do_signal) Ncol += 2;
@@ -631,6 +644,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
     if(do_signal) Ncol -= 2;
     else Ncol -= 3;
   }
+  if (cleanup) Ncol -=2;
   TString blind_s = "$\\spadesuit$";
 
   //// Setting output file name
@@ -647,7 +661,6 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(abcd.method.Contains("signal") && Ncol>7 && !table_preview) out << "\\resizebox{\\textwidth}{!}{\n";
   out << "\\begin{tabular}[tbp!]{ l ";
   if(do_signal) out << "|cc";
-//   if(do_signal) out << "|c";
   if(split_bkg) out << "|ccc";
   out << "|cc|ccc";
   if(do_zbi) out<<"c";
@@ -655,8 +668,12 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
   if(do_signal) out << " & ("+sig_nc.first+","+sig_nc.second+") & ("+sig_c.first+","+sig_c.second+") ";
   if(split_bkg) out << " & Other & $t\\bar{t}(1\\ell)$ & $t\\bar{t}(2\\ell)$ ";
-  out << "& $\\kappa$ & MC bkg. & Pred.";
-  if(!only_mc) out << "& Obs. & Obs./MC "<<(do_zbi?"& Signi.":"");
+  if (cleanup) out << "& $\\kappa$ & Pred.";
+  else out << "& $\\kappa$ & MC bkg. & Pred.";
+  if(!only_mc) {
+    if (cleanup) out << "& Obs. "<<(do_zbi?"& Signi.":"");
+    else out << "& Obs. & Obs./MC "<<(do_zbi?"& Signi.":"");
+  }
   else if(do_signal) out << "& Signi.(NC) & Signi.(C)";
 //   else if(do_signal) out << "& S(NC)";
   out << " \\\\ \\hline\\hline\n";
@@ -664,9 +681,14 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////// Printing results////////////////////////////////////////////////
   for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
-    out<<endl<< "\\multicolumn{"<<Ncol<<"}{c}{$"<<CodeToLatex(abcd.planecuts[iplane].Data())
-       <<"$ (Obs/MC = $"<<RoundNumber(yieldsPlane[iplane][0],2)<<"\\pm"<<RoundNumber(yieldsPlane[iplane][1],2)
-       <<"$)}  \\\\ \\hline\n";
+    if (cleanup) {
+      out<<endl<< "\\multicolumn{"<<Ncol<<"}{c}{$"<<CodeToLatex(abcd.planecuts[iplane].Data())
+         <<"$}  \\\\ \\hline\n";
+    } else {
+      out<<endl<< "\\multicolumn{"<<Ncol<<"}{c}{$"<<CodeToLatex(abcd.planecuts[iplane].Data())
+         <<"$ (Obs/MC = $"<<RoundNumber(yieldsPlane[iplane][0],2)<<"\\pm"<<RoundNumber(yieldsPlane[iplane][1],2)
+         <<"$)}  \\\\ \\hline\n";
+    }
     for(size_t iabcd=0; iabcd < abcd.abcdcuts.size(); iabcd++){
       for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
@@ -697,15 +719,32 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         }
         //// Printing kappa
         out<<ump;
-        if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits)
-                          << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits)
-                          << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits) <<"}$ ";
+        if(iabcd==3) {
+          if (cleanup) {
+            TString unc_ = fabs(kappas[iplane][ibin][1])>fabs(kappas[iplane][ibin][2]) ? RoundNumber(kappas[iplane][ibin][1], digits):RoundNumber(kappas[iplane][ibin][2], digits);
+            out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits)
+                 << "\\pm"  << unc_ <<"$ ";
+          } else {
+            out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits)
+                 << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits)
+                 << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits) <<"}$ ";
+          }
+        }
         //// Printing MC Bkg yields
-        out << ump << RoundNumber(allyields[1][index].Yield(), digits)<< ump;
+        if (!cleanup) out << ump << RoundNumber(allyields[1][index].Yield(), digits)<< ump;
+        else out << ump;
         //// Printing background predictions
-        if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits)
+        if(iabcd==3) {
+          if (cleanup) {
+            TString unc_ = fabs(preds[iplane][ibin][1])>fabs(preds[iplane][ibin][2]) ? RoundNumber(preds[iplane][ibin][1], digits):RoundNumber(preds[iplane][ibin][2], digits);
+            out << "$"    << RoundNumber(preds[iplane][ibin][0], digits)
+                         << "\\pm"  << unc_ <<"$ ";
+          } else {
+            out << "$"    << RoundNumber(preds[iplane][ibin][0], digits)
                          << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits)
                          << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits) <<"}$ ";
+          }
+        }
         if(!only_mc){
           //// Printing observed events in data and Obs/MC ratio
           if(!unblind && iabcd==3 && abcd.signalplanes[iplane]) out << ump << blind_s<< ump << blind_s;
@@ -720,7 +759,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
               double Eratio = sqrt(pow(Eobs/Nmc,2) + pow(Nobs*Emc/Nmc/Nmc,2));
               ratio_s = "$"+RoundNumber(ratio, 2)+"\\pm"+RoundNumber(Eratio,2)+"$";
             }
-            out << ump << ratio_s;
+            if (!cleanup) out << ump << ratio_s;
           }
           //// Printing Zbi significance
           if(do_zbi && iabcd==3) out << ump << Zbi(allyields[0][index].Yield(), preds[iplane][ibin][0], 
@@ -795,9 +834,12 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   PlotOpt opts("txt/plot_styles.txt", "Kappa");
   if(label_up) opts.BottomMargin(0.11);
   opts.CanvasWidth(1400);
+
+  if(abcd.method.Contains("signal") && !abcd.method.Contains("met100")) opts.CanvasWidth(900);
+
   markerSize = 1.5;
   opts.YTitleOffset(0.5);
-  opts.LeftMargin(0.07);
+  opts.LeftMargin(0.095);
   opts.RightMargin(0.03);
   
   setPlotStyle(opts);
@@ -872,11 +914,10 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   can.SetFillStyle(4000);
   TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
   TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
-  if(k_ordered.size()>3) label.SetTextSize(0.04);
+  if(abcd.method.Contains("signal") && !abcd.method.Contains("met100")) label.SetTextSize(0.04);
 
 
-  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 2.4;
-  if(label_up) maxy = 2.6;
+  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 3.;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
@@ -886,6 +927,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   if(abcd.method.Contains("lowmj")) ytitle += "#lower[-0.1]{_{A}}";
   if(abcd.method.Contains("highmj")) ytitle += "#lower[-0.1]{_{B}}";
   histo.SetYTitle(ytitle);
+  // histo.GetYaxis()->SetTitleOffset(0.6);
   histo.Draw();
 
   //// Filling vx, vy vectors with kappa coordinates. Each nb cut is stored in a TGraphAsymmetricErrors
@@ -943,6 +985,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   for(size_t indb=0; indb<ind_bcuts.size(); indb++){
     graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]),
                                     &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));
+    graph[indb].SetName(CodeToPlainText(ind_bcuts[indb].cut.Data()).c_str());
     graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(markerSize);
     graph[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
@@ -957,14 +1000,14 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   cmslabel.SetNDC(kTRUE);
   cmslabel.SetTextAlign(11);
   cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,
-                    "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Supplementary}}");
+                    "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
   cmslabel.SetTextAlign(31);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
   TString method_label = Contains(abcd.method.Data(),"lowmj") ? "Low M#lower[-0.15]{_{J}}  " : "High M#lower[-0.15]{_{J}}  ";
-  // if (year==0) method_label += "Run II";
-  // else method_label += year;
-  // cmslabel.DrawLatex(1-opts.RightMargin()-0.155, 1-opts.TopMargin()+0.015,
-  //                    "#scale[0.75]{#font[42]{"+method_label+"}}");
+  if (year==0) method_label += "";
+  else method_label += year;
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.255, 1-opts.TopMargin()+0.015,
+                     "#scale[0.75]{#font[42]{"+method_label+"}}");
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
 
@@ -972,6 +1015,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   fname += year;
   fname += ".pdf";
   can.SaveAs(fname);
+  can.SaveAs(fname.ReplaceAll(".pdf",".root"));
   cout<<endl<<" open "<<fname<<endl;
 
 }
@@ -989,13 +1033,15 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   //// Setting plot style
   PlotOpt opts("txt/plot_styles.txt", "Kappa");
   if(label_up) opts.BottomMargin(0.11);
-  if(kappas.size() >= 1) { // Used to be 4
-    opts.CanvasWidth(1400);
-    markerSize = 1.5;
-    opts.YTitleOffset(0.5);
-    opts.LeftMargin(0.07);
-    opts.RightMargin(0.03);
+  opts.CanvasWidth(1400);
+  if (cleanup) {
+    opts.CanvasWidth(900);
+    opts.CanvasHeight(600);
   }
+  markerSize = 1.5;
+  opts.YTitleOffset(0.5);
+  opts.LeftMargin(0.1);
+  opts.RightMargin(0.02);
   setPlotStyle(opts);
 
   struct kmarker{
@@ -1110,11 +1156,12 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   histo.SetMaximum(maxy);
   histo.GetYaxis()->CenterTitle(true);
   histo.GetXaxis()->SetLabelOffset(0.008);
+  // histo.GetYaxis()->SetLabelOffset(0.4);
   TString ytitle = "#kappa";
   if(abcd.method.Contains("lowmj")) ytitle += "#lower[-0.1]{_{A}}";
   if(abcd.method.Contains("highmj")) ytitle += "#lower[-0.1]{_{B}}";
   if(mm_scen!="data") ytitle += " (Scen. = "+mm_scen+")";
-  histo.SetTitleOffset(opts.YTitleOffset(),"y");
+  histo.SetTitleOffset(0.9,"y");
   histo.SetTitleSize(0.06,"y");
   histo.SetYTitle(ytitle);
   histo.Draw();
@@ -1199,7 +1246,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
               klab.SetTextColor(cSignal);
             else klab.SetTextColor(1);
             klab.SetTextSize(0.04);
-            if (data_kappas) klab.DrawLatex(xval, 0.952*maxy, text);
+            if (data_kappas) klab.DrawLatex(xval, 0.95*maxy, text);
 	      //// Printing stat uncertainty of kappa_mm/kappa
             float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
             float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
@@ -1208,12 +1255,12 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
         // text = "#sigma_{st} = "+RoundNumber(errStat*100,0, kap)+"%";
             text = RoundNumber(errStat*100,0, kap)+"%";
             text = "#sigma_{st} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
-        // if (fabs(ekmdUp) > fabs(ekmdDown))
-        //   text = "#sigma_{st} = "+RoundNumber(ekmdUp*100,0, kap)+"%";
-        // else
-        //   text = "#sigma_{st} = "+RoundNumber(ekmdDown*100,0, kap)+"%";
+            if (fabs(ekmdUp) > fabs(ekmdDown))
+              text = "#sigma_{st} = "+RoundNumber(ekmdUp*100,0, kap)+"%";
+            else
+              text = "#sigma_{st} = "+RoundNumber(ekmdDown*100,0, kap)+"%";
             klab.SetTextSize(0.04);
-            klab.DrawLatex(xval, 0.888*maxy, text);
+            klab.DrawLatex(xval, 0.88*maxy, text);
 	    } // If unblind || not signal bin
 
            xval += binw;
@@ -1227,16 +1274,17 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
     TString metlabel = CodeToRootTex(abcd.planecuts[iplane].Data()) + " GeV";
+    label.SetTextSize(0.035);
     if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, metlabel);
     else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.10*maxy, metlabel);
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
-  double legX(opts.LeftMargin()+0.005), legY(1-0.03), legSingle = 0.05;
-  legX = 0.36;
+  double legX(opts.LeftMargin()+0.005), legY(1-0.035), legSingle = 0.05;
+  legX = 0.25;
   if (mm_scen!="data") legX = 0.2;
-  if(label_up) legY = 0.8;
-  double legW = 0.35, legH = legSingle*(ind_bcuts.size()+1)/2;
+  if(label_up) legY = 0.9;
+  double legW = 0.45, legH = legSingle*(ind_bcuts.size()+1)/2;
   if(ind_bcuts.size()>3) legH = legSingle*((ind_bcuts.size()+1)/2);
   TLegend leg(legX, legY-legH, legX+legW, legY);
   leg.SetTextSize(opts.LegendEntryHeight()*1.15); leg.SetFillColor(0);
@@ -1255,7 +1303,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     graph_kmd3[indb].SetMarkerStyle(ind_bcuts[indb].style); graph_kmd3[indb].SetMarkerSize(markerSize);
     graph_kmd3[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph_kmd3[indb].SetLineColor(kMagenta+1); graph_kmd3[indb].SetLineWidth(2);graph_kmd3[indb].SetLineStyle(2);
-    if (show_23sigma) graph_kmd3[indb].Draw("p0 same");
+    if (show_23sigma && !cleanup) graph_kmd3[indb].Draw("p0 same");
 
     graph_kmd2[indb] = TGraphAsymmErrors(vx_kmd2[indb].size(), &(vx_kmd2[indb][0]), &(vy_kmd2[indb][0]),
                &(vexl_kmd2[indb][0]), &(vexh_kmd2[indb][0]), &(veyl_kmd2[indb][0]), 
@@ -1263,7 +1311,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     graph_kmd2[indb].SetMarkerStyle(ind_bcuts[indb].style); graph_kmd2[indb].SetMarkerSize(markerSize);
     graph_kmd2[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph_kmd2[indb].SetLineColor(kAzure+1); graph_kmd2[indb].SetLineWidth(2); graph_kmd2[indb].SetLineStyle(2);
-    if (show_23sigma) graph_kmd2[indb].Draw("p0 same");
+    if (show_23sigma && !cleanup) graph_kmd2[indb].Draw("p0 same");
 
     graph_kmd[indb] = TGraphAsymmErrors(vx_kmd[indb].size(), &(vx_kmd[indb][0]), &(vy_kmd[indb][0]),
 					&(vexl_kmd[indb][0]), &(vexh_kmd[indb][0]), &(veyl_kmd[indb][0]), 
@@ -1290,10 +1338,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
     leg.AddEntry(&graph[indb], "MC", "p");
     TString data_s = (mm_scen=="data"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
-    if (year==0) lumi_s ="137";
-    else if (year==2016) lumi_s ="35.9";
-    else if (year==2017) lumi_s ="41.5";
-    else lumi_s ="59.6";
+
     leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1} (13 TeV)", "p");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
@@ -1303,8 +1348,8 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   //// Drawing CMS labels and line at 1
   TLatex cmslabel;
-  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
-  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
+  TString cmsPrel = "#font[62]{CMS} ";//"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
+  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";// Preliminary}}";
   cmslabel.SetTextSize(0.06);
   cmslabel.SetNDC(kTRUE);
   cmslabel.SetTextAlign(11);
@@ -1315,17 +1360,18 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   cmslabel.SetTextAlign(31);
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
   cmslabel.SetTextSize(0.053);
-  TString title = "#font[42]{"+abcd.title+"}";
+  if (abcd.method.Contains("lowmj")) abcd.title += " (Low M#lower[-0.1]{_{J}})";
+  if (abcd.method.Contains("highmj")) abcd.title += " (High M#lower[-0.1]{_{J}})";
+  TString title = "#font[52]{"+abcd.title+"}";
   TString newSignal = "#color["; newSignal += cSignal; newSignal += "]{Signal}";
   title.ReplaceAll("Signal", newSignal);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.03, title);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, legY-legH+0.01, title);
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
 
   TString fname="plots/dataKappa_" + abcd.method;
-  lumi_s.ReplaceAll(".","p");
-  fname += "_lumi"+lumi_s+"_";
+  fname += "_lumi"+lumi_s+"_"; fname.ReplaceAll(".","p");
   if (xoption!="") fname += xoption+"_";
   fname += year;
   fname += ".pdf";
@@ -1502,6 +1548,7 @@ void GetOptions(int argc, char *argv[]){
       {"year",     required_argument, 0, 'y'},   // 2016, 2017 or 2018
       {"mm",     required_argument, 0, 0},   // Mismeasurment scenario, 0 for data
       {"quick",        no_argument, 0, 0},   // Used inclusive ttbar for quick testing
+      {"clean",        no_argument, 0, 0},   // Used inclusive ttbar for quick testing
       {"preview",      no_argument, 0, 0},   // Table preview, no caption
       {"tt",      no_argument, 0, 0},   // Table preview, no caption
       {0, 0, 0, 0}
@@ -1558,6 +1605,8 @@ void GetOptions(int argc, char *argv[]){
         only_tt = true;
       }else if(optname == "quick"){
         quick_test = true;
+      }else if(optname == "clean"){
+        cleanup = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
 	    exit(1);

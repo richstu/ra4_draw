@@ -46,6 +46,7 @@ sftp-config.json
 .DS_Store
 datacard_*
 sys_*.txt
+scan_point/
 
 # LaTeX
 *.tex
