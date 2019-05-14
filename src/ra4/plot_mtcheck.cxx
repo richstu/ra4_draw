@@ -2,7 +2,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include <string.h>
+#include <TVector3.h>
 
 #include "TMath.h"
 #include "TError.h"
@@ -39,7 +41,6 @@ NamedFunc BaselineCuts(string var = "", string extra = "1") {
 	if     (var == "nleps") cuts[0] = "nleps >= 1";
 	else if(var == "met")   cuts[2] = "met > 100";
 	else if(var == "njets") out = 3;
-// 	else if(var == "njets") cuts[3] = "njets >= 4";
 	else if(var == "nbm")   out = 4;
 	NamedFunc baseline(cuts[0]);
 	for(int i = 1; i < num_cuts; i++) 
@@ -54,6 +55,13 @@ NamedFunc BaselineCuts(string var = "", string extra = "1") {
 	  baseline = baseline && temp;
 	}
 	return baseline;
+}
+
+float dphi(double phi1, double phi2) {
+  double abs_diff(abs(phi1-phi2));
+	if(abs_diff > 6.283) return(abs_diff-6.283);
+	else if(abs_diff > 3.142) return(6.283-abs_diff);
+	else return(abs_diff);
 }
 
 int main() {
@@ -73,6 +81,47 @@ int main() {
       return wgt;
   });
 
+  NamedFunc adj_mt("adj_mt", [](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.SampleType() > 0) {
+      int ri(b.event()%3), rj;
+      string run;
+      vector<double> corrs;
+      if(b.SampleType() == 2016) {
+        rj = b.event()%3590;
+        if(rj <= 505)       corrs = {0.90, 0.95, 1.15}; // 2016B
+        else if(rj <=  745) corrs = {0.96, 1.00, 1.17}; // 2016C
+        else if(rj <= 1171) corrs = {0.96, 1.00, 1.17}; // 2016D
+        else if(rj <= 1576) corrs = {1.01, 1.06, 1.19}; // 2016E
+        else if(rj <= 1887) corrs = {1.04, 1.07, 1.15}; // 2016F
+        else if(rj <= 2641) corrs = {1.00, 1.02, 1.20}; // 2016G
+        else                corrs = {1.03, 1.07, 1.33}; // 2016H
+      }
+      else if(b.SampleType() == 2017) {
+        rj = b.event()%4150;
+        if(rj <= 482)       corrs = {1.01, 0.98, 1.09}; // 2017B
+        else if(rj <= 1448) corrs = {1.00, 0.95, 1.15}; // 2017C
+        else if(rj <= 1873) corrs = {1.00, 0.96, 1.14}; // 2017D
+        else if(rj <= 2801) corrs = {1.09, 1.07, 1.16}; // 2017E
+        else                corrs = {1.15, 1.15, 1.19}; // 2017F
+      }
+      else {
+        rj = b.event()%6000;
+        if(rj <= 1400)      corrs = {1.12, 1.12, 1.26}; // 2018A
+        else if(rj <= 2110) corrs = {1.10, 1.13, 1.18}; // 2018B
+        else if(rj <= 2804) corrs = {1.15, 1.15, 1.17}; // 2018C
+        else                corrs = {1.10, 1.13, 1.20}; // 2018D
+      }
+      double metx(b.met()*cos(b.met_phi())), mety(b.met()*sin(b.met_phi()));
+      double met_trux(b.met_tru()*cos(b.met_tru_phi())), met_truy(b.met_tru()*sin(b.met_tru_phi()));
+      double n_metx = (metx-met_trux)*corrs.at(ri) + met_trux;
+      double n_mety = (mety-met_truy)*corrs.at(ri) + met_truy;
+      double n_metphi = atan2(n_mety,n_metx);
+      double n_met = hypot(n_metx,n_mety);
+      return sqrt(2*b.leps_pt()->at(0)*n_met*(1-cos(n_metphi-b.leps_phi()->at(0))));
+      }
+    return b.mt();
+    });
+
   // Data
   string data16_path("/net/cms2/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/");
   string data17_path("/net/cms2/cms2r0/babymaker/babies/2018_12_17/data/merged_database_standard/");
@@ -90,6 +139,13 @@ int main() {
 	                 {data16_path+"*.root",
 	                  data17_path+"*.root",
 	                  data18_path+"*.root"},q_cuts && Functions::hem_veto && Functions::trig_run2);
+
+	auto data_2017B = Process::MakeShared<Baby_full>("2017 Data - Run B",data,kBlack,
+	                  {data17_path+"*Run2017B*.root"},q_cuts && Functions::trig_run2);
+	auto data_2017E = Process::MakeShared<Baby_full>("2017 Data - Run E",data,kBlack,
+	                  {data17_path+"*Run2017E*.root"},q_cuts && Functions::trig_run2);
+	auto data_2017F = Process::MakeShared<Baby_full>("2017 Data - Run F",data,kBlack,
+	                  {data17_path+"*Run2017F*.root"},q_cuts && Functions::trig_run2);
 
 	// MC samples
   string mc16_path("/net/cms2/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_standard/");
@@ -215,6 +271,9 @@ int main() {
 	vector<shared_ptr<Process> > data18_mc17  = {data_2018, mc17_tt1l, mc17_tt2l, mc17_wjets, mc17_single_t, mc17_ttv, mc17_other};
 	vector<shared_ptr<Process> > data_mc_RunII  = {data_RunII, mcRunII_tt1l, mcRunII_tt2l, mcRunII_wjets, mcRunII_single_t, mcRunII_ttv, mcRunII_other};
 	vector<vector<shared_ptr<Process> >> data_mc = {data16_mc16, data17_mc17, data18_mc18, /*data18_mc17,*/ data_mc_RunII};
+	vector<shared_ptr<Process> > data17B_mc17  = {data_2017B, mc17_tt1l, mc17_tt2l, mc17_wjets, mc17_single_t, mc17_ttv, mc17_other};
+	vector<shared_ptr<Process> > data17E_mc17  = {data_2017E, mc17_tt1l, mc17_tt2l, mc17_wjets, mc17_single_t, mc17_ttv, mc17_other};
+	vector<shared_ptr<Process> > data17F_mc17  = {data_2017F, mc17_tt1l, mc17_tt2l, mc17_wjets, mc17_single_t, mc17_ttv, mc17_other};
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   PlotOpt log_ratios("txt/plot_styles.txt", "CMSPaper");
@@ -234,7 +293,7 @@ int main() {
   NamedFunc w_fr2(Functions::wgt_run2 * Functions::eff_trig_run2);
   w_fr2.Name("w_fr2");
   NamedFunc w_tot(w_run2 * Functions::eff_trig_run2);
-  NamedFunc base("nleps==1 && st>500 && mj14>250 && nbdm>=1 && nveto==0");
+  NamedFunc base("nleps==1 && st>500 && mj14>250 && nbdm>=1 && nveto==0 && met > 200");
   vector<NamedFunc> nj = {"njets>=7", "njets>=5 && njets<=6","njets>=5"};
   vector<string> tnj = {"7pj","56j","5pj"};
   vector<NamedFunc> met = {"met>200&&met<=350","met>350&&met<=500","met>500"};
@@ -244,19 +303,39 @@ int main() {
   vector<string> hig_abcd_mj = {"mj14 < 500", "mj14 > 500 && mj14 < 800", "mj14 > 800"};
   vector<vector<string>> abcd_mj = {low_abcd_mj, mid_abcd_mj, hig_abcd_mj};
   vector<string> tmj = {"loMJ","midMJ","hiMJ"};
-	for(size_t i = 0; i < 4; i++) {
-    PlotMaker pm;
-	  temp = data_mc.at(i);
-    if(i == 3) w_tot = w_fr2;
-		tag = sample_label.at(i) + "_mTcheck_";
-    for(int b = 0; b < 3; b++) 
-      for(int j = 0; j < 3; j++)
-        for(int m = 0; m < 3; m++) 
-          pm.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), 
-		                      base && nj[j] && abcd_mj[b][m] && met[b],temp,log_stack).Weight(w_tot)
-                          .Tag(tag+tmet.at(b)+"_"+tnj.at(j)+"_"+tmj.at(m));
-    pm.min_print_=true;
-    pm.MakePlots(sample_lumi.at(i));
-  }
+  PlotMaker pm16;
+  pm16.Push<Hist1D>(Axis(15,0, 300, adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data16_mc16, log_stack).Weight(w_tot).Tag("NEW_mt_16");
+  pm16.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), base,  data16_mc16, log_stack).Weight(w_tot).Tag("OLD_mt_16");
+  pm16.min_print_=true;
+  pm16.MakePlots(35.9);
+  PlotMaker pm17;
+  pm17.Push<Hist1D>(Axis(15,0, 300, adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data17_mc17, log_stack).Weight(w_tot).Tag("NEW_mt_17");
+  pm17.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), base,  data17_mc17, log_stack).Weight(w_tot).Tag("OLD_mt_17");
+  pm17.min_print_=true;
+  pm17.MakePlots(41.5);
+  PlotMaker pm18;
+  pm18.Push<Hist1D>(Axis(15,0, 300, adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data18_mc18, log_stack).Weight(w_tot).Tag("NEW_mt_18");
+  pm18.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), base,  data18_mc18, log_stack).Weight(w_tot).Tag("OLD_mt_18");
+  pm18.min_print_=true;
+  pm18.MakePlots(60);
+  PlotMaker pmRunII;
+  pmRunII.Push<Hist1D>(Axis(15,0, 300, adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data_mc_RunII, log_stack).Weight(w_fr2).Tag("NEW_mt_RunII");
+  pmRunII.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), base,  data_mc_RunII, log_stack).Weight(w_fr2).Tag("OLD_mt_RunII");
+  pmRunII.min_print_=true;
+  pmRunII.MakePlots(1);
+// 	for(size_t i = 1; i < 2; i++) {
+//     PlotMaker pm;
+// 	  temp = data_mc.at(i);
+//     if(i == 3) w_tot = w_fr2;
+// 		tag = sample_label.at(i) + "_mTcheck_";
+//     for(int b = 0; b < 3; b++) 
+//       for(int j = 0; j < 3; j++)
+//         for(int m = 0; m < 3; m++) 
+//           pm.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), 
+// 		                      base && nj[j] && abcd_mj[b][m] && met[b],temp,log_stack).Weight(w_tot)
+//                           .Tag(tag+tmet.at(b)+"_"+tnj.at(j)+"_"+tmj.at(m));
+//     pm.min_print_=true;
+//     pm.MakePlots(sample_lumi.at(i));
+//   }
 }
 
