@@ -32,6 +32,8 @@ namespace Functions{
   extern const NamedFunc ntop_tight_nom;
   extern const NamedFunc offshellw;
   extern const NamedFunc hem_veto;
+  extern const NamedFunc adj_met;
+  extern const NamedFunc adj_mt;
   extern const NamedFunc pass_run2;
   extern const NamedFunc wgt_run2;
   extern const NamedFunc mht_ratio;
@@ -45,6 +47,7 @@ namespace Functions{
   bool IsGoodElectron(const Baby &b, std::size_t iel);
   bool IsGoodMuon(const Baby &b, std::size_t imu);
   bool IsGoodTrack(const Baby &b, std::size_t itk);
+  std::pair<double, double> calc_adj_met(const Baby &b);
 
   NamedFunc::ScalarType NJetsWeights_ttISR(const Baby &b, bool use_baby_nisr);
   NamedFunc::ScalarType NJetsWeights_vISR(const Baby &b);

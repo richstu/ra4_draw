@@ -211,6 +211,12 @@ void FunctionParser::ResolveVariables() const{
       else if(token.string_rep_ == "n_mus_bad_dupl"){
 	token = Functions::n_mus_bad_dupl;
       }
+      else if(token.string_rep_ == "adj_met"){
+  token = Functions::adj_met;
+      }
+      else if(token.string_rep_ == "adj_mt"){
+  token = Functions::adj_mt;
+      }
       else {
 	token.function_ = Baby::GetFunction(token.string_rep_);
 	token.type_ = token.function_.IsScalar() ? Token::Type::resolved_scalar : Token::Type::resolved_vector;

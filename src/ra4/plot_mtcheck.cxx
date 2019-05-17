@@ -81,50 +81,6 @@ int main() {
       return wgt;
   });
 
-  NamedFunc adj_mt("adj_mt", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.SampleType() > 0) {
-      int rj;
-      string run;
-      vector<double> corrs, fracs;
-      if(b.SampleType() == 2016) {
-        rj = b.event()%3590;
-        if(rj <= 505)       { corrs = {0.90, 0.95, 1.15}; fracs = {0.672, 0.994}; } // 2016B
-        else if(rj <=  745) { corrs = {0.96, 1.00, 1.17}; fracs = {0.621, 0.993}; } // 2016C
-        else if(rj <= 1171) { corrs = {0.96, 1.00, 1.17}; fracs = {0.655, 0.994}; } // 2016D
-        else if(rj <= 1576) { corrs = {1.01, 1.06, 1.19}; fracs = {0.646, 0.994}; } // 2016E
-        else if(rj <= 1887) { corrs = {1.04, 1.07, 1.15}; fracs = {0.624, 0.994}; } // 2016F
-        else if(rj <= 2641) { corrs = {1.00, 1.02, 1.20}; fracs = {0.672, 0.994}; } // 2016G
-        else                { corrs = {1.03, 1.07, 1.33}; fracs = {0.642, 0.990}; } // 2016H
-      }
-      else if(b.SampleType() == 2017) {
-        rj = b.event()%4150;
-        if(rj <= 482)       { corrs = {1.01, 0.98, 1.09}; fracs = {0.426, 0.983}; } // 2017B
-        else if(rj <= 1448) { corrs = {1.00, 0.95, 1.15}; fracs = {0.485, 0.988}; } // 2017C
-        else if(rj <= 1873) { corrs = {1.00, 0.96, 1.14}; fracs = {0.454, 0.987}; } // 2017D
-        else if(rj <= 2801) { corrs = {1.09, 1.07, 1.16}; fracs = {0.318, 0.978}; } // 2017E
-        else                { corrs = {1.15, 1.15, 1.19}; fracs = {0.257, 0.970}; } // 2017F
-      }
-      else {
-        rj = b.event()%6000;
-        if(rj <= 1400)      { corrs = {1.12, 1.12, 1.26}; fracs = {0.331, 0.983}; } // 2018A
-        else if(rj <= 2110) { corrs = {1.10, 1.13, 1.18}; fracs = {0.354, 0.988}; } // 2018B
-        else if(rj <= 2804) { corrs = {1.15, 1.15, 1.17}; fracs = {0.298, 0.985}; } // 2018C
-        else                { corrs = {1.10, 1.13, 1.20}; fracs = {0.361, 0.987}; } // 2018D
-      }
-      TRandom3 rng;
-      double ri(rng.Rndm());
-      int i = (ri < fracs.at(0)) + (ri < fracs.at(1)) + (ri >= fracs.at(1));
-      double metx(b.met()*cos(b.met_phi())), mety(b.met()*sin(b.met_phi()));
-      double met_trux(b.met_tru()*cos(b.met_tru_phi())), met_truy(b.met_tru()*sin(b.met_tru_phi()));
-      double n_metx = (metx-met_trux)*corrs.at(i) + met_trux;
-      double n_mety = (mety-met_truy)*corrs.at(i) + met_truy;
-      double n_metphi = atan2(n_mety,n_metx);
-      double n_met = hypot(n_metx,n_mety);
-      return sqrt(2*b.leps_pt()->at(0)*n_met*(1-cos(n_metphi-b.leps_phi()->at(0))));
-      }
-    return b.mt();
-    });
-
   NamedFunc dphi1("dphi1", [](const Baby &b) -> NamedFunc::ScalarType{
     return dphi(b.met_phi(), b.jets_phi()->at(0));
     });
@@ -320,30 +276,30 @@ int main() {
   vector<vector<string>> abcd_mj = {low_abcd_mj, mid_abcd_mj, hig_abcd_mj};
   vector<string> tmj = {"loMJ","midMJ","hiMJ"};
   PlotMaker pm16;
-  pm16.Push<Hist1D>(Axis(15,0, 300, adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data16_mc16, log_stack).Weight(w_tot).Tag("NEW_mt_16");
+  pm16.Push<Hist1D>(Axis(15,0, 300, Functions::adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data16_mc16, log_stack).Weight(w_tot).Tag("NEW_mt_16");
   pm16.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), base,  data16_mc16, log_stack).Weight(w_tot).Tag("OLD_mt_16");
-  pm16.Push<Hist1D>(Axis(40,0, 400, adj_mt,   "Adjusted m_{T} [GeV]",{}), srsbmet2, data16_mc16, log_stack).Weight(w_tot).Tag("srsbmet2_adj_mt_16");
+  pm16.Push<Hist1D>(Axis(40,0, 400, Functions::adj_mt,   "Adjusted m_{T} [GeV]",{}), srsbmet2, data16_mc16, log_stack).Weight(w_tot).Tag("srsbmet2_adj_mt_16");
   pm16.Push<Hist1D>(Axis(40,0, 400, "mt",  "m_{T} [GeV]",{}),             srsbmet2, data16_mc16, log_stack).Weight(w_tot).Tag("srsbmet2_mt_16");
   pm16.min_print_=true;
   pm16.MakePlots(35.9);
   PlotMaker pm17;
-  pm17.Push<Hist1D>(Axis(15,0, 300, adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data17_mc17, log_stack).Weight(w_tot).Tag("NEW_mt_17");
+  pm17.Push<Hist1D>(Axis(15,0, 300, Functions::adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data17_mc17, log_stack).Weight(w_tot).Tag("NEW_mt_17");
   pm17.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), base,  data17_mc17, log_stack).Weight(w_tot).Tag("OLD_mt_17");
-  pm17.Push<Hist1D>(Axis(40,0, 400, adj_mt,   "Adjusted m_{T} [GeV]",{}), srsbmet2, data17_mc17, log_stack).Weight(w_tot).Tag("srsbmet2_adj_mt_17");
+  pm17.Push<Hist1D>(Axis(40,0, 400, Functions::adj_mt,   "Adjusted m_{T} [GeV]",{}), srsbmet2, data17_mc17, log_stack).Weight(w_tot).Tag("srsbmet2_adj_mt_17");
   pm17.Push<Hist1D>(Axis(40,0, 400, "mt",  "m_{T} [GeV]",{}),             srsbmet2, data17_mc17, log_stack).Weight(w_tot).Tag("srsbmet2_mt_17");
   pm17.min_print_=true;
   pm17.MakePlots(41.5);
   PlotMaker pm18;
-  pm18.Push<Hist1D>(Axis(15,0, 300, adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data18_mc18, log_stack).Weight(w_tot).Tag("NEW_mt_18");
+  pm18.Push<Hist1D>(Axis(15,0, 300, Functions::adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data18_mc18, log_stack).Weight(w_tot).Tag("NEW_mt_18");
   pm18.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), base,  data18_mc18, log_stack).Weight(w_tot).Tag("OLD_mt_18");
-  pm18.Push<Hist1D>(Axis(40,0, 400, adj_mt,   "Adjusted m_{T} [GeV]",{}), srsbmet2, data18_mc18, log_stack).Weight(w_tot).Tag("srsbmet2_adj_mt_18");
+  pm18.Push<Hist1D>(Axis(40,0, 400, Functions::adj_mt,   "Adjusted m_{T} [GeV]",{}), srsbmet2, data18_mc18, log_stack).Weight(w_tot).Tag("srsbmet2_adj_mt_18");
   pm18.Push<Hist1D>(Axis(40,0, 400, "mt",  "m_{T} [GeV]",{}),             srsbmet2, data18_mc18, log_stack).Weight(w_tot).Tag("srsbmet2_mt_18");
   pm18.min_print_=true;
   pm18.MakePlots(60);
   PlotMaker pmRunII;
-  pmRunII.Push<Hist1D>(Axis(15,0, 300, adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data_mc_RunII, log_stack).Weight(w_fr2).Tag("NEW_mt_RunII");
+  pmRunII.Push<Hist1D>(Axis(15,0, 300, Functions::adj_mt,   "Adjusted m_{T} [GeV]",{}), base,  data_mc_RunII, log_stack).Weight(w_fr2).Tag("NEW_mt_RunII");
   pmRunII.Push<Hist1D>(Axis(15,0, 300, "mt",  "m_{T} [GeV]",{}), base,  data_mc_RunII, log_stack).Weight(w_fr2).Tag("OLD_mt_RunII");
-  pmRunII.Push<Hist1D>(Axis(40,0, 400, adj_mt,   "Adjusted m_{T} [GeV]",{}), srsbmet2, data_mc_RunII, log_stack).Weight(w_tot).Tag("srsbmet2_adj_mt_RunII");
+  pmRunII.Push<Hist1D>(Axis(40,0, 400, Functions::adj_mt,   "Adjusted m_{T} [GeV]",{}), srsbmet2, data_mc_RunII, log_stack).Weight(w_tot).Tag("srsbmet2_adj_mt_RunII");
   pmRunII.Push<Hist1D>(Axis(40,0, 400, "mt",  "m_{T} [GeV]",{}),             srsbmet2, data_mc_RunII, log_stack).Weight(w_tot).Tag("srsbmet2_mt_RunII");
   pmRunII.min_print_=true;
   pmRunII.MakePlots(1);
