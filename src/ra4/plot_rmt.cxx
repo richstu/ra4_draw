@@ -129,15 +129,15 @@ int main(int argc, char *argv[]){
 
   // Makes a plot for each vector in plotcuts
   vector<oneplot> plotcuts;
-  plotcuts.push_back({tag+"_njets", "met>200 && met<=350", {"njets==5 && mj14<400", "njets==6 && mj14<400", "njets==7 && mj14<400", "njets>=8 && mj14<400",
-                                                            "njets==5 && mj14>=400 && mj14<=500", "njets==6 && mj14>=400 && mj14<=500", "njets==7 && mj14>=400 && mj14<=500", "njets>=8 && mj14>=400 && mj14<=500", 
-                                                            "njets==5 && mj14>500", "njets==6 && mj14>500", "njets==7 && mj14>500", "njets>=8 && mj14>500"}});
-  plotcuts.push_back({tag+"_njets", "met>350 && met<=500", {"njets==5 && mj14<450", "njets==6 && mj14<450", "njets==7 && mj14<450", "njets==8 && mj14<450", "njets>=9 && mj14<450",
-                                                            "njets==5 && mj14>=450 && mj14<=650", "njets==6 && mj14>=450 && mj14<=650", "njets==7 && mj14>=450 && mj14<=650", "njets==8 && mj14>=450 && mj14<=650", "njets>=9 && mj14>=450 && mj14<=650",
-                                                            "njets==5 && mj14>650", "njets==6 && mj14>650", "njets==7 && mj14>650", "njets==8 && mj14>650", "njets>=9 && mj14>650"}});
-  // plotcuts.push_back({tag+"_njets", "met>500"            , {"njets==5 && mj14<500", "njets==6 && mj14<500", "njets==7 && mj14<500", "njets==8 && mj14<500", "njets>=9 && mj14<500",
-  //                                                           "njets==5 && mj14>=650 && mj14<=800", "njets==6 && mj14>=650 && mj14<=800", "njets==7 && mj14>=650 && mj14<=800", "njets==8 && mj14>=650 && mj14<=800", "njets>=9 && mj14>=650 && mj14<=800",
-  //                                                           "njets==5 && mj14>800", "njets==6 && mj14>800", "njets==7 && mj14>800", "njets==8 && mj14>800", "njets>=9 && mj14>800"}});
+  plotcuts.push_back({tag+"_njets", "met>200 && met<=350", {"njets==5 && mj14<=400",             "njets==6 && mj14<=400",             "njets==7 && mj14<=400",             "njets>=8 && mj14<=400",
+                                                            "njets==5 && mj14>400 && mj14<=500", "njets==6 && mj14>400 && mj14<=500", "njets==7 && mj14>400 && mj14<=500", "njets>=8 && mj14>400 && mj14<=500", 
+                                                            "njets==5 && mj14>500",              "njets==6 && mj14>500",              "njets==7 && mj14>500",              "njets>=8 && mj14>500"}});
+  plotcuts.push_back({tag+"_njets", "met>350 && met<=500", {"njets==5 && mj14<=450",             "njets==6 && mj14<=450",             "njets==7 && mj14<=450",             "njets==8 && mj14<=450",
+                                                            "njets==5 && mj14>450 && mj14<=650", "njets==6 && mj14>450 && mj14<=650", "njets==7 && mj14>450 && mj14<=650", "njets==8 && mj14>450 && mj14<=650",
+                                                            "njets==5 && mj14>650",              "njets==6 && mj14>650",              "njets==7 && mj14>650",              "njets==8 && mj14>650"}});
+  plotcuts.push_back({tag+"_njets", "met>500"            , {"njets==5 && mj14<=500",             "njets==6 && mj14<=500",             "njets==7 && mj14<=500",             "njets==8 && mj14<=500",
+                                                            "njets==5 && mj14>650 && mj14<=800", "njets==6 && mj14>650 && mj14<=800", "njets==7 && mj14>650 && mj14<=800", "njets==8 && mj14>650 && mj14<=800",
+                                                            "njets==5 && mj14>800",              "njets==6 && mj14>800",              "njets==7 && mj14>800",              "njets==8 && mj14>800"}});
   
 
   PlotMaker pm;
@@ -284,7 +284,10 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   vector<vector<double> > vy(ngraphs), veyh(ngraphs), veyl(ngraphs);
   for(size_t ibin=0; ibin<nbins; ibin++){
     TString tmp = plotdef.bincuts[ibin];
-    tmp.ReplaceAll("&& mj14<400","").ReplaceAll(" && mj14>=400 && mj14<=500","").ReplaceAll("&& mj14>500","");
+    tmp.ReplaceAll(" ","");
+    tmp.ReplaceAll("&&mj14<=400","").ReplaceAll("&&mj14>400&&mj14<=500","").ReplaceAll("&&mj14>500","");
+    tmp.ReplaceAll("&&mj14<=450","").ReplaceAll("&&mj14>450&&mj14<=650","").ReplaceAll("&&mj14>650","");
+    tmp.ReplaceAll("&&mj14<=500","").ReplaceAll("&&mj14>500&&mj14<=800","").ReplaceAll("&&mj14>800","");
     histo.GetXaxis()->SetBinLabel(ibin+1, CodeToRootTex(tmp.Data()).c_str());
     // xval is the x position of the first marker in the group
     double xval = ibin+1, minxb = 0.15, binw = 0;
@@ -360,9 +363,19 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
 
   TLatex mjlabel;
   mjlabel.SetTextSize(0.06);
-  mjlabel.DrawLatex(1.65, maxy-0.07, "250 #leq M#lower[-0.1]{_{J}} #leq 400");
-  mjlabel.DrawLatex(5.65, maxy-0.07, "400 #leq M#lower[-0.1]{_{J}} #leq 500");
-  mjlabel.DrawLatex(10, maxy-0.07, "M#lower[-0.1]{_{J}} #geq 500");
+  if (plotdef.baseline.Contains("met>200")) {
+    mjlabel.DrawLatex(1.65, maxy-0.07, "250 #leq M#lower[-0.1]{_{J}} #leq 400");
+    mjlabel.DrawLatex(5.65, maxy-0.07, "400 #leq M#lower[-0.1]{_{J}} #leq 500");
+    mjlabel.DrawLatex(10, maxy-0.07, "M#lower[-0.1]{_{J}} #geq 500");
+  } else if (plotdef.baseline.Contains("met>350")) {
+    mjlabel.DrawLatex(1.65, maxy-0.07, "250 #leq M#lower[-0.1]{_{J}} #leq 450");
+    mjlabel.DrawLatex(5.65, maxy-0.07, "450 #leq M#lower[-0.1]{_{J}} #leq 650");
+    mjlabel.DrawLatex(10, maxy-0.07, "M#lower[-0.1]{_{J}} #geq 650");
+  } else {
+    mjlabel.DrawLatex(1.65, maxy-0.07, "250 #leq M#lower[-0.1]{_{J}} #leq 500");
+    mjlabel.DrawLatex(5.65, maxy-0.07, "500 #leq M#lower[-0.1]{_{J}} #leq 800");
+    mjlabel.DrawLatex(10, maxy-0.07, "M#lower[-0.1]{_{J}} #geq 800");
+  }
 
   TString fname = "plots/ratio_"+CodeToPlainText(ytitle.Data())+"_"+plotdef.name+"_"
     +CodeToPlainText(plotdef.baseline.Data())+".pdf";

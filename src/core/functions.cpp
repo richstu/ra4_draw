@@ -304,7 +304,7 @@ namespace Functions{
       return std::make_pair(hypot(n_metx,n_mety), n_metphi);
     }
     return std::make_pair(b.met(), b.met_phi());
-  };
+  }
 
   const NamedFunc adj_met("adj_met", [](const Baby &b) -> NamedFunc::ScalarType{
     if (b.SampleType() > 0) {

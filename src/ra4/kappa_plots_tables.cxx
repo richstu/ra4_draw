@@ -151,6 +151,10 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>{mm_scen};
     weights.emplace(mm_scen, w*Functions::fake_met);
     corrections.emplace(mm_scen, 1);
+  } else if (mm_scen=="smeared_met") {
+    scenarios = vector<string>{mm_scen};
+    weights.emplace(mm_scen, w);
+    corrections.emplace(mm_scen, 1);
   } else if (mm_scen=="mismeas_kappa") {
     scenarios = vector<string>{mm_scen};
     weights.emplace(mm_scen, w*mismeas_kappa);
@@ -215,8 +219,8 @@ int main(int argc, char *argv[]){
     tt2l_files.insert(foldermc[yr]+"*_TTJets*DiLept*.root");
     tt_files.insert(foldermc[yr]+"*_TTJets*Lept*.root");
     data_files.insert(folderdata[yr]+"*root");
-    for(auto name : vnames_other)
-      other_files.insert(foldermc[yr] + "*" + name + "*.root");
+    // for(auto name : vnames_other)
+    //   other_files.insert(foldermc[yr] + "*" + name + "*.root");
       
   }
 
@@ -225,7 +229,7 @@ int main(int argc, char *argv[]){
     data_files.clear();
     data_files.insert(tt1l_files.begin(), tt1l_files.end());
     data_files.insert(tt2l_files.begin(), tt2l_files.end());
-    data_files.insert(other_files.begin(), other_files.end());
+    // data_files.insert(other_files.begin(), other_files.end());
     trigs = NamedFunc("stitch_met");
     if(quick_test) {
       data_files = quick_files;
@@ -408,6 +412,14 @@ int main(int argc, char *argv[]){
         firstSigBin = -1;
         abcd_title = "Signal + low MET";
       }
+      if(method.Contains("metbins200")) {
+        metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
+        doVBincuts = true;
+        vbincuts = vector<vector<TString>>{{"nbdm>=1 && njets>=7"}, {"nbdm>=1 && njets>=7"}, {"nbdm>=1 && njets>=6"}};
+        caption = "Signal search regions";
+        firstSigBin = -1;
+        abcd_title = "Signal";
+      }
       if(method.Contains("njbins")) {
         metcuts = vector<TString>{"met>100 && met<=200", "met>200 && met<=500"};
         doVBincuts = false;
@@ -524,8 +536,15 @@ int main(int argc, char *argv[]){
       //// Adding cuts to table for yield calculation
       table_cuts.push_back(TableRow(abcds.back().allcuts[icut].Data(), totcut,
 				    0,0,weights.at("no_mismeasurement")*correction));
-      if(only_mc) table_cuts_mm.push_back(TableRow(abcds.back().allcuts[icut].Data(), totcut,
+      if(only_mc) {
+        TString allcuts_(abcds.back().allcuts[icut]), totcut_(totcut);
+        if (mm_scen=="smeared_met") {
+          allcuts_.ReplaceAll("met","adj_met").ReplaceAll("mt","adj_mt").ReplaceAll("adj_met_calo","met_calo");
+          totcut_.ReplaceAll("met","adj_met").ReplaceAll("mt","adj_mt").ReplaceAll("adj_met_calo","met_calo");
+        }
+        table_cuts_mm.push_back(TableRow(allcuts_.Data(), totcut_.Data(),
 						   0,0,weights.at(mm_scen)));
+      }
     }
     TString tname = "preds"; tname += iabcd;
     pm.Push<Table>(tname.Data(),  table_cuts, all_procs, true, false);
