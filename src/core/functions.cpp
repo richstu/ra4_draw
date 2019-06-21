@@ -96,7 +96,8 @@ namespace Functions{
     } else if (b.SampleType()==2017){
       return wgt*b.w_prefire()*wnpv2017(b)*41.5;
     } else {
-      return wgt*59.6;
+      if (b.type()==101000) return wgt*137.;
+      else return wgt*59.6;
     }
   });
 

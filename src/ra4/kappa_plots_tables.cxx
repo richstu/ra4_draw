@@ -219,8 +219,8 @@ int main(int argc, char *argv[]){
     tt2l_files.insert(foldermc[yr]+"*_TTJets*DiLept*.root");
     tt_files.insert(foldermc[yr]+"*_TTJets*Lept*.root");
     data_files.insert(folderdata[yr]+"*root");
-    // for(auto name : vnames_other)
-    //   other_files.insert(foldermc[yr] + "*" + name + "*.root");
+    for(auto name : vnames_other)
+      other_files.insert(foldermc[yr] + "*" + name + "*.root");
       
   }
 
@@ -229,7 +229,7 @@ int main(int argc, char *argv[]){
     data_files.clear();
     data_files.insert(tt1l_files.begin(), tt1l_files.end());
     data_files.insert(tt2l_files.begin(), tt2l_files.end());
-    // data_files.insert(other_files.begin(), other_files.end());
+    data_files.insert(other_files.begin(), other_files.end());
     trigs = NamedFunc("stitch_met");
     if(quick_test) {
       data_files = quick_files;
@@ -944,9 +944,11 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   histo.GetXaxis()->SetLabelOffset(0.008);
   TString ytitle = "#kappa";
   if(abcd.method.Contains("lowmj")) ytitle += "#lower[-0.1]{_{A}}";
-  if(abcd.method.Contains("highmj")) ytitle += "#lower[-0.1]{_{B}}";
+  else if(abcd.method.Contains("highmj")) ytitle += "#lower[-0.1]{_{B}}";
+  else  ytitle += "#lower[-0.1]{_{X}}"; // otherwise label placement in "quick" mode is not relevant..
   histo.SetYTitle(ytitle);
-  // histo.GetYaxis()->SetTitleOffset(0.6);
+  histo.SetTitleOffset(0.8,"y");
+  histo.SetTitleSize(0.06,"y");
   histo.Draw();
 
   //// Filling vx, vy vectors with kappa coordinates. Each nb cut is stored in a TGraphAsymmetricErrors
@@ -1034,9 +1036,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   fname += year;
   fname += ".pdf";
   can.SaveAs(fname);
-  can.SaveAs(fname.ReplaceAll(".pdf",".root"));
   cout<<endl<<" open "<<fname<<endl;
-
+  can.SaveAs(fname.ReplaceAll(".pdf",".root"));
 }
 
 //// Makes kappa plots comparing MC and data

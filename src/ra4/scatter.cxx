@@ -50,15 +50,15 @@ int main(int argc, char *argv[]){
 
   map<int, string> foldermc, folderdata, foldersig;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
-  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/T1tttt/skim_sys_abcd/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_05_16/T1tttt/skim_sys_abcd/";
   folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
 
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
-  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/T1tttt/skim_sys_abcd/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_05_17/T1tttt/skim_sys_abcd/";
   folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
 
   foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_stdnj5/";
-  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/T1tttt/skim_sys_abcd/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_05_18/T1tttt/skim_sys_abcd/";
   folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
 
   // Filling all other processes
@@ -104,8 +104,8 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > tt_sig = {tt1l, tt2l, t1tttt};
 
   PlotOpt style("txt/plot_styles.txt", "Scatter");
-  vector<PlotOpt> bkg_hist = {style().Stack(StackType::data_norm).Title(TitleType::supplementary)};
-  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::simulation_supplementary)};
+  vector<PlotOpt> bkg_hist = {style().Stack(StackType::data_norm).Title(TitleType::data)};
+  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::simulation)};
 
   vector<NamedFunc> met_bins = {"met>200 && njets>=7", "met>200&&met<=350 && njets>=7", "met>350&&met<=500 && njets>=7", "met>500 && njets>=6"};
   vector<set<double>> mj_lines = {{250, 400},{250, 400, 500},{250, 450, 650},{250, 500, 800}};
@@ -115,12 +115,15 @@ int main(int argc, char *argv[]){
   for(unsigned imet(0); imet<met_bins.size(); imet++){
     for(const auto &nbdm_bin: nb_bins){
       NamedFunc cut = met_bins[imet] && nbdm_bin;
-      pm.Push<Hist2D>(Axis(44, 0., 1100., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-                      Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
-                      cut, all_procs, bkg_hist).Weight(nom_wgt);
-      pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-                      Axis(175, 0., 700., "mt", "m_{T} [GeV]", {140.}),
-                      cut, tt_sig, bkg_pts).Weight(nom_wgt);
+      if (imet==0) {
+        pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+          Axis(175, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+          cut, tt_sig, bkg_pts).Weight(nom_wgt);
+      } else if (imet>1) {
+        pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+          Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+          cut, all_procs, bkg_hist).Weight(nom_wgt);
+      }
     }
   }
 

@@ -57,11 +57,11 @@ int main(){
         } else if (b.mj14()>400 && b.mj14()<=500) {
           if (b.nbdm()==1)         return (b.njets()==7 ? 1.05 : 0.84);
           else if (b.nbdm()==2)    return (b.njets()==7 ? 1.03 : 0.96);
-          else                     return (b.njets()==7 ? 1.33 : 1.04);
+          else                     return (b.njets()==7 ? 1.32 : 1.04);
         } else {
           if (b.nbdm()==1)         return (b.njets()==7 ? 1.32 : 1.22);
           else if (b.nbdm()==2)    return (b.njets()==7 ? 1.33 : 1.23);
-          else                     return (b.njets()==7 ? 1.47 : 1.33);
+          else                     return (b.njets()==7 ? 1.48 : 1.33);
         }
       } 
     } else if (b.met()>350 && b.met()<=500) {
@@ -75,9 +75,9 @@ int main(){
           else if (b.nbdm()==2)    return (b.njets()==7 ? 1.11 : 0.84);
           else                     return (b.njets()==7 ? 1.35 : 1.25);
         } else {
-          if (b.nbdm()==1)         return (b.njets()==7 ? 1.59 : 1.27);
-          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.23 : 1.00);
-          else                     return (b.njets()==7 ? 1.30 : 1.56);
+          if (b.nbdm()==1)         return (b.njets()==7 ? 1.59 : 1.26);
+          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.24 : 1.00);
+          else                     return (b.njets()==7 ? 1.29 : 1.56);
         }
       } 
     } else {
@@ -89,9 +89,9 @@ int main(){
         } else if (b.mj14()>500 && b.mj14()<=800) {
           if (b.nbdm()==1)         return (b.njets()==7 ? 0.92 : 0.80);
           else if (b.nbdm()==2)    return (b.njets()==7 ? 1.02 : 0.96);
-          else                     return (b.njets()==7 ? 0.94 : 1.30);
+          else                     return (b.njets()==7 ? 0.93 : 1.30);
         } else {
-          if (b.nbdm()==1)         return (b.njets()==7 ? 1.18 : 1.01);
+          if (b.nbdm()==1)         return (b.njets()==7 ? 1.17 : 1.00);
           else if (b.nbdm()==2)    return (b.njets()==7 ? 1.27 : 0.69);
           else                     return (b.njets()==7 ? 1.45 : 2.69);
         } 
@@ -105,13 +105,13 @@ int main(){
   set<int> years = {2016, 2017, 2018};
 
   map<int, string> foldermc, folderdata, foldersig;
-  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/T1tttt/skim_sys_abcd/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_05_16/T1tttt/skim_sys_abcd/";
   folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
 
-  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/T1tttt/skim_sys_abcd/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_05_17/T1tttt/skim_sys_abcd/";
   folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
 
-  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/T1tttt/skim_sys_abcd/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_05_18/T1tttt/skim_sys_abcd/";
   folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
 
   set<string> data_files, sig_nc_files, sig_c_files;
@@ -173,33 +173,33 @@ int main(){
     string metlabel = CodeToRootTex(metbins[imet]);
     ReplaceAll(metlabel,"E_{T}^{miss}",etmiss);
     if (metbins[imet]=="met>500") {
-      pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-        metbins[imet] + "&&nbdm>=2&&njets>=6", data1l_procs, lin).Tag("2b_lnj")
-      .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-      .RightLabel({metlabel+" GeV, "+nj6+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);        
+      // pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+      //   metbins[imet] + "&&nbdm>=2&&njets>=6", data1l_procs, lin).Tag("2b_lnj")
+      // .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+      // .RightLabel({metlabel+" GeV, "+nj6+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);        
       pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
         metbins[imet] + "&&nbdm>=1&&njets>=6", data1l_procs, lin).Tag("1b_lnj")
       .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
       .RightLabel({metlabel+" GeV, "+nj6+", "+nb1}).YAxisZoom(0.85).Weight(nom_wgt);        
 
     } else {
-       pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-        metbins[imet] + "&&nbdm>=2&&njets>=7", data1l_procs, lin).Tag("2b_lnj")
-       .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-      .RightLabel({metlabel+" GeV, "+nj7+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);
+      //  pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+      //   metbins[imet] + "&&nbdm>=2&&njets>=7", data1l_procs, lin).Tag("2b_lnj")
+      //  .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+      // .RightLabel({metlabel+" GeV, "+nj7+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);
        pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
         metbins[imet] + "&&nbdm>=1&&njets>=7", data1l_procs, lin).Tag("1b_lnj")
        .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
       .RightLabel({metlabel+" GeV, "+nj7+", "+nb1}).YAxisZoom(0.85).Weight(nom_wgt);
     }
-    pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-      metbins[imet] + "&&nbdm>=2&&njets>=8", data1l_procs, lin).Tag("2b_hnj")
-    .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-    .RightLabel({metlabel+" GeV, "+nj8+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);    
-    pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
-      metbins[imet] + "&&nbdm>=1&&njets>=8", data1l_procs, lin).Tag("1b_hnj")
-    .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
-    .RightLabel({metlabel+" GeV, "+nj8+", "+nb1}).YAxisZoom(0.85).Weight(nom_wgt);    
+    // pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+    //   metbins[imet] + "&&nbdm>=2&&njets>=8", data1l_procs, lin).Tag("2b_hnj")
+    // .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+    // .RightLabel({metlabel+" GeV, "+nj8+", "+nb2}).YAxisZoom(0.85).Weight(nom_wgt);    
+    // pm.Push<Hist1D>(Axis(23, 50.,1200., "mj14", "M_{J} [GeV]", mj_lines[imet]),
+    //   metbins[imet] + "&&nbdm>=1&&njets>=8", data1l_procs, lin).Tag("1b_hnj")
+    // .RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+    // .RightLabel({metlabel+" GeV, "+nj8+", "+nb1}).YAxisZoom(0.85).Weight(nom_wgt);    
   } 
 
 
