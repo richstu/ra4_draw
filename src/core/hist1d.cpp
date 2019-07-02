@@ -816,9 +816,13 @@ void Hist1D::StyleHisto(TH1D &h) const{
   switch(this_opt_.Stack()){
   default:
     DBG("Unrecognized stack option " << static_cast<int>(this_opt_.Stack()) << ".");
+    /* FALLTHRU */
   case StackType::signal_overlay:
+    /* FALLTHRU */
   case StackType::signal_on_top:
+    /* FALLTHRU */
   case StackType::data_norm:
+    /* FALLTHRU */
   case StackType::lumi_shapes:
     if(xaxis_.units_ == "" && bin_width == 1){
       title << Yunit;    
@@ -1055,6 +1059,7 @@ vector<TLine> Hist1D::GetCutLines(double y_min, double y_max, bool adjust_bottom
     switch(this_opt_.YAxis()){
     default:
       DBG("Bad YAxis type " << static_cast<int>(this_opt_.YAxis()));
+      /* FALLTHRU */
     case YAxisType::linear: bottom = y_min >= 0. ? 0. : y_min; break;
     case YAxisType::log:    bottom = y_min > this_opt_.LogMinimum() ? y_min : this_opt_.LogMinimum(); break;
     }
@@ -1392,8 +1397,11 @@ void Hist1D::AddEntries(vector<shared_ptr<TLegend> > &legends,
       switch(this_opt_.Stack()){
       default:
         DBG("Bad stack option: " << static_cast<int>(this_opt_.Stack()));
+        /* FALLTHRU */
       case StackType::signal_overlay:
+        /* FALLTHRU */
       case StackType::signal_on_top:
+        /* FALLTHRU */
       case StackType::data_norm:
         value = GetYield(h);
         if(value>=1.){
@@ -1403,6 +1411,7 @@ void Hist1D::AddEntries(vector<shared_ptr<TLegend> > &legends,
         }
         break;
       case StackType::lumi_shapes:
+        /* FALLTHRU */
       case StackType::shapes:
         value = GetMean(h);
         label += " [#mu=" + FixedDigits(value,3) + "]";

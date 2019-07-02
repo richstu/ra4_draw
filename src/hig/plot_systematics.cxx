@@ -642,7 +642,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(lumi-floor(lumi)==0) digits_lumi = 0;
   TString lumi_s = RoundNumber(lumi, digits_lumi);
   TString outname = "tables/table_pred_"+skim+"_tight_lumi"+lumi_s; outname.ReplaceAll(".","p");
-  if (do_loose) outname = "tables/table_pred_"+skim+"_loose_lumi"+lumi_s; outname.ReplaceAll(".","p");
+  if (do_loose) {outname = "tables/table_pred_"+skim+"_loose_lumi"+lumi_s; outname.ReplaceAll(".","p");}
   if (do_highnb) outname +="_highnb";
   if (do_midnb) outname +="_midnb";
   if(unblind) outname += "_unblind";
