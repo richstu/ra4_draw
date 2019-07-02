@@ -177,18 +177,18 @@ int main(){
   string single_lepton("nleps==1&&st>500&&met>200&&mt<140&&njets>=6&&nbm>=1&&nveto==0");
   string dilepton("st>500&&nleps==2&&njets>=4&&nbm<=2&&met>200&&met<500");
   string cut("2Lepton");
-  string sample("2016_2017");
+  string sample_name("2016_2017");
   vector<shared_ptr<Process> > data_samples;
-  if(strstr(sample.c_str(),"2016_2017") != NULL) {
+  if(strstr(sample_name.c_str(),"2016_2017") != NULL) {
 	if(strstr(cut.c_str(),"met100") != NULL) data_samples = full_data_16_17_met100_compare;
 	else data_samples = full_data_16_17_compare;
 	bjets = bjets_16_17;
 	}
-  else if(strstr(sample.c_str(),"2017_Prompt_ReReco") != NULL) {
+  else if(strstr(sample_name.c_str(),"2017_Prompt_ReReco") != NULL) {
 	if(strstr(cut.c_str(),"met100") != NULL) data_samples = full_data_Prompt_ReReco_met100_compare;
 	else data_samples = full_data_Prompt_ReReco_compare;
 	}
-  else if(strstr(sample.c_str(),"2017-ReReco_runsBD_runF") != NULL) {
+  else if(strstr(sample_name.c_str(),"2017-ReReco_runsBD_runF") != NULL) {
 	if(strstr(cut.c_str(),"met100") != NULL) data_samples = full_data_ReReco_BD_F_met100_compare;
 	else data_samples = full_data_ReReco_BD_F_compare;
 	}

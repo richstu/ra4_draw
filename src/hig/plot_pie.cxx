@@ -31,7 +31,7 @@ namespace{
   //fixme:simplify options
   float lumi = 35.9;
   // options "zll", "qcd", "ttbar", "search"
-  string sample = "search";
+  string sample_name = "search";
   bool do_trim = true;
   bool split_higsbd = false;
   bool note = true;
@@ -71,9 +71,9 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/");
-  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
-  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
+  if (sample_name=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
+  if (sample_name=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
+  if (sample_name=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
@@ -92,10 +92,10 @@ int main(int argc, char *argv[]){
   NamedFunc wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
   NamedFunc base_func("pass && pass_ra2_badmu && stitch_met && met/met_calo<5 && njets>=4 && njets<=5");
   if (do_trim) base_func = base_func && "higd_dm<=40 && higd_am<=200";
-  if (sample=="zll")    base_func = base_func && "met<50";
-  if (sample=="qcd")    base_func = base_func && "ntks==0 && low_dphi && met>=150";
-  if (sample=="ttbar")  base_func = base_func && "mt<100";
-  if (sample=="search") base_func = base_func && "nveto==0 && ntks==0 && !low_dphi && met>=150";
+  if (sample_name=="zll")    base_func = base_func && "met<50";
+  if (sample_name=="qcd")    base_func = base_func && "ntks==0 && low_dphi && met>=150";
+  if (sample_name=="ttbar")  base_func = base_func && "mt<100";
+  if (sample_name=="search") base_func = base_func && "nveto==0 && ntks==0 && !low_dphi && met>=150";
 
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
@@ -127,19 +127,19 @@ int main(int argc, char *argv[]){
   xcuts.push_back("higd_drmax<=2.2");
   
   PlotMaker pm;
-  SlideMaker sm("slide_pies_"+sample+".tex","1610");
+  SlideMaker sm("slide_pies_"+sample_name+".tex","1610");
   vector<string> pnames;
   vector<TableRow> table_cuts;
 
   // pie charts for the "nb - additional cuts" plane
   //-------------------------------------------------
   vector<string> nbcuts;
-  if (sample=="zll" || sample=="qcd") {
+  if (sample_name=="zll" || sample_name=="qcd") {
     nbcuts.push_back("nbdm==0");
     nbcuts.push_back("nbdm==1");
   }
   nbcuts.push_back("nbdt==2&&nbdm==2");
-  if (sample=="ttbar" || sample=="search" || !note) {
+  if (sample_name=="ttbar" || sample_name=="search" || !note) {
     nbcuts.push_back("nbdt>=2&&nbdm==3&&nbdl==3");
     nbcuts.push_back("nbdt>=2&&nbdm>=3&&nbdl>=4");
   }
@@ -149,14 +149,14 @@ int main(int argc, char *argv[]){
     for(auto &inb: nbcuts) {
       string icut = inb+"&&"+ixcut;
       table_cuts.push_back(TableRow("", icut, 0, 0, wgt));  
-      pnames.push_back("pie_"+sample+"_"+tag+"_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
+      pnames.push_back("pie_"+sample_name+"_"+tag+"_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
     }
   }
-  pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
+  pm.Push<Table>(sample_name+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
   sm.AddSlide(pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");  
   //push the table with the same cuts but different procs, so also have to change the pie chart names
-  if (sample=="search" || !note) {
-    pm.Push<Table>(sample+"_procs",  table_cuts, procs, true, true, true);
+  if (sample_name=="search" || !note) {
+    pm.Push<Table>(sample_name+"_procs",  table_cuts, procs, true, true, true);
     sm.AddSlideWithReplace(tag,"procs", pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");
   }
   
@@ -164,14 +164,14 @@ int main(int argc, char *argv[]){
   //--------------------------------------------------------------------------------
   vector<string> metcuts;
   string metdef = "met";
-  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
-  if (sample=="ttbar" || sample=="zll"){
+  if (sample_name=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+  if (sample_name=="ttbar" || sample_name=="zll"){
     metcuts.push_back(metdef+">0&&"+metdef+"<=75");
     metcuts.push_back(metdef+">75&&"+metdef+"<=150");
   }
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-  // if (sample=="search") {
+  // if (sample_name=="search") {
     metcuts.push_back(metdef+">300&&"+metdef+"<=450");
     metcuts.push_back(metdef+">450");
   // } else {
@@ -188,28 +188,28 @@ int main(int argc, char *argv[]){
         string icut = inb+"&&"+imet+"&&"+ixcut;
         if (split_higsbd && !note) {
           table_cuts.push_back(TableRow("", icut+"&&!(higd_am>100&&higd_am<=140)", 0, 0, wgt));  
-          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut+"&&!(higd_am>100&&higd_am<=140)")+
+          pnames.push_back("pie_"+sample_name+"_procs_"+CodeToPlainText(icut+"&&!(higd_am>100&&higd_am<=140)")+
             "_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
           table_cuts.push_back(TableRow("", icut+"&&(higd_am>100&&higd_am<=140)", 0, 0, wgt));  
-          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut+"&&(higd_am>100&&higd_am<=140)")+
+          pnames.push_back("pie_"+sample_name+"_procs_"+CodeToPlainText(icut+"&&(higd_am>100&&higd_am<=140)")+
             "_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
         } else {
           // procs
           table_cuts.push_back(TableRow("", icut, 0, 0, wgt));  
-          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
+          pnames.push_back("pie_"+sample_name+"_procs_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
         }
       }
     }
     if (split_higsbd) sm.AddSlide(pnames, metcuts.size()*2, slide_ttl);
     else sm.AddSlide(pnames, metcuts.size(), slide_ttl);
 
-    if (sample=="ttbar" || !note){
+    if (sample_name=="ttbar" || !note){
       if (!split_higsbd) sm.AddSlideWithReplace("procs", tag, pnames, metcuts.size(), slide_ttl);
     }
   }
-  pm.Push<Table>(sample+"_procs",  table_cuts, procs, true, true, true);
-  if (!split_higsbd && (sample=="ttbar" || !note))
-      pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
+  pm.Push<Table>(sample_name+"_procs",  table_cuts, procs, true, true, true);
+  if (!split_higsbd && (sample_name=="ttbar" || !note))
+      pm.Push<Table>(sample_name+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
 
   pm.min_print_ = true;
   pm.multithreaded_ = true;
@@ -226,7 +226,7 @@ void GetOptions(int argc, char *argv[]){
     static struct option long_options[] = {
       {"bcats", required_argument, 0, 'b'},
       {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
-      {"sample", required_argument, 0, 's'},    // Which sample to use: standard, met150, 2015 data
+      {"sample", required_argument, 0, 's'},    // Which sample_name to use: standard, met150, 2015 data
       {0, 0, 0, 0}
     };
 
@@ -241,7 +241,7 @@ void GetOptions(int argc, char *argv[]){
       lumi = atof(optarg);
       break;
     case 's':
-      sample = optarg;
+      sample_name = optarg;
       break;
     case 0:
       break;

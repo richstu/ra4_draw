@@ -32,7 +32,7 @@ namespace{
   bool paper = true;
   bool rewgt = false;
   float lumi = 4.3;
-  string sample = "search";
+  string sample_name = "search";
   string json = "1";
   bool do_data = true;
   bool do_loose = false; // removes track veto and delta phi requirement for the search region to make dphi "N-1" plots
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
     exit(0);
   }
   // protect from silly options
-  if (sample=="ttbar" || sample=="search" || !do_data) subtr_ttx = false;
+  if (sample_name=="ttbar" || sample_name=="search" || !do_data) subtr_ttx = false;
 
   time_t begtime, endtime;
   time(&begtime);
@@ -103,13 +103,13 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/";
-  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
-  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
+  if (sample_name=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
+  if (sample_name=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
+  if (sample_name=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/");
-  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep1/";
-  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep2/";
-  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higqcd/";
+  if (sample_name=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep1/";
+  if (sample_name=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep2/";
+  if (sample_name=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higqcd/";
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_split/");
 
   map<string, set<string>> mctags; 
@@ -135,26 +135,26 @@ int main(int argc, char *argv[]){
   if (rewgt) wgt *= wgt_comp;
 
   string base_func("njets>=4 && njets<=5 && met/met_calo<5"); //met/met_calo
-  if (sample=="zll") base_func = base_func+"&& nleps==2 && met<50";
-  if (sample=="qcd") base_func = base_func+"&& ntks==0 && nvleps==0 && low_dphi";
-  if (sample=="ttbar") base_func = base_func+"&& nleps==1 && mt<100";
-  if (sample=="search") {
+  if (sample_name=="zll") base_func = base_func+"&& nleps==2 && met<50";
+  if (sample_name=="qcd") base_func = base_func+"&& ntks==0 && nvleps==0 && low_dphi";
+  if (sample_name=="ttbar") base_func = base_func+"&& nleps==1 && mt<100";
+  if (sample_name=="search") {
     if (do_loose) base_func = base_func+"&& nvleps==0";
     else base_func = base_func+"&& nvleps==0 && ntks==0 && !low_dphi";
   } 
 
   string cr_label = "";
-  if (sample=="zll") cr_label = "Dilepton";
-  if (sample=="qcd") cr_label = "Low #Delta";
-  if (sample=="ttbar") cr_label = "Single-lepton";
+  if (sample_name=="zll") cr_label = "Dilepton";
+  if (sample_name=="qcd") cr_label = "Low #Delta";
+  if (sample_name=="ttbar") cr_label = "Single-lepton";
 
   vector<shared_ptr<Process> > procs;
   if (!subtr_ttx) 
   procs.push_back(Process::MakeShared<Baby_full>("QCD",        
     Process::Type::background, colors("other"),    attach_folder(foldermc,mctags["qcd"]),     
     base_func+"&& pass && pass_ra2_badmu && stitch_met" 
-    + ((sample=="qcd"&&!subtr_ttx) ? "&&weight<10":"") 
-    + (sample=="zll" ? "&&higd_am>20":""))); // kill the huge error band in the ratio plot 
+    + ((sample_name=="qcd"&&!subtr_ttx) ? "&&weight<10":"") 
+    + (sample_name=="zll" ? "&&higd_am>20":""))); // kill the huge error band in the ratio plot 
   procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
       Process::Type::background, colors("tt_1l"),    attach_folder(foldermc,mctags["ttx"]),     
       base_func+"&& pass && pass_ra2_badmu && stitch_met"));
@@ -180,7 +180,7 @@ int main(int argc, char *argv[]){
         {folderdata+"*root"},  trig_hig>0. && " pass && pass_ra2_badmu &&"+json+"&&"+base_func)); 
     }
   }
-  // if (sample == "search") {
+  // if (sample_name == "search") {
   //   for (unsigned isig(0); isig<sigm.size(); isig++)
   //     procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
   //       sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, base_func +" && pass_ra2_badmu"));
@@ -190,10 +190,10 @@ int main(int argc, char *argv[]){
 
   vector<string> metcuts;
   string metdef = "met";
-  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+  if (sample_name=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
   if (do_metint) {
-    if (sample=="zll") metcuts.push_back(metdef+">0");
-    else if (sample=="ttbar") metcuts.push_back(metdef+">0");
+    if (sample_name=="zll") metcuts.push_back(metdef+">0");
+    else if (sample_name=="ttbar") metcuts.push_back(metdef+">0");
     metcuts.push_back(metdef+">150");
   } else {
     metcuts.push_back(metdef+">150&&"+metdef+"<=200");
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]){
   }
   
   vector<string> nbcuts;
-  if (sample=="zll" || sample=="qcd") {
+  if (sample_name=="zll" || sample_name=="qcd") {
     if (paper) {
       nbcuts.push_back("nbdm>=0");
     } else {
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]){
       nbcuts.push_back("nbdm==1");
     }
   } 
-  if (!note || sample=="ttbar" || sample=="search") {
+  if (!note || sample_name=="ttbar" || sample_name=="search") {
     if (paper) {
       nbcuts.push_back("nbdt>=2");
     } else {
@@ -236,55 +236,55 @@ int main(int argc, char *argv[]){
   // nb plots integrated in MET
   if (metcuts.size()>0) tmp_seln += "&&"+metcuts[0];
   if (!note) {
-    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbl", "N_{b}^{L} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);
-    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbm", "N_{b}^{M} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);
-    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbt", "N_{b}^{T} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);
+    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbl", "N_{b}^{L} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample_name);
+    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbm", "N_{b}^{M} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample_name);
+    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbt", "N_{b}^{T} (CSVv2)"), tmp_seln, procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample_name);
 
-    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbdl", "N_{b}^{L}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
-    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbdm", "N_{b}^{M}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
-    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbdt", "N_{b}^{T}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
+    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbdl", "N_{b}^{L}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
+    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbdm", "N_{b}^{M}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
+    pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbdt", "N_{b}^{T}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
   }
-  if (sample=="search") {
+  if (sample_name=="search") {
       pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat, "b-tag category (TTML)"), 
-        tmp_seln && higd_bcat>0., procs, linplot).Weight(wgt).Tag(sample);
+        tmp_seln && higd_bcat>0., procs, linplot).Weight(wgt).Tag(sample_name);
       // pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat_ttll, "b-tag category (TTLL)"), 
-      //   tmp_seln && higd_bcat_ttll>0., procs, linplot).Weight(wgt).Tag(sample);
+      //   tmp_seln && higd_bcat_ttll>0., procs, linplot).Weight(wgt).Tag(sample_name);
       // pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat_tmml, "b-tag category (TMML)"), 
-      //   tmp_seln && higd_bcat_tmml>0., procs, linplot).Weight(wgt).Tag(sample);
+      //   tmp_seln && higd_bcat_tmml>0., procs, linplot).Weight(wgt).Tag(sample_name);
       // pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat_mmmm, "b-tag category (MMMM)"), 
-      //   tmp_seln && higd_bcat_mmmm>0., procs, linplot).Weight(wgt).Tag(sample);
+      //   tmp_seln && higd_bcat_mmmm>0., procs, linplot).Weight(wgt).Tag(sample_name);
   } else { 
     if (!note) {
       pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_bcat, "CSVv2 b-tag categories (TTML)"), 
-        tmp_seln && hig_bcat>0., procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample); 
+        tmp_seln && hig_bcat>0., procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample_name); 
       pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_bcat, "CSVv2 b-tag categories (TTML)"), 
-        tmp_seln && hig_bcat>0. && "hig_dm<=40 && hig_am<=200", procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);            
+        tmp_seln && hig_bcat>0. && "hig_dm<=40 && hig_am<=200", procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample_name);            
       pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_bcat, "CSVv2 b-tag categories (TTML)"), 
-        tmp_seln && hig_bcat>0. && "hig_dm<=40 && hig_am<=200 && hig_drmax<=2.2", procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample);    
+        tmp_seln && hig_bcat>0. && "hig_dm<=40 && hig_am<=200 && hig_drmax<=2.2", procs, linplot).Weight(weight_higd*eff_higtrig).Tag(sample_name);    
       // deep
       pm.Push<Hist1D>(Axis(6,-0.5,5.5,higd_bcat_extended, "Extended b-tag categories (TTML)"), 
-        tmp_seln && higd_bcat_extended<6, procs, linplot).Weight(wgt).Tag(sample);
+        tmp_seln && higd_bcat_extended<6, procs, linplot).Weight(wgt).Tag(sample_name);
       pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat, "b-tag categories (TTML)"), 
-        tmp_seln && higd_bcat>0. && "higd_dm<=40 && higd_am<=200", procs, linplot).Weight(wgt).Tag(sample);            
+        tmp_seln && higd_bcat>0. && "higd_dm<=40 && higd_am<=200", procs, linplot).Weight(wgt).Tag(sample_name);            
       pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat, "b-tag categories (TTML)"), 
-        tmp_seln && higd_bcat>0. && "higd_dm<=40 && higd_am<=200 && higd_drmax<=2.2", procs, linplot).Weight(wgt).Tag(sample);    
+        tmp_seln && higd_bcat>0. && "higd_dm<=40 && higd_am<=200 && higd_drmax<=2.2", procs, linplot).Weight(wgt).Tag(sample_name);    
     } 
-    if (subtr_ttx || sample=="ttbar" || !note) pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat, "b-tag categories (TTML)"), 
-      tmp_seln && higd_bcat>0., procs, linplotprint).Weight(wgt).Tag(sample); 
+    if (subtr_ttx || sample_name=="ttbar" || !note) pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat, "b-tag categories (TTML)"), 
+      tmp_seln && higd_bcat>0., procs, linplotprint).Weight(wgt).Tag(sample_name); 
   }
-  if (sample!="search") {
+  if (sample_name!="search") {
     vector<double> metbins = {150, 200, 300, 600};
     vector<double> metbins_ext = {0,50, 100, 150, 200, 300, 600};
-    if (sample=="zll" && (subtr_ttx || !note)) {
+    if (sample_name=="zll" && (subtr_ttx || !note)) {
       pm.Push<Hist1D>(Axis(metbins,metdef, "p_{T}^{Z} [GeV]",{150,200,300}), 
-        tmp_seln && "nbdt>=2" && metdef+">150", procs, logplotprint).Weight(wgt).Tag(sample+"_norm");
+        tmp_seln && "nbdt>=2" && metdef+">150", procs, logplotprint).Weight(wgt).Tag(sample_name+"_norm");
     } else {
-      if (sample=="ttbar") {
+      if (sample_name=="ttbar") {
         pm.Push<Hist1D>(Axis(metbins_ext,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
-          tmp_seln && "nbdt>=2", procs, logplotprint).Weight(wgt).Tag(sample+"_normext");
+          tmp_seln && "nbdt>=2", procs, logplotprint).Weight(wgt).Tag(sample_name+"_normext");
       } else if (subtr_ttx || !note) {
         pm.Push<Hist1D>(Axis(metbins,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
-          tmp_seln && "nbdt>=2" && metdef+">"+to_string(metbins[0]), procs, logplotprint).Weight(wgt).Tag(sample+"_norm");
+          tmp_seln && "nbdt>=2" && metdef+">"+to_string(metbins[0]), procs, logplotprint).Weight(wgt).Tag(sample_name+"_norm");
       }
     }
   }
@@ -302,56 +302,56 @@ int main(int argc, char *argv[]){
           if (ixcut.first=="nm1") { 
             pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40", 
-                            procs, linplot).Weight(wgt).Tag(sample).RightLabel({cr_label, "control region"});
+                            procs, linplot).Weight(wgt).Tag(sample_name).RightLabel({cr_label, "control region"});
             pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40 && higd_drmax<=2.2", 
-              procs, linplot).Weight(wgt).Tag(sample).RightLabel({cr_label, "control region"});
+              procs, linplot).Weight(wgt).Tag(sample_name).RightLabel({cr_label, "control region"});
             tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
             if(!note) pm.Push<Hist1D>(Axis(15,0,150,"higd_dm", "#Deltam [GeV]", {40.}), 
-              tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
+              tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
           }
           tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
           if(!note) pm.Push<Hist1D>(Axis(20,0,2000,"ht", "H_{T} [GeV]"), 
-            tmp_seln, procs, logplot).Weight(wgt).Tag(sample);
+            tmp_seln, procs, logplot).Weight(wgt).Tag(sample_name);
           if (imet==0) {
-            if (sample=="zll") pm.Push<Hist1D>(Axis(24,0,600,metdef, "p_{T}^{Z} [GeV]",{150,200,300}), 
-              tmp_seln, procs, logplot).Weight(wgt).Tag(sample);
+            if (sample_name=="zll") pm.Push<Hist1D>(Axis(24,0,600,metdef, "p_{T}^{Z} [GeV]",{150,200,300}), 
+              tmp_seln, procs, logplot).Weight(wgt).Tag(sample_name);
             else pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300,450}), 
-              tmp_seln, procs, logplot).Weight(wgt).Tag(sample);
+              tmp_seln, procs, logplot).Weight(wgt).Tag(sample_name);
           }  
           if (ixcut.first=="base") // do only with the trimmed selection
             pm.Push<Hist1D>(Axis(20/div,0,4,"higd_drmax", "#DeltaR_{max}", {2.2}),
             ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb], 
-            procs, linplot).Weight(wgt).Tag(sample);
+            procs, linplot).Weight(wgt).Tag(sample_name);
           if (!note) {
             pm.Push<Hist1D>(Axis(15,0,600,"jets_pt[0]", "Jet 1 p_{T} [GeV]"), 
-              tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
+              tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
             pm.Push<Hist1D>(Axis(17,0,340,"jets_pt[1]", "Jet 2 p_{T} [GeV]"), 
-              tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
+              tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
             pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[2]", "Jet 3 p_{T} [GeV]"), 
-              tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
+              tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
             pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[3]", "Jet 4 p_{T} [GeV]"), 
-              tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
-            if (sample=="ttbar"){
+              tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
+            if (sample_name=="ttbar"){
                 tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
                 pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
-                  tmp_seln+"&&nels==1", procs, linplot).Weight(wgt).Tag(sample);
+                  tmp_seln+"&&nels==1", procs, linplot).Weight(wgt).Tag(sample_name);
                 pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
-                tmp_seln+"&&nmus==1", procs, linplot).Weight(wgt).Tag(sample);
-            } else if (sample=="search" && do_loose) {
+                tmp_seln+"&&nmus==1", procs, linplot).Weight(wgt).Tag(sample_name);
+            } else if (sample_name=="search" && do_loose) {
               if (imet>0) continue; 
               tmp_seln = ixcut.second+"&& ntks==0 && !low_dphi && met>100 &&"+nbcuts[inb];
-              pm.Push<Hist1D>(Axis(10,100,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
+              pm.Push<Hist1D>(Axis(10,100,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
               tmp_seln = ixcut.second+"&& !low_dphi && met>150 &&"+nbcuts[inb];
               pm.Push<Hist1D>(Axis(5,-0.5,4.5,"ntks", "N_{tks}"),
-                tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
+                tmp_seln, procs, linplot).Weight(wgt).Tag(sample_name);
               tmp_seln = ixcut.second+"&& ntks==0 && met>150 &&"+nbcuts[inb];
               pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi2", "#Delta#phi_{2}",{0.5}),
-                tmp_seln+"&& dphi1>0.5", procs, linplot).Weight(wgt).Tag(sample);
+                tmp_seln+"&& dphi1>0.5", procs, linplot).Weight(wgt).Tag(sample_name);
               pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi3", "#Delta#phi_{3}",{0.3}),
-                tmp_seln+"&& dphi1>0.5 && dphi2>0.5", procs, linplot).Weight(wgt).Tag(sample);
+                tmp_seln+"&& dphi1>0.5 && dphi2>0.5", procs, linplot).Weight(wgt).Tag(sample_name);
               pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi4", "#Delta#phi_{4}",{0.3}),
-                tmp_seln+"&& dphi1>0.5 && dphi2>0.5 && dphi3>0.3", procs, linplot).Weight(wgt).Tag(sample);
+                tmp_seln+"&& dphi1>0.5 && dphi2>0.5 && dphi3>0.3", procs, linplot).Weight(wgt).Tag(sample_name);
             }
           } // not note
         } // nb cuts
@@ -370,7 +370,7 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
-      {"sample", required_argument, 0, 's'},    // Which sample to use: standard, met150, 2015 data
+      {"sample", required_argument, 0, 's'},    // Which sample_name to use: standard, met150, 2015 data
       {"subttx", no_argument, 0, 0},             
       {"rewgt", no_argument, 0, 0},             
       {0, 0, 0, 0}
@@ -387,7 +387,7 @@ void GetOptions(int argc, char *argv[]){
       lumi = atof(optarg);
       break;
     case 's':
-      sample = optarg;
+      sample_name = optarg;
       break;
     case 0:
       optname = long_options[option_index].name;

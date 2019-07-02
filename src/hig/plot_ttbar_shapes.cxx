@@ -28,7 +28,7 @@ using namespace PlotOptTypes;
 void GetOptions(int argc, char *argv[]);
 
 namespace{
-  string sample = "tt";
+  string sample_name = "tt";
 }
 
 int main(int argc, char *argv[]){
@@ -63,18 +63,18 @@ int main(int argc, char *argv[]){
   nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
   nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
 
-  string samplename = "t#bar{t}+X";
+  string sname = "t#bar{t}+X";
   // vector<int> colors = {kGreen+3, kGreen+1, kOrange, kAzure+1, kBlue+1};
   vector<int> colors = {kOrange, kAzure+1, kBlue+1};
   vector<shared_ptr<Process> > procs = vector<shared_ptr<Process> >();
   for (unsigned inb(0); inb<nbcuts.size(); inb++){
-    procs.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb+2,0).Data()+"b)", 
+    procs.push_back(Process::MakeShared<Baby_full>(sname+" ("+RoundNumber(inb+2,0).Data()+"b)", 
       Process::Type::background, colors[inb], allfiles, baseline+"&& pass &&"+nbcuts[inb]));
   }
   vector<int> colors_trub = {kAzure-4, kTeal-8, kOrange-4, kPink+2, kMagenta-1};
   vector<shared_ptr<Process> > procs_trub = vector<shared_ptr<Process> >();
   for (unsigned inb(2); inb<5; inb++){
-      procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+" B-hadrons)", 
+      procs_trub.push_back(Process::MakeShared<Baby_full>(sname+" ("+RoundNumber(inb,0).Data()+" B-hadrons)", 
         Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub==inb && baseline+"&& pass"));
   }
 
@@ -95,17 +95,17 @@ int main(int argc, char *argv[]){
   for (unsigned imet(0); imet<metcuts.size(); imet++){
     for (unsigned ic(0); ic<xcuts.size(); ic++){
       pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-        baseline+"&& ntrutaush==1 && nvleps==0 &&"+xcuts[ic]+"&&"+metcuts[imet], procs, plt_types).Tag(sample+"0l_shape_bcats");
+        baseline+"&& ntrutaush==1 && nvleps==0 &&"+xcuts[ic]+"&&"+metcuts[imet], procs, plt_types).Tag(sample_name+"0l_shape_bcats");
       pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-        baseline+"&& ntrutaush==1 && nvleps==0 &&"+xcuts[ic]+"&&"+metcuts[imet], procs_trub, plt_types).Tag(sample+"0l_shape_trub");
+        baseline+"&& ntrutaush==1 && nvleps==0 &&"+xcuts[ic]+"&&"+metcuts[imet], procs_trub, plt_types).Tag(sample_name+"0l_shape_trub");
       pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-        baseline+"&& ntruleps==1 && nleps==1 &&"+xcuts[ic]+"&&"+metcuts[imet], procs, plt_types).Tag(sample+"1l_shape_bcats");
+        baseline+"&& ntruleps==1 && nleps==1 &&"+xcuts[ic]+"&&"+metcuts[imet], procs, plt_types).Tag(sample_name+"1l_shape_bcats");
       pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-        baseline+"&& ntruleps==1 && nleps==1 &&"+xcuts[ic]+"&&"+metcuts[imet], procs_trub, plt_types).Tag(sample+"1l_shape_trub");
+        baseline+"&& ntruleps==1 && nleps==1 &&"+xcuts[ic]+"&&"+metcuts[imet], procs_trub, plt_types).Tag(sample_name+"1l_shape_trub");
       pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-        baseline+"&& ntruleps==2 && nleps==2 &&"+xcuts[ic]+"&&"+metcuts[imet], procs, plt_types).Tag(sample+"2l_shape_bcats");
+        baseline+"&& ntruleps==2 && nleps==2 &&"+xcuts[ic]+"&&"+metcuts[imet], procs, plt_types).Tag(sample_name+"2l_shape_bcats");
       pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-        baseline+"&& ntruleps==2 && nleps==2 &&"+xcuts[ic]+"&&"+metcuts[imet], procs_trub, plt_types).Tag(sample+"2l_shape_trub");
+        baseline+"&& ntruleps==2 && nleps==2 &&"+xcuts[ic]+"&&"+metcuts[imet], procs_trub, plt_types).Tag(sample_name+"2l_shape_trub");
     }
   }
 
@@ -131,7 +131,7 @@ void GetOptions(int argc, char *argv[]){
     string optname;
     switch(opt){
     case 's':
-      sample = optarg;
+      sample_name = optarg;
       break;
     case 0:
       break;

@@ -8,15 +8,15 @@ compile_table = True
 
 
 # --- Official plot
-tag1 = '_nor4'
+tag1 = '_nor4_2100'
 tag1_lbl = 'R1--R3 fit'
 tag1_color = kPink+2
 
-tag2 = '_r4' 
+tag2 = '_r4_2100' 
 tag2_lbl = 'R1--R4 fit'
 tag2_color = kAzure+1
 
-tag_sig_c = '_r4_sig_c'
+tag_sig_c = '_r4_1900'
 
 # --- Effect of systematics
 # tag1 = '_nor4'
@@ -345,7 +345,7 @@ hbotdummy.GetYaxis().SetTitleOffset(0.2)
 
 hbotdummy.GetXaxis().SetLabelSize(0.12)
 hbotdummy.GetXaxis().SetLabelOffset(0.02)
-hbotdummy.GetXaxis().SetTitle("Bin #")
+hbotdummy.GetXaxis().SetTitle("Bin number")
 hbotdummy.GetXaxis().CenterTitle()
 hbotdummy.GetXaxis().SetTitleSize(0.15)
 hbotdummy.GetXaxis().SetTitleOffset(0.9)

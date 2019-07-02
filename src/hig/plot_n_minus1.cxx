@@ -28,7 +28,7 @@ using namespace PlotOptTypes;
 void GetOptions(int argc, char *argv[]);
 
 namespace{
-  string sample = "tt";
+  string sample_name = "tt";
   bool paper = false;
 }
 
@@ -285,7 +285,7 @@ void GetOptions(int argc, char *argv[]){
     string optname;
     switch(opt){
     case 's':
-      sample = optarg;
+      sample_name = optarg;
       break;
     case 0:
       break;

@@ -42,11 +42,13 @@ Plots showing that CRs mimic behavior of SRs:
     ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm w_isr -m cr2lveto_njbins --data_kappas -y 0
     ./compile.py && ./run/ra4/kappa_plots_tables.exe --mm w_isr -m signal_njbins --data_kappas -y 0
 
-Generate a specific datacard:
+Generate a specific datacard, or wihtout signal uncertainties for the results plot:
 
     ./compile.py && ./run/ra4/write_datacards.exe -p 2100_100 -y 0 -u -d
+    ./compile.py && ./run/ra4/write_datacards.exe -p 2100_100 -y 0 -u -d --no_syst
 
 Getting the detailed signal systematics tables:
+
     ./python/sig_sys_table.py systable_lowmj.tex sys_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.txt sys_SMS-T1tttt_mGluino-1900_mLSP-1250_0_nom.txt --lowmj
     ./python/sig_sys_table.py systable_highmj.tex sys_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.txt sys_SMS-T1tttt_mGluino-1900_mLSP-1250_0_nom.txt
 
@@ -56,7 +58,7 @@ Get limits, this also generates the datacards for the full scan:
 
 To perform the fit without the signal region observations, start by creating a workspace in order to create the masking variables:
 
-    text2workspace.py cards/datacard_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.txt --channel-masks
+    text2workspace.py datacard_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.txt --channel-masks
 
 The resulting workspace can be examined using [dump_workspace.cxx](src/ra4/dump_workspace.cxx). Then, to do the fit with masked R4s:
 

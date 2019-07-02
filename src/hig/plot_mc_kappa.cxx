@@ -37,7 +37,7 @@ using namespace Functions;
 namespace{
   bool debug = false;
   // options "zll", "qcd", "ttbar", "search"
-  string sample = "search";
+  string sample_name = "search";
   float lumi=40.;
   bool do_trim = true;
 
@@ -74,9 +74,9 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
-  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1met0/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
-  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
+  if (sample_name=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1met0/";
+  if (sample_name=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
+  if (sample_name=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
 
   set<string> alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
             "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root",
@@ -98,13 +98,13 @@ int main(int argc, char *argv[]){
   procs.push_back(Process::MakeShared<Baby_full>("All bkg.", Process::Type::background, 
     kBlack, attach_folder(foldermc,alltags), base_func));
   // Sample specific kappa
-  if (sample=="zll") 
+  if (sample_name=="zll") 
     procs.push_back(Process::MakeShared<Baby_full>("Z#rightarrow ll", Process::Type::background, 
       kOrange+1, {foldermc+"*DYJetsToLL*.root"}, base_func));
-  if (sample=="qcd") 
+  if (sample_name=="qcd") 
     procs.push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, 
       colors("other"),{foldermc+"*QCD_HT*0_Tune*.root", foldermc+"*QCD_HT*Inf_Tune*.root"}, base_func)); 
-  if (sample=="ttbar" || sample=="search") 
+  if (sample_name=="ttbar" || sample_name=="search") 
     procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background,
       colors("tt_1l"),attach_folder(foldermc,ttxtags), base_func));
 
@@ -113,34 +113,34 @@ int main(int argc, char *argv[]){
   vector<TString> xcuts; // all desired cut combinations
   // zll skim:  ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100))
   // nleps==2 && Max$(leps_pt)>40 
-  if (sample=="zll") {
+  if (sample_name=="zll") {
     xcuts.push_back("nleps==2 && met<50");
     xcuts.push_back("nleps==2 && met<50 && hig_drmax<2.2");
   }
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
-  if (sample=="qcd") {
+  if (sample_name=="qcd") {
     xcuts.push_back("nvleps==0 && ntks==0 && low_dphi");
     xcuts.push_back("nvleps==0 && ntks==0 && low_dphi && hig_drmax<2.2");
   }
   // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbm>=2
-  if (sample=="ttbar") {
+  if (sample_name=="ttbar") {
     xcuts.push_back("nleps==1 && mt<100");
     xcuts.push_back("nleps==1 && mt<100 && hig_drmax<2.2");
   } 
   // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
-  if (sample=="search") {
+  if (sample_name=="search") {
     xcuts.push_back("nvleps==0");
     xcuts.push_back("nvleps==0 && ntks==0 && !low_dphi && hig_drmax<2.2");
   }
 
   vector<TString> metcuts;
   string metdef = "met";
-  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
-  if (sample=="zll" || sample=="ttbar") {
+  if (sample_name=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+  if (sample_name=="zll" || sample_name=="ttbar") {
     metcuts.push_back(metdef+"<=50");
     metcuts.push_back(metdef+">50&&"+metdef+"<=100");
   }
-  if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
+  if (sample_name!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
   metcuts.push_back(metdef+">300&&"+metdef+"<=400");
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]){
   TString c_ab="nbt==2&&nbm==2";
   TString c_cd="nbt>=2&&nbm==3&&nbl==3";
   TString c_ef="nbt>=2&&nbm>=3&&nbl>=4";
-  if (sample=="qcd" || sample=="zll"){
+  if (sample_name=="qcd" || sample_name=="zll"){
     c_ab="nbm==0";
     c_cd="nbm==1";
     c_ef="nbt==1";  
@@ -284,11 +284,11 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
     size_t ind0=indices[0][0][1], ind1=indices[0][1][1];
     size_t ind2=indices[0][2][1], ind3=indices[0][3][1];
     if((ind0==hig4b&&ind1==sbd4b && ind2==hig2b&&ind3==sbd2b)) {
-      if (sample=="qcd" || sample=="zll") ytitle = "1 tight b #kappa";
+      if (sample_name=="qcd" || sample_name=="zll") ytitle = "1 tight b #kappa";
       else ytitle = "4b #kappa";
     }
     if((ind0==hig3b&&ind1==sbd3b && ind2==hig2b&&ind3==sbd2b)) {
-      if (sample=="qcd" || sample=="zll") ytitle = "1b #kappa";
+      if (sample_name=="qcd" || sample_name=="zll") ytitle = "1b #kappa";
       else ytitle = "3b #kappa";
     }
   }
@@ -386,7 +386,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
 
-  TString fname = "plots/ratio_"+sample+"_"+CodeToPlainText(ytitle.Data())+"_"+plotdef.name+"_"
+  TString fname = "plots/ratio_"+sample_name+"_"+CodeToPlainText(ytitle.Data())+"_"+plotdef.name+"_"
     +CodeToPlainText(plotdef.baseline.Data())+".pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
@@ -417,7 +417,7 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
-      {"sample", required_argument, 0, 's'},    // Which sample to use: standard, met150, 2015 data
+      {"sample", required_argument, 0, 's'},    // Which sample_name to use: standard, met150, 2015 data
       {"debug", no_argument, 0, 'g'},         // Debug: prints yields and cuts used
       {0, 0, 0, 0}
     };
@@ -433,7 +433,7 @@ void GetOptions(int argc, char *argv[]){
       lumi = atof(optarg);
       break;
     case 's':
-      sample = optarg;
+      sample_name = optarg;
       break;
     case 'g':
       debug = true;
