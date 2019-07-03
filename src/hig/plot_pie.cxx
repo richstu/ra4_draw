@@ -152,12 +152,17 @@ int main(int argc, char *argv[]){
       pnames.push_back("pie_"+sample_name+"_"+tag+"_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
     }
   }
+
+  vector<string> col_labels = {""}; 
+  for(auto &inb: nbcuts) col_labels.push_back("$"+CodeToLatex(inb)+"$");
+  vector<string> row_labels; 
+  for(auto &ixcut: xcuts) row_labels.push_back("$"+CodeToLatex(ixcut)+"$");
   pm.Push<Table>(sample_name+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
-  sm.AddSlide(pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");  
+  sm.AddSlide(pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts", col_labels, row_labels);  
   //push the table with the same cuts but different procs, so also have to change the pie chart names
   if (sample_name=="search" || !note) {
     pm.Push<Table>(sample_name+"_procs",  table_cuts, procs, true, true, true);
-    sm.AddSlideWithReplace(tag,"procs", pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");
+    sm.AddSlideWithReplace(tag,"procs", pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts", col_labels, row_labels);
   }
   
   // pie charts for the "met - nb cuts" plane, one slide per set of additional cuts
@@ -200,11 +205,30 @@ int main(int argc, char *argv[]){
         }
       }
     }
-    if (split_higsbd) sm.AddSlide(pnames, metcuts.size()*2, slide_ttl);
-    else sm.AddSlide(pnames, metcuts.size(), slide_ttl);
+    col_labels.clear();
+    row_labels.clear();
+    for(auto &inb: nbcuts) row_labels.push_back("$"+CodeToLatex(inb)+"$");
+    if (split_higsbd){ 
+      col_labels.push_back("");
+      for(auto &imet: metcuts) {
+        col_labels.push_back("$"+CodeToLatex(imet+"&&!(higd_am>100&&higd_am<=140)")+"$");
+        col_labels.push_back("$"+CodeToLatex(imet+"&&(higd_am>100&&higd_am<=140)")+"$");
+      }
+      sm.AddSlide(pnames, metcuts.size()*2, slide_ttl, col_labels, row_labels);
+    }
+    else {
+      col_labels.push_back("");
+      for(auto &imet: metcuts) col_labels.push_back("$"+CodeToLatex(imet)+"$");
+      sm.AddSlide(pnames, metcuts.size(), slide_ttl, col_labels, row_labels);
+    }
 
     if (sample_name=="ttbar" || !note){
-      if (!split_higsbd) sm.AddSlideWithReplace("procs", tag, pnames, metcuts.size(), slide_ttl);
+      if (!split_higsbd) {
+        col_labels.clear();
+        col_labels.push_back("");
+        for(auto &imet: metcuts) col_labels.push_back("$"+CodeToLatex(imet)+"$");
+        sm.AddSlideWithReplace("procs", tag, pnames, metcuts.size(), slide_ttl);
+      }
     }
   }
   pm.Push<Table>(sample_name+"_procs",  table_cuts, procs, true, true, true);
