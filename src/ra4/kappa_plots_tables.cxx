@@ -61,7 +61,7 @@ namespace{
   string mm_scen = "";
   float lumi=1;
   TString lumi_s = "137";
-  int year = 2016;
+  int year = 0;
   bool quick_test = false;
   pair<string, string> sig_nc = make_pair("2100","100");
   pair<string, string> sig_c = make_pair("1900","1250");
@@ -177,17 +177,17 @@ int main(int argc, char *argv[]){
   map<int, string> foldermc, folderdata, foldersig;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
   if (only_method=="signal") foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_abcd/";
-  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/T1tttt/unskimmed/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_05_16/T1tttt/skim_sys_abcd/";
   folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
 
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
   if (only_method=="signal") foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_abcd/";
-  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/T1tttt/unskimmed/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_05_17/T1tttt/skim_sys_abcd/";
   folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
 
   foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_stdnj5/";
   if (only_method=="signal") foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_abcd/";
-  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/T1tttt/unskimmed/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_05_18/T1tttt/skim_sys_abcd/";
   folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
 
   Palette colors("txt/colors.txt", "default");
@@ -654,7 +654,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields, v
   if (cleanup) digits = 1;
   TString ump = " & ";
   bool do_zbi = true;
-  if(!unblind || !abcd.method.Contains("signal")) do_zbi = false;
+  if(!abcd.method.Contains("signal")) do_zbi = false;
   size_t Ncol = 6;
   if(do_zbi) Ncol++;
   if(do_signal) Ncol += 2;

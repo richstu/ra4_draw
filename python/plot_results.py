@@ -98,12 +98,12 @@ tab.append(open("tables/table_hmj"+tag1+"_vs"+tag2+".tex","w"))
 ncols = 6
 if (do_sig): ncols +=2
 
-tab_head = "\\begin{tabular}[tbp!]{ l"
-for i in range(ncols-1): tab_head += " r"
+tab_head = "\\begin{tabular}[tbp!]{ l cc"
+for i in range(ncols-3): tab_head += " r"
 tab_head += "} \n\\hline\\hline\n"
 tab_head += "${\\cal L}=137$ fb$^{-1}$ &"
 if do_sig:
-    tab_head += " NC & C &"
+    tab_head += " T1tttt(2100,100) & T1tttt(1900,1250) &"
 tab_head += tag1_lbl+" & Pull & "+tag2_lbl+" & Pull & Obs. \\\\ \\hline\n"
 for i in range(2): tab[i].write(tab_head)
 
