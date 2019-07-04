@@ -91,6 +91,12 @@ int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing bfanches
   time_t begtime, endtime;
   time(&begtime);
+
+  string bfolder("");
+  string hostname = execute("echo $HOSTNAME");
+  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
+    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
+  infolder = bfolder + infolder;
   
   GetOptions(argc, argv);
   gSystem->mkdir(outfolder, kTRUE);
