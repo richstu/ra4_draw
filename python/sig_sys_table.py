@@ -110,14 +110,14 @@ def recordValue(line, values, lowmj):
     elif nb == "hnb": inb = 2
     else: raise Exception("Bad Nb: {}".format(nb))
 
-    value = int(round(100.*float(value)))
-
-    if value == 0:
-        values[imet][injets][inb] = "$<1$"
+    if "/" in value:
+        values[imet][injets][inb] = value
     else:
-        if (value==100):
-           values[imet][injets][inb] = "$-$"
-        else:            
+        value = int(round(100.*float(value)))
+
+        if value == 0:
+            values[imet][injets][inb] = "$<1$"
+        else:     
             values[imet][injets][inb] = "${}$".format(str(value))
 
 def modelName(path):
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     parser.add_argument("output_file", help="Output LaTeX file containing table")
     parser.add_argument("input_files", nargs="*", help="Input text file(s) containing systematics")
     parser.add_argument("--no_compile", action="store_true", help="Do not run pdflatex on resulting .tex file")
-    parser.add_argument("--lowmj", action="store_true", help="Do the lowmj")
     args = parser.parse_args()
 
-    sigSysTable(args.output_file, args.input_files, not args.no_compile, args.lowmj)
+    sigSysTable(args.output_file.replace(".tex","_lowmj.tex"), args.input_files, not args.no_compile, True)
+    sigSysTable(args.output_file.replace(".tex","_highmj.tex"), args.input_files, not args.no_compile, False)

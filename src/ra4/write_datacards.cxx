@@ -27,6 +27,7 @@ using namespace std;
 namespace {
   bool unblind = false;
   bool debug = false;
+  bool do_t2tt = false;
   int year = 0;
   string model = "T1tttt";
   string xoption = "nom";
@@ -120,15 +121,15 @@ int main(int argc, char *argv[]){
 
   map<int, string> foldermc, folderdata, foldersig;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_abcd/";
-  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/T1tttt/skim_sys_abcd/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/"+model+"/skim_sys_abcd/";
   folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
 
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_abcd/";
-  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/T1tttt/skim_sys_abcd/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_05_17/"+model+"/skim_sys_abcd/";
   folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
 
   foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_abcd/";
-  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/T1tttt/skim_sys_abcd/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_05_18/"+model+"/skim_sys_abcd/";
   folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
 
   // Filling all other processes
@@ -164,16 +165,25 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > sig_procs;
   for (auto &imass: mass_pts) {
     set<string> sig_files;
-    for (auto &yr: years) 
+    for (auto &yr: years) {
       sig_files.insert(foldersig[yr]+"*mGluino-"+imass.first+"_mLSP-"+imass.second+"_*.root");
+      if (do_t2tt && yr==2018){ // will be scaled to 137 ifb in wgt_run2 
+        string folder_ = foldersig[yr];
+        ReplaceAll(folder_,"T5tttt","T2tt");
+        string stop_mass = imass.second == "1" ? "175": RoundNumber(atoi(imass.second.c_str()) + 175,0).Data();
+        sig_files.insert(folder_ +"*mStop-"+stop_mass+"_mLSP-"+imass.second+"_*.root");
+        cout<<folder_ +"*mStop-"+stop_mass+"_mLSP-"+imass.second+"_*.root"<<endl;
+      }
+    }
     
-    sig_procs.push_back(Process::MakeShared<Baby_full>("T1tttt", Process::Type::signal, kBlack,
+    sig_procs.push_back(Process::MakeShared<Baby_full>(model, Process::Type::signal, kBlack,
       sig_files, filters));
   }
 
   // --------------------------------------
   //            Binning
   //---------------------------------------
+  if (debug) cout<<"INFO:: Defining bins"<<endl;
 
   string c_mt_r1 = "mt<=140";
 
@@ -271,6 +281,7 @@ int main(int argc, char *argv[]){
   // ---------------------------------------------------
   //     Vector of signal systematic variations
   //----------------------------------------------------
+  if (debug) cout<<"INFO:: Defining set of signal systematics"<<endl;
   vector<sysdef> v_sys;
   // order as they will appear in latex table
   // *Nominal must stay in the first spot!!* (will be skipped in table)
@@ -301,6 +312,7 @@ int main(int argc, char *argv[]){
     //   v_sys.back().v_wgts.push_back("sys_mur["+to_string(i)+"]");
     //   v_sys.back().v_wgts.push_back("sys_muf["+to_string(i)+"]");
     //   v_sys.back().v_wgts.push_back("sys_murf["+to_string(i)+"]");
+    //   v_sys.back().v_wgts.push_back("sys_murf["+to_string(i+2)+"]");
     // }
     v_sys.push_back(sysdef("ISR", "isr", kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_isr["+to_string(i)+"]/w_isr");
@@ -320,6 +332,8 @@ int main(int argc, char *argv[]){
   //------------------------------------------
   //       Vector of all cuts
   //------------------------------------------
+  if (debug) cout<<"INFO:: Defining vector of bins"<<endl;
+
   sysdef nom = v_sys[0];
   if (nom.tag != "nominal"){
     cerr<<" The first entry in the v_sys vector must be the nominal"<<endl;
@@ -357,6 +371,8 @@ int main(int argc, char *argv[]){
   //------------------------------------------
   //       Get BKG yields
   //------------------------------------------
+  if (debug) cout<<"INFO:: Getting bkg yields"<<endl;
+
   PlotMaker pm;
   pm.Push<Table>("tmc",  cuts_nosys, bkg_procs, true, false);
   pm.Push<Table>("tsig",  cuts, sig_procs, true, false);
@@ -411,6 +427,12 @@ int main(int argc, char *argv[]){
   yield_table = static_cast<Table*>(pm.Figures()[1].get());
   for (auto &isig: sig_procs) {
     sig_params.push_back(yield_table->Yield(isig.get(), lumi));
+  }
+  vector<vector<float>> sig_yields;
+  for (auto &ivec: sig_params) {
+    sig_yields.push_back(vector<float>());
+    for (auto &ipar: ivec)
+      sig_yields.back().push_back(ipar.Yield());  
   }
 
   //------------------------------------------
@@ -519,81 +541,123 @@ int main(int argc, char *argv[]){
     }
 
     // ------------ Closure uncertainties
-    if (do_syst){
-      if (xoption =="uncorr") {
-        vector<float> cr_unc_nj = {1.09, 1.09}; 
-        vector<float> cr_unc_nb = {1.10, 1.20, 1.25}; 
-        vector<vector<float>> cr_unc_met = {{1.15, 1.21}, {1.18, 1.30}}; 
+    if (xoption =="uncorr") {
+      vector<float> cr_unc_nj = {1.09, 1.09}; 
+      vector<float> cr_unc_nb = {1.10, 1.20, 1.25}; 
+      vector<vector<float>> cr_unc_met = {{1.15, 1.21}, {1.18, 1.30}}; 
 
-        for (size_t ibin(0); ibin<nbins; ibin++) {
-          if(Contains(vbins[ibin].tag,"r2_")) {
-            // njets uncertainty
-            if(Contains(vbins[ibin].tag,"lnj")) {
-              fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_lnj"<<setw(wdist)<<"lnN";
+      for (size_t ibin(0); ibin<nbins; ibin++) {
+        if(Contains(vbins[ibin].tag,"r2_")) {
+          // njets uncertainty
+          if(Contains(vbins[ibin].tag,"lnj")) {
+            fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_lnj"<<setw(wdist)<<"lnN";
+            for (size_t jbin(0); jbin<nbins; jbin++) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nj[0],2) : "-");
+          } else { // if hnj
+            fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_hnj"<<setw(wdist)<<"lnN";
+            for (size_t jbin(0); jbin<nbins; jbin++) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nj[1],2) : "-");
+          }
+          // nb uncertainty
+          if(Contains(vbins[ibin].tag,"lnb")) {
+            fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_lnb"<<setw(wdist)<<"lnN";
+            for (size_t jbin(0); jbin<nbins; jbin++) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nb[0],2) : "-");
+          } else if(Contains(vbins[ibin].tag,"mnb")) { 
+            fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_mnb"<<setw(wdist)<<"lnN";
+            for (size_t jbin(0); jbin<nbins; jbin++) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nb[1],2) : "-");
+          } else { 
+            fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_hnb"<<setw(wdist)<<"lnN";
+            for (size_t jbin(0); jbin<nbins; jbin++) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nb[2],2) : "-");
+          }
+          // met uncertainty
+          if(Contains(vbins[ibin].tag,"mmet")) { 
+            if(Contains(vbins[ibin].tag,"lmj")) { 
+              fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_mmet_lmj"<<setw(wdist)<<"lnN";
               for (size_t jbin(0); jbin<nbins; jbin++) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nj[0],2) : "-");
-            } else { // if hnj
-              fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_hnj"<<setw(wdist)<<"lnN";
+                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_met[0][0],2) : "-");
+            } else {
+              fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_mmet_hmj"<<setw(wdist)<<"lnN";
               for (size_t jbin(0); jbin<nbins; jbin++) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nj[1],2) : "-");
+                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_met[1][0],2) : "-");
             }
-            // nb uncertainty
-            if(Contains(vbins[ibin].tag,"lnb")) {
-              fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_lnb"<<setw(wdist)<<"lnN";
+          } else if(Contains(vbins[ibin].tag,"hmet")) { 
+            if(Contains(vbins[ibin].tag,"lmj")) { 
+              fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_hmet_lmj"<<setw(wdist)<<"lnN";
               for (size_t jbin(0); jbin<nbins; jbin++) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nb[0],2) : "-");
-            } else if(Contains(vbins[ibin].tag,"mnb")) { 
-              fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_mnb"<<setw(wdist)<<"lnN";
+                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_met[0][1],2) : "-");
+            } else {
+              fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_hmet_hmj"<<setw(wdist)<<"lnN";
               for (size_t jbin(0); jbin<nbins; jbin++) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nb[1],2) : "-");
-            } else { 
-              fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_hnb"<<setw(wdist)<<"lnN";
-              for (size_t jbin(0); jbin<nbins; jbin++) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_nb[2],2) : "-");
-            }
-            // met uncertainty
-            if(Contains(vbins[ibin].tag,"mmet")) { 
-              if(Contains(vbins[ibin].tag,"lmj")) { 
-                fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_mmet_lmj"<<setw(wdist)<<"lnN";
-                for (size_t jbin(0); jbin<nbins; jbin++) 
-                  fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_met[0][0],2) : "-");
-              } else {
-                fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_mmet_hmj"<<setw(wdist)<<"lnN";
-                for (size_t jbin(0); jbin<nbins; jbin++) 
-                  fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_met[1][0],2) : "-");
-              }
-            } else if(Contains(vbins[ibin].tag,"hmet")) { 
-              if(Contains(vbins[ibin].tag,"lmj")) { 
-                fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_hmet_lmj"<<setw(wdist)<<"lnN";
-                for (size_t jbin(0); jbin<nbins; jbin++) 
-                  fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_met[0][1],2) : "-");
-              } else {
-                fcard<<endl<<setw(wname)<<"cr_unc_"<<ibin<<"_hmet_hmj"<<setw(wdist)<<"lnN";
-                for (size_t jbin(0); jbin<nbins; jbin++) 
-                  fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_met[1][1],2) : "-");
-              }
+                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(ibin==jbin ? RoundNumber(cr_unc_met[1][1],2) : "-");
             }
           }
         }
-        fcard<<endl;
-      } else if (xoption=="mjcorr") {
-        vector<vector<float>> cr_unc_nj = {{1.09, 1.09}, {1.09, 1.09}}; 
-        vector<vector<float>> cr_unc_nb = {{1.10, 1.20, 1.25}, {1.10, 1.20, 1.25}}; 
-        vector<vector<float>> cr_unc_met = {{1.15, 1.21}, {1.18, 1.30}};
-        fcard<<endl<<setw(wname)<<"cr_unc_nj"<<setw(wdist)<<"lnN";
-        for (size_t ibin(0); ibin<nbins; ibin++) {
-          if(Contains(vbins[ibin].tag,"r2_")) {
-            if(Contains(vbins[ibin].tag,"lnj")) 
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nj[0][0],2) :  RoundNumber(cr_unc_nj[1][0],2));
-            else 
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nj[0][1],2) :  RoundNumber(cr_unc_nj[1][1],2));
-          } else {
+      }
+      fcard<<endl;
+    } else if (xoption=="mjcorr") {
+      vector<vector<float>> cr_unc_nj = {{1.09, 1.09}, {1.09, 1.09}}; 
+      vector<vector<float>> cr_unc_nb = {{1.10, 1.20, 1.25}, {1.10, 1.20, 1.25}}; 
+      vector<vector<float>> cr_unc_met = {{1.15, 1.21}, {1.18, 1.30}};
+      fcard<<endl<<setw(wname)<<"cr_unc_nj"<<setw(wdist)<<"lnN";
+      for (size_t ibin(0); ibin<nbins; ibin++) {
+        if(Contains(vbins[ibin].tag,"r2_")) {
+          if(Contains(vbins[ibin].tag,"lnj")) 
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nj[0][0],2) :  RoundNumber(cr_unc_nj[1][0],2));
+          else 
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nj[0][1],2) :  RoundNumber(cr_unc_nj[1][1],2));
+        } else {
+          fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+        }
+      }
+      fcard<<endl<<setw(wname)<<"cr_unc_nb"<<setw(wdist)<<"lnN";
+      for (size_t ibin(0); ibin<nbins; ibin++) {
+        if(Contains(vbins[ibin].tag,"r2_")) {
+          if (Contains(vbins[ibin].tag,"lnb")) 
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nb[0][0],2) :  RoundNumber(cr_unc_nb[1][0],2));
+          else if (Contains(vbins[ibin].tag,"mnb")) 
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nb[0][1],2) :  RoundNumber(cr_unc_nb[1][1],2));
+          else
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nb[0][2],2) :  RoundNumber(cr_unc_nb[1][2],2));
+        } else {
+          fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+        }
+      }
+      fcard<<endl<<setw(wname)<<"cr_unc_met"<<setw(wdist)<<"lnN";
+      for (size_t ibin(0); ibin<nbins; ibin++) {
+        if(Contains(vbins[ibin].tag,"r2_")) {
+          if (Contains(vbins[ibin].tag,"lmet")) 
             fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-          }
+          else if (Contains(vbins[ibin].tag,"mmet")) 
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_met[0][0],2) : RoundNumber(cr_unc_met[1][0],2));
+          else
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_met[0][1],2) : RoundNumber(cr_unc_met[1][1],2));
+        } else {
+          fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
         }
-        fcard<<endl<<setw(wname)<<"cr_unc_nb"<<setw(wdist)<<"lnN";
+      }
+      fcard<<endl;
+    } else if (xoption=="mjcorr_nometcorr4nb") {
+      vector<vector<float>> cr_unc_nj = {{1.09, 1.09}, {1.09, 1.09}}; 
+      vector<vector<float>> cr_unc_nb = {{1.10, 1.20, 1.25}, {1.10, 1.20, 1.25}}; 
+      vector<vector<float>> cr_unc_met = {{1.15, 1.21}, {1.18, 1.30}};
+      fcard<<endl<<setw(wname)<<"cr_unc_nj"<<setw(wdist)<<"lnN";
+      for (size_t ibin(0); ibin<nbins; ibin++) {
+        if(Contains(vbins[ibin].tag,"r2_")) {
+          if(Contains(vbins[ibin].tag,"lnj")) 
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nj[0][0],2) :  RoundNumber(cr_unc_nj[1][0],2));
+          else 
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nj[0][1],2) :  RoundNumber(cr_unc_nj[1][1],2));
+        } else {
+          fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+        }
+      }
+      for (unsigned imet(0); imet<vl_met.size(); imet++){
+        fcard<<endl<<setw(wname)<<"cr_unc_nb_"<<vl_met[imet]<<setw(wdist)<<"lnN";
         for (size_t ibin(0); ibin<nbins; ibin++) {
-          if(Contains(vbins[ibin].tag,"r2_")) {
+          if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_met[imet])) {
             if (Contains(vbins[ibin].tag,"lnb")) 
               fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nb[0][0],2) :  RoundNumber(cr_unc_nb[1][0],2));
             else if (Contains(vbins[ibin].tag,"mnb")) 
@@ -604,115 +668,71 @@ int main(int argc, char *argv[]){
             fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
           }
         }
-        fcard<<endl<<setw(wname)<<"cr_unc_met"<<setw(wdist)<<"lnN";
-        for (size_t ibin(0); ibin<nbins; ibin++) {
-          if(Contains(vbins[ibin].tag,"r2_")) {
-            if (Contains(vbins[ibin].tag,"lmet")) 
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-            else if (Contains(vbins[ibin].tag,"mmet")) 
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_met[0][0],2) : RoundNumber(cr_unc_met[1][0],2));
-            else
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_met[0][1],2) : RoundNumber(cr_unc_met[1][1],2));
-          } else {
-            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-          }
-        }
-        fcard<<endl;
-      } else if (xoption=="mjcorr_nometcorr4nb") {
-        vector<vector<float>> cr_unc_nj = {{1.09, 1.09}, {1.09, 1.09}}; 
-        vector<vector<float>> cr_unc_nb = {{1.10, 1.20, 1.25}, {1.10, 1.20, 1.25}}; 
-        vector<vector<float>> cr_unc_met = {{1.15, 1.21}, {1.18, 1.30}};
-        fcard<<endl<<setw(wname)<<"cr_unc_nj"<<setw(wdist)<<"lnN";
-        for (size_t ibin(0); ibin<nbins; ibin++) {
-          if(Contains(vbins[ibin].tag,"r2_")) {
-            if(Contains(vbins[ibin].tag,"lnj")) 
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nj[0][0],2) :  RoundNumber(cr_unc_nj[1][0],2));
-            else 
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nj[0][1],2) :  RoundNumber(cr_unc_nj[1][1],2));
-          } else {
-            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-          }
-        }
-        for (unsigned imet(0); imet<vl_met.size(); imet++){
-          fcard<<endl<<setw(wname)<<"cr_unc_nb_"<<vl_met[imet]<<setw(wdist)<<"lnN";
-          for (size_t ibin(0); ibin<nbins; ibin++) {
-            if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_met[imet])) {
-              if (Contains(vbins[ibin].tag,"lnb")) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nb[0][0],2) :  RoundNumber(cr_unc_nb[1][0],2));
-              else if (Contains(vbins[ibin].tag,"mnb")) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nb[0][1],2) :  RoundNumber(cr_unc_nb[1][1],2));
-              else
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_nb[0][2],2) :  RoundNumber(cr_unc_nb[1][2],2));
-            } else {
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-            }
-          }
-        }
-        fcard<<endl<<setw(wname)<<"cr_unc_met"<<setw(wdist)<<"lnN";
-        for (size_t ibin(0); ibin<nbins; ibin++) {
-          if(Contains(vbins[ibin].tag,"r2_")) {
-            if (Contains(vbins[ibin].tag,"lmet")) 
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-            else if (Contains(vbins[ibin].tag,"mmet")) 
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_met[0][0],2) : RoundNumber(cr_unc_met[1][0],2));
-            else
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_met[0][1],2) : RoundNumber(cr_unc_met[1][1],2));
-          } else {
-            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-          }
-        }
-        fcard<<endl;
-      } else {  // -------- Default correlation model
-        vector<vector<float>> cr_unc_nj = {{1.09, 1.09}, {1.09, 1.09}}; 
-        vector<vector<float>> cr_unc_nb = {{1.10, 1.20, 1.25}, {1.10, 1.20, 1.25}}; 
-        vector<vector<float>> cr_unc_met = {{1.15, 1.21}, {1.18, 1.30}};
-        for (unsigned imj(0); imj<vl_mj.size(); imj++){
-          fcard<<endl<<setw(wname)<<"cr_unc_nj_"+vl_mj[imj]<<setw(wdist)<<"lnN";
-          for (size_t ibin(0); ibin<nbins; ibin++) {
-            if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_mj[imj])) {
-              if(Contains(vbins[ibin].tag,"lnj")) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nj[imj][0],2);
-              else 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nj[imj][1],2);
-            } else {
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-            }
-          }
-        }
-        for (unsigned imj(0); imj<vl_mj.size(); imj++){
-          fcard<<endl<<setw(wname)<<"cr_unc_nb_"+vl_mj[imj]<<setw(wdist)<<"lnN";
-          for (size_t ibin(0); ibin<nbins; ibin++) {
-            if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_mj[imj])) {
-              if (Contains(vbins[ibin].tag,"lnb")) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nb[imj][0],2);
-              else if (Contains(vbins[ibin].tag,"mnb")) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nb[imj][1],2);
-              else
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nb[imj][2],2);
-            } else {
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-            }
-          }
-        }
-        for (unsigned imj(0); imj<vl_mj.size(); imj++){
-          fcard<<endl<<setw(wname)<<"cr_unc_met_"+vl_mj[imj]<<setw(wdist)<<"lnN";
-          for (size_t ibin(0); ibin<nbins; ibin++) {
-            if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_mj[imj])) {
-              if (Contains(vbins[ibin].tag,"lmet")) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-              else if (Contains(vbins[ibin].tag,"mmet")) 
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_met[imj][0],2);
-              else
-                fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_met[imj][1],2);
-            } else {
-              fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-            }
-          }
-        }
-        fcard<<endl;
       }
-      cout<<"Wrote CR-based closure uncertainties"<<endl;
+      fcard<<endl<<setw(wname)<<"cr_unc_met"<<setw(wdist)<<"lnN";
+      for (size_t ibin(0); ibin<nbins; ibin++) {
+        if(Contains(vbins[ibin].tag,"r2_")) {
+          if (Contains(vbins[ibin].tag,"lmet")) 
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+          else if (Contains(vbins[ibin].tag,"mmet")) 
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_met[0][0],2) : RoundNumber(cr_unc_met[1][0],2));
+          else
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<(Contains(vbins[ibin].tag, "_lmj") ? RoundNumber(cr_unc_met[0][1],2) : RoundNumber(cr_unc_met[1][1],2));
+        } else {
+          fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+        }
+      }
+      fcard<<endl;
+    } else {  // -------- Default correlation model
+      vector<vector<float>> cr_unc_nj = {{1.09, 1.09}, {1.09, 1.09}}; 
+      vector<vector<float>> cr_unc_nb = {{1.10, 1.20, 1.25}, {1.10, 1.20, 1.25}}; 
+      vector<vector<float>> cr_unc_met = {{1.15, 1.21}, {1.18, 1.30}};
+      for (unsigned imj(0); imj<vl_mj.size(); imj++){
+        fcard<<endl<<setw(wname)<<"cr_unc_nj_"+vl_mj[imj]<<setw(wdist)<<"lnN";
+        for (size_t ibin(0); ibin<nbins; ibin++) {
+          if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_mj[imj])) {
+            if(Contains(vbins[ibin].tag,"lnj")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nj[imj][0],2);
+            else 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nj[imj][1],2);
+          } else {
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+          }
+        }
+      }
+      for (unsigned imj(0); imj<vl_mj.size(); imj++){
+        fcard<<endl<<setw(wname)<<"cr_unc_nb_"+vl_mj[imj]<<setw(wdist)<<"lnN";
+        for (size_t ibin(0); ibin<nbins; ibin++) {
+          if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_mj[imj])) {
+            if (Contains(vbins[ibin].tag,"lnb")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nb[imj][0],2);
+            else if (Contains(vbins[ibin].tag,"mnb")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nb[imj][1],2);
+            else
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_nb[imj][2],2);
+          } else {
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+          }
+        }
+      }
+      for (unsigned imj(0); imj<vl_mj.size(); imj++){
+        fcard<<endl<<setw(wname)<<"cr_unc_met_"+vl_mj[imj]<<setw(wdist)<<"lnN";
+        for (size_t ibin(0); ibin<nbins; ibin++) {
+          if(Contains(vbins[ibin].tag,"r2_") && Contains(vbins[ibin].tag,vl_mj[imj])) {
+            if (Contains(vbins[ibin].tag,"lmet")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+            else if (Contains(vbins[ibin].tag,"mmet")) 
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_met[imj][0],2);
+            else
+              fcard<<setw(wbin)<<"-"<<setw(wbin)<<RoundNumber(cr_unc_met[imj][1],2);
+          } else {
+            fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+          }
+        }
+      }
+      fcard<<endl;
     }
+    cout<<"Wrote CR-based closure uncertainties"<<endl;
 
     //calculate uncertainties and write results to three files
     cout<<"Writing to "<<outpath<<endl;
@@ -724,7 +744,7 @@ int main(int argc, char *argv[]){
         }
         for (size_t ibin = 0; ibin<nbins; ++ibin) {
           const double nom_yield(sig_params[isig][ibin].Yield());
-          // size_t nwgts = sys.v_wgts.size();
+          size_t nwgts = sys.v_wgts.size();
           double up(0.), dn(0.); 
           if (sys.sys_type == kConst) {
             up = stod(sys.v_wgts[0].Data());
@@ -734,10 +754,10 @@ int main(int argc, char *argv[]){
               continue;
             } else if (sys.tag == "murf") {
               //max/min of all weights mur_up, muf_up and murf_up
-              // up = *max_element(sig_params[isig].begin() + sys.ind + nwgts*ibin, 
-              //                   sig_params[isig].begin() + sys.ind + nwgts*(ibin+1))/nom_yield - 1; 
-              // dn = *min_element(sig_params[isig].begin() + sys.ind + nwgts*ibin, 
-              //                   sig_params[isig].begin() + sys.ind + nwgts*(ibin+1))/nom_yield - 1; 
+              up = *max_element(sig_yields[isig].begin() + sys.ind + nwgts*ibin, 
+                                sig_yields[isig].begin() + sys.ind + nwgts*(ibin+1))/nom_yield - 1; 
+              dn = *min_element(sig_yields[isig].begin() + sys.ind + nwgts*ibin, 
+                                sig_yields[isig].begin() + sys.ind + nwgts*(ibin+1))/nom_yield - 1; 
             } else {
               up = sig_params[isig][sys.ind + 2*ibin].Yield()/nom_yield - 1;
               dn = sig_params[isig][sys.ind + 2*ibin + 1].Yield()/nom_yield - 1;
@@ -779,6 +799,8 @@ int main(int argc, char *argv[]){
 
     //   Writing datacard param section
     //---------------------------------------
+  if (debug) cout<<"INFO:: Writing datacard param section"<<endl;
+
     if (!Contains(xoption,"noabcd")) {
       unsigned iyield(0);
       wbin +=3; // to allow the label to fit even with "rp_" in front
@@ -904,6 +926,7 @@ void GetOptions(int argc, char *argv[]){
       {"xoption", required_argument, 0, 'x'},
       {"mass_pts", required_argument, 0, 'p'},
       {"no_syst", no_argument, 0, 0},
+      {"do_t2tt", no_argument, 0, 0},
       {"unblind", no_argument, 0, 'u'},
       {"year", no_argument, 0, 'y'},
       {"debug", no_argument, 0, 'd'},
@@ -928,7 +951,9 @@ void GetOptions(int argc, char *argv[]){
       optname = long_options[option_index].name;
       if(optname == "no_syst"){
         do_syst = false;
-      }else{
+      } else if(optname == "do_t2tt"){
+        do_t2tt = true;
+      } else {
         printf("Bad option! Found option name %s\n", optname.c_str());
       }
       break;
