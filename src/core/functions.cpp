@@ -101,6 +101,20 @@ namespace Functions{
     }
   });
 
+  const NamedFunc wgt_run2_nosf("wgt_run2_nosf", [](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.SampleType()<0) return 1.;
+
+    double wgt = b.w_lumi(); //omit SFs to allow calculating systematic variations
+    if (b.SampleType()==2016){
+      return wgt*b.w_prefire()*35.9;
+    } else if (b.SampleType()==2017){
+      return wgt*b.w_prefire()*wnpv2017(b)*41.5;
+    } else {
+      if (b.type()==101000) return wgt*137.;
+      else return wgt*59.6;
+    }
+  });
+
   const NamedFunc mht_ratio("mht_ratio", [](const Baby &b) -> NamedFunc::ScalarType{
     double mht_px(0.), mht_py(0.);
     for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){

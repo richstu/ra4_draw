@@ -706,9 +706,9 @@ void WriteBaseSource(const set<Variable> &vars){
 
   file << "int Baby::SetSampleType(const TString &filename){\n";
   file << "  int samp_type = 0;\n";
-  file << "  if(filename.Contains(\"2017_01_27\") || filename.Contains(\"2019_01_11\") || filename.Contains(\"2017_02_22\")  || filename.Contains(\"2019_05_16\"))     samp_type = 2016;\n";
-  file << "  if(filename.Contains(\"2018_12_17\")  || filename.Contains(\"2019_05_17\"))     samp_type = 2017;\n";
-  file << "  if(filename.Contains(\"2019_01_18\") || filename.Contains(\"2019_03_30\") || filename.Contains(\"2019_05_18\"))     samp_type = 2018;\n";
+  file << "  if(filename.Contains(\"2017_01_27\") || filename.Contains(\"2019_01_11\") || filename.Contains(\"2017_02_22\")  || filename.Contains(\"2019_05_16\") || filename.Contains(\"2019_07_16\"))     samp_type = 2016;\n";
+  file << "  if(filename.Contains(\"2018_12_17\")  || filename.Contains(\"2019_05_17\") || filename.Contains(\"2019_07_17\"))     samp_type = 2017;\n";
+  file << "  if(filename.Contains(\"2019_01_18\") || filename.Contains(\"2019_03_30\") || filename.Contains(\"2019_05_18\")|| filename.Contains(\"2019_07_18\"))     samp_type = 2018;\n";
   file << "  if(filename.Contains(\"data\"))     samp_type *= -1;\n";
 //   file << "  if(filename.Contains(\"SMS\"))     samp_type = 10;\n";
 //   file << "  if(filename.Contains(\"_TTJets\")) samp_type = 20;\n";

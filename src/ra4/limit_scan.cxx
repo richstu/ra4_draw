@@ -28,12 +28,15 @@ using namespace std;
 namespace{
   int num_smooth_ = 4; // Number of times to smooth TH2D
   string filename_ = "txt/t1tttt_limit_scan.txt";
+  string tag = "";
   string model_ = "T1tttt";
 }
 
 int main(int argc, char *argv[]){
   GetOptions(argc, argv);
   // styles style("2Dscan"); style.setDefaultStyle();
+
+  if (Contains(filename_,"5tttt")) model_ = "T5tttt";
 
   if(filename_ == "") ERROR("No input file provided");
 
@@ -125,8 +128,8 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
   g.SetMinimum(-the_max);
   g.SetMaximum(the_max);
 
-  g.SetNpx(GetNumBins(vmx, 12.5));
-  g.SetNpy(GetNumBins(vmy, 12.5));
+  g.SetNpx((2600.-800.)/12.5);
+  g.SetNpy(1600/12.5);
 
   g.GetHistogram()->SetTitle(title.c_str());
   g.GetHistogram()->SetTickLength(0., "Z");
@@ -179,8 +182,8 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
   ltitle.Draw("same");
   rtitle.Draw("same");
 
-  c.Print((model_+"_sigobs.pdf").c_str());
-  c.Print((model_+"_sigobs.root").c_str());
+  c.Print((model_+"_sigobs_"+tag+".pdf").c_str());
+  c.Print((model_+"_sigobs_"+tag+".root").c_str());
 
   TH2D h = *g.GetHistogram();
   h.SetTitle("Observed Significance");
@@ -207,8 +210,8 @@ TH2D MakeExpectedSignificancePlot(vector<double> vmx,
   g.SetMinimum(0.);
   g.SetMaximum(the_max);
 
-  g.SetNpx(GetNumBins(vmx, 12.5));
-  g.SetNpy(GetNumBins(vmy, 12.5));
+  g.SetNpx((2600.-800.)/12.5);
+  g.SetNpy(1600/12.5);
 
   g.GetHistogram()->SetTitle(title.c_str());
 
@@ -237,8 +240,8 @@ TH2D MakeExpectedSignificancePlot(vector<double> vmx,
   ltitle.Draw("same");
   rtitle.Draw("same");
   
-  c.Print((model_+"_sigexp.pdf").c_str());
-  c.Print((model_+"_sigexp.root").c_str());
+  c.Print((model_+"_sigexp_"+tag+".pdf").c_str());
+  c.Print((model_+"_sigexp_"+tag+".root").c_str());
 
   TH2D h = *g.GetHistogram();
   h.SetTitle("Expected Significance");
@@ -273,8 +276,8 @@ void MakeLimitPlot(vector<double> vmx,
   glim.SetMinimum(0.0001);
   glim.SetMaximum(2);
 
-  glim.SetNpx(GetNumBins(vmx, 12.5));
-  glim.SetNpy(GetNumBins(vmy, 12.5));
+  glim.SetNpx((2600.-800.)/12.5);
+  glim.SetNpy(1600/12.5);
 
   glim.SetTitle(title.c_str());
 
@@ -322,9 +325,9 @@ void MakeLimitPlot(vector<double> vmx,
     filebase += to_string(num_smooth_);
   }
 
-  c.Print((filebase+".pdf").c_str());
+  c.Print((filebase+"_"+tag+".pdf").c_str());
   
-  TFile file((filebase+".root").c_str(), "recreate");
+  TFile file((filebase+"_"+tag+".root").c_str(), "recreate");
   glim.GetHistogram()->Write((model_+"ObservedExcludedXsec").c_str());
   cobs.Write((model_+"ObservedLimit").c_str());
   cobsup.Write((model_+"ObservedLimitUp").c_str());
@@ -337,7 +340,7 @@ void MakeLimitPlot(vector<double> vmx,
     hsigexp.Write("ExpectedSignificance");
   }
   file.Close();
-  cout << "\nSaved limit curves in " << filebase << ".root\n" << endl;
+  cout << "\nSaved limit curves in " << filebase << "_"<<tag<<".root\n" << endl;
 }
 
 int GetNumBins(const vector<double> &pts, double width){
@@ -428,7 +431,7 @@ TGraph DrawContours(TGraph2D &g2, int color, int style, double width,
         vx.push_back(x);
         vy.push_back(y);
         int thresh = glu_lsp+30;
-        if (model_=="T5tttt") thresh = glu_lsp+85;
+        if (model_=="T5tttt") thresh = glu_lsp+50;
         if(x-y>thresh){
           vz.push_back(z);
         }else{
@@ -555,13 +558,14 @@ void GetOptions(int argc, char *argv[]){
     static struct option long_options[] = {
       {"num_smooth", required_argument, 0, 's'},
       {"model", required_argument, 0, 'm'},
+      {"tag", required_argument, 0, 't'},
       {"file", required_argument, 0, 'f'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:m:s:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:m:s:t:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -571,6 +575,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'm':
       model_ = optarg;
+      break;
+    case 't':
+      tag = optarg;
       break;
     case 'f':
       filename_ = optarg;

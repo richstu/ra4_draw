@@ -103,7 +103,7 @@ for i in range(ncols-3): tab_head += " r"
 tab_head += "} \n\\hline\\hline\n"
 tab_head += "${\\cal L}=137$ fb$^{-1}$ &"
 if do_sig:
-    tab_head += " T1tttt(2100,100) & T1tttt(1900,1250) &"
+    tab_head += " SUS-NC & SUS-C &"
 tab_head += tag1_lbl+" & Pull & "+tag2_lbl+" & Pull & Obs. \\\\ \\hline\n"
 for i in range(2): tab[i].write(tab_head)
 
@@ -112,9 +112,9 @@ irow = 0
 for ibin in range(nbins):
     tmp = bins[ibin].split("_")
     ireg = tmp[0].replace("r","R")
-    imet = tmp[1].replace("lmet","$200<p_{T}^{miss}\\leq350$ GeV")
-    imet = imet.replace("mmet","$350<p_{T}^{miss}\\leq500$ GeV")
-    imet = imet.replace("hmet","$p_{T}^{miss}> 500$ GeV")
+    imet = tmp[1].replace("lmet","$200<p_{T}^{\text{miss}}\\leq350$ GeV")
+    imet = imet.replace("mmet","$350<p_{T}^{\text{miss}}\\leq500$ GeV")
+    imet = imet.replace("hmet","$p_{T}^{\text{miss}}> 500$ GeV")
     inb,inj = '',''
     if ireg=='R2' or ireg=='R4':
         inb = tmp[2].replace("lnb","1b").replace("mnb","2b").replace("hnb","$\\geq$ 3b")

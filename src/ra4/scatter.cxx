@@ -50,15 +50,15 @@ int main(int argc, char *argv[]){
 
   map<int, string> foldermc, folderdata, foldersig;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
-  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_05_16/T1tttt/skim_sys_abcd/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_07_16/T1tttt/unskimmed/";
   folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
 
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
-  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_05_17/T1tttt/skim_sys_abcd/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_07_17/T1tttt/unskimmed/";
   folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
 
   foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_stdnj5/";
-  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_05_18/T1tttt/skim_sys_abcd/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_07_18/T1tttt/unskimmed/";
   folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
 
   // Filling all other processes

@@ -24,7 +24,7 @@
 using namespace std;
 namespace{
   //double cmsH = 0.075;
-  bool do_tev = true;
+  bool do_tev = false;
   double cmsH = 0.03;
   float legLineH = 0.058;
   float legTextSize = 0.0425;
@@ -51,15 +51,15 @@ int main(){
   //TString mt2("M#lower[-.1]{_{T2}}"), mht("#slash{H}#lower[-.1]{_{T}}"), aT("#alpha#lower[-.1]{_{T}}");
 
   // Folder with root files containing the TGraphs
-  TString folder("root/limits/");
+  TString folder("");
   vector<model_limits> models;
 
   ///////////////////////////////    Defining T1tttt plot    /////////////////////////////////
-  models.push_back(model_limits("T5tttt", pp_gluglu));
-  models.back().add(t1tttt_s, folder+"T1tttt_limit_scan_smooth4.root", 1, "T1ttttObservedLimit", "T1ttttExpectedLimit");
-  models.back().add("#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #kern[-0.2]{#rightarrow} #kern[-0.2]{"+stop+"}#bar{t},  "+stop
-		    +" #rightarrow t#kern[0.4]{"+lsp+"},  "+mstop_s+" #kern[-0.5]{-} #kern[-0.1]{"+mlsp_s+"} = #kern[-0.1]{175} GeV", 
-		    folder+"T5tttt_limit_scan_smooth4.root", kAzure+7, "T5ttttObservedLimit", "T5ttttExpectedLimit");
+  models.push_back(model_limits("T1tttt", pp_gluglu));
+  models.back().add(t1tttt_s, folder+"T1tttt_limit_scan_smooth1_nom.root", 1, "T1ttttObservedLimit", "T1ttttExpectedLimit");
+  // models.back().add("#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #kern[-0.2]{#rightarrow} #kern[-0.2]{"+stop+"}#bar{t},  "+stop
+		//     +" #rightarrow t#kern[0.4]{"+lsp+"},  "+mstop_s+" #kern[-0.5]{-} #kern[-0.1]{"+mlsp_s+"} = #kern[-0.1]{175} GeV", 
+		//     folder+"T5tttt_limit_scan_smooth1_new.root", kAzure+7, "T5ttttObservedLimit", "T5ttttExpectedLimit");
 
 
   //////////////////////////////////////////////////////////////////////////////////////// 
@@ -69,7 +69,7 @@ int main(){
   // Creating canvas
   gStyle->SetOptStat(0);  
   SetupColors();
-  float lMargin(0.093), tMargin(0.08), rMargin(0.13), bMargin(0.13);
+  float lMargin(0.11), tMargin(0.08), rMargin(0.145), bMargin(0.11);
   int canW = 800, canH = 600;
   TCanvas can("canvas","", canW, canH);
   setCanvas(can, lMargin, tMargin, rMargin, bMargin);
@@ -103,7 +103,6 @@ int main(){
 
     TH2D hbase = baseHistogram(Xmin, Xmax, Ymin, Ymax);
     hbase.Draw();
-    addLabelsTitle(lMargin, tMargin, rMargin, mod.title);
     TH2D *hxsec_ori = nullptr;
 
     // Plotting limits
@@ -127,22 +126,43 @@ int main(){
       reverseGraph(expDown[file]);
       expArea[file] = joinGraphs(expUp[file], expDown[file]);
       if(file==0){
-       hxsec_ori = getHist2D(*flimit[file], "hXsec_exp_corr");
+       hxsec_ori = getHist2D(*flimit[file], "T1ttttObservedExcludedXsec");
        hxsec_ori->SetDirectory(0);
       }
     }
-    TH2D hxsec2 = ScaleAxes(*hxsec_ori, 0.001, "XY");
-    TH2D hxsec = ScaleAxes(hxsec2, (do_tev?1000:1.), "Z");
-    hxsec.SetMinimum(do_tev?1:0.001);
-    hxsec.GetZaxis()->SetLabelSize(0.04);
-    hxsec.GetZaxis()->SetTitleSize(0.05);
-    hxsec.GetZaxis()->SetTitleOffset(0.88);
-    hxsec.GetZaxis()->SetTitle("95% CL upper limit on #sigma("+t1tttt_s+") [fb]");
-    hxsec.GetZaxis()->SetTitle("Upper limit (95% CL) on #sigma("+t1tttt_s+") [fb]");
-    hxsec.Draw("colz same");
+
+    TH2D dummy("","",hxsec_ori->GetNbinsX(),
+               hxsec_ori->GetXaxis()->GetXmin(),hxsec_ori->GetXaxis()->GetXmax(), 
+               hxsec_ori->GetNbinsY()+ceil(600./hxsec_ori->GetYaxis()->GetBinWidth(1)),
+               hxsec_ori->GetYaxis()->GetXmin(),hxsec_ori->GetYaxis()->GetXmax()+600.);
+
+    for (int ix(0); ix<hxsec_ori->GetNbinsX(); ix++) {
+      for (int iy(0); iy<hxsec_ori->GetNbinsY(); iy++) {
+        dummy.SetBinContent(ix+1,iy+1,hxsec_ori->GetBinContent(ix+1, iy+1)*1000.); //switch to fb
+        dummy.SetBinError(ix+1,iy+1,hxsec_ori->GetBinError(ix+1, iy+1)*1000.);
+        dummy.GetXaxis()->SetTitle(hxsec_ori->GetXaxis()->GetTitle());
+        dummy.GetYaxis()->SetTitle(hxsec_ori->GetYaxis()->GetTitle());
+      }
+    }
+    dummy.SetMinimum(1e-1);
+    dummy.GetYaxis()->SetTitleOffset(1.2);
+    dummy.GetYaxis()->SetTitleSize(0.045);
+    dummy.GetYaxis()->SetLabelSize(0.039);
+
+    dummy.GetXaxis()->SetTitleOffset(1.1);
+    dummy.GetXaxis()->SetTitleSize(0.045);
+    dummy.GetXaxis()->SetLabelSize(0.039);
+
+    dummy.GetZaxis()->SetLabelSize(0.04);
+    dummy.GetZaxis()->SetTitleSize(0.05);
+    dummy.GetZaxis()->SetTitleOffset(0.88);
+    dummy.GetZaxis()->SetTitle("Upper limit (95% CL) on #sigma("+t1tttt_s+") [fb]");
+    dummy.Draw("colz");
+    addLabelsTitle(lMargin, tMargin, rMargin, mod.title);
+
     gPad->Modified();
     gPad->Update();
-    TPaletteAxis *palette = static_cast<TPaletteAxis*>(hxsec.GetListOfFunctions()->FindObject("palette"));
+    TPaletteAxis *palette = static_cast<TPaletteAxis*>(hxsec_ori->GetListOfFunctions()->FindObject("palette"));
     palette->SetX1NDC(1.-rMargin+0.006);
     palette->SetX2NDC(1.-rMargin+0.035);
     palette->SetY1NDC(bMargin);
@@ -207,10 +227,10 @@ int main(){
     for(size_t file(0); file < ncurves; file++){
       if(!mod.labels[file].Contains("175")) {
 	// expArea[file]->Draw("f same");
-	expUp[file]->Draw("same");
-	expDown[file]->Draw("same");
-	obsUp[file]->Draw("same");
-	obsDown[file]->Draw("same");
+       expUp[file]->Draw("same");
+       expDown[file]->Draw("same");
+       obsUp[file]->Draw("same");
+       obsDown[file]->Draw("same");
       }
       exp[file]->Draw("same");
       obs[file]->Draw("same");
@@ -253,45 +273,11 @@ int main(){
     //baseleg.Draw();
     //obsleg.Draw();
 
-    TString plotname("plots/"+mod.model+"_limits_summary_cms.pdf");
+    TString plotname("plots/"+mod.model+"_limit.pdf");
     can.SaveAs(plotname);
     cout<<" open "<<plotname<<endl;
   } // Loop over models
   cout<<endl<<endl;
-}
-
-TString altName(const TString &name){
-  if(name == "hXsec_exp_corr"){
-    return "T1ttttObservedExcludedXsec";
-  }else if(name == "graph_smoothed_Obs"){
-    return "T1ttttObservedLimit";
-  }else if(name == "graph_smoothed_ObsP"){
-    return "T1ttttObservedLimitUp";
-  }else if(name == "graph_smoothed_ObsM"){
-    return "T1ttttObservedLimitDown";
-  }else if(name == "graph_smoothed_Exp"){
-    return "T1ttttExpectedLimit";
-  }else if(name == "graph_smoothed_ExpP"){
-    return "T1ttttExpectedLimitUp";
-  }else if(name == "graph_smoothed_ExpM"){
-    return "T1ttttExpectedLimitDown";
-  }else if(name ==  "T5ttttObservedExcludedXsec"){
-    return "hXsec_exp_corr";
-  }else if(name ==  "T5ttttObservedLimit"){
-    return "graph_smoothed_Obs";
-  }else if(name ==  "T5ttttObservedLimitUp"){
-    return "graph_smoothed_ObsP";
-  }else if(name ==  "T5ttttObservedLimitDown"){
-    return "graph_smoothed_ObsM";
-  }else if(name ==  "T5ttttExpectedLimit"){
-    return "graph_smoothed_Exp";
-  }else if(name ==  "T5ttttExpectedLimitUp"){
-    return "graph_smoothed_ExpP";
-  }else if(name ==  "T5ttttExpectedLimitDown"){
-    return "graph_smoothed_ExpM";
-  }else{
-    return name;
-  }
 }
 
 TH2D* getHist2D(TFile &flimit, TString hname, bool allow_name_change){
@@ -306,7 +292,7 @@ TH2D* getHist2D(TFile &flimit, TString hname, bool allow_name_change){
     }
   }
   if(hist == nullptr && allow_name_change){
-    hist = getHist2D(flimit, altName(hname), false);
+    hist = getHist2D(flimit, "T1ttttObservedExcludedXsec", false);
   }
   return hist;
 }
@@ -323,14 +309,13 @@ TGraph* getGraph(TFile &flimit, TString gname, bool allow_name_change){
     }
   }
   if(graph == nullptr && allow_name_change){
-    graph = getGraph(flimit, altName(gname), false);
+    graph = getGraph(flimit, "T1ttttObservedExcludedXsec", false);
   }
   return graph;
 }
 
 void setGraphStyle(TGraph* graph, int color, int style, int width, double glu_lsp, TString model_name){
   if(graph==0) return;
-  cout<<"Model "<<model_name<<endl;
   // Setting graph style
   graph->SetLineColor(color);
   graph->SetLineStyle(style);
@@ -431,8 +416,8 @@ void reverseGraph(TGraph *graph){
 
 void getModelParams(TString model, float &Xmin, float &Xmax, float &Ymin, float &Ymax, float &glu_lsp){
   if(model == "T1tttt" || model == "T5tttt"){
-    Xmin = 600; Xmax = 2100.;
-    Ymin = 0;   Ymax = 2000;
+    Xmin = 800; Xmax = 2600.;
+    Ymin = 0;   Ymax = 2200;
     glu_lsp = 225;
   }
   if(model == "T1bbbb"){
@@ -475,20 +460,12 @@ void addLabelsTitle(float lMargin, float tMargin, float rMargin, TString title){
   //label.DrawLatex(0.27+offsetx, 1-tMargin/2.-0.013, "Preliminary");
   // Printing lumi (energy)
   label.SetTextAlign(31); label.SetTextFont(42); label.SetTextSize(0.6*tMargin);
-  label.DrawLatex(1-rMargin, 1-tMargin+0.018, "35.9 fb^{-1} (13 TeV)");
+  label.DrawLatex(1-rMargin, 1-tMargin+0.018, "137 fb^{-1} (13 TeV)");
   
   title += " "; ycms += 1;// To avoid non-used warnings
 }
 
 void SetupColors(){
-  // const unsigned num = 5;
-  // const int bands = 255;
-  // int colors[bands];
-  // double stops[num] = {0.00, 0.34, 0.61, 0.84, 1.00};
-  // double red[num] = {0.50, 0.50, 1.00, 1.00, 1.00};
-  // double green[num] = {0.50, 1.00, 1.00, 0.60, 0.50};
-  // double blue[num] = {1.00, 1.00, 0.50, 0.40, 0.50};
-
   const unsigned num = 4;
   const int bands = 255;
   int colors[bands];

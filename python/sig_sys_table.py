@@ -18,7 +18,7 @@ def ensureDir(path):
         if not os.path.isdir(path):
             raise
 
-def printHeader(out_file):
+def printHeader(out_file, mjtype):
     print("\\documentclass{article}", file=out_file)
     print("\\usepackage{rotating}", file=out_file)
     print("\\usepackage{amsmath}", file=out_file)
@@ -36,7 +36,7 @@ def printHeader(out_file):
     print("  \\caption{Summary of the signal systematic uncertainties. Systematics are considered", file=out_file)
     print("           fully correlated between bins and opposite signs indicate anti-correlation.", file=out_file)
     print("           Different sources of uncertainties are considered uncorrelated.}", file=out_file)
-    print("  \\label{tab:unc:sig}", file=out_file)
+    print("  \\label{tab:unc:sig_"+mjtype+"}", file=out_file)
     print("  \\resizebox{\\textwidth}{!}{", file=out_file)
     print("  \\renewcommand{\\arraystretch}{1.2}", file=out_file)
     print("  \\begin{tabular}[tbp!]{l||ccc|ccc||ccc|ccc||ccc|ccc}\\hline\\hline", file=out_file)
@@ -177,7 +177,9 @@ def sigSysTable(output_path, input_paths, do_compile, lowmj):
     output_path = fullPath(output_path)
     input_paths = [ fullPath(f) for sublist in input_paths for f in glob.glob(sublist) if os.path.isfile(f) ]
     with open(output_path, "w") as out_file:
-        printHeader(out_file)
+        mjtype = "highmj"
+        if lowmj: mjtype = "lowmj"
+        printHeader(out_file, mjtype)
         for input_path in input_paths:
             with open(input_path, "r") as input_file:
                 printModel(out_file, input_file, lowmj)
