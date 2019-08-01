@@ -95,7 +95,7 @@ file_sig_c.Close()
 tab = []
 tab.append(open("tables/table_lmj"+tag1+"_vs"+tag2+".tex","w"))
 tab.append(open("tables/table_hmj"+tag1+"_vs"+tag2+".tex","w"))
-ncols = 6
+ncols = 4
 if (do_sig): ncols +=2
 
 tab_head = "\\begin{tabular}[tbp!]{ l cc"
@@ -103,8 +103,9 @@ for i in range(ncols-3): tab_head += " r"
 tab_head += "} \n\\hline\\hline\n"
 tab_head += "${\\cal L}=137$ fb$^{-1}$ &"
 if do_sig:
-    tab_head += " SUS-NC & SUS-C &"
-tab_head += tag1_lbl+" & Pull & "+tag2_lbl+" & Pull & Obs. \\\\ \\hline\n"
+    tab_head += " T1tttt(2100,100) & T1tttt(1900,1250) &"
+tab_head += tag1_lbl+" & "+tag2_lbl+" & Obs. \\\\ \\hline\n"
+# tab_head += tag1_lbl+" & Pull & "+tag2_lbl+" & Pull & Obs. \\\\ \\hline\n"
 for i in range(2): tab[i].write(tab_head)
 
 save_rows = { 'r1_lmet':'', 'r3_lmet':'', 'r1_mmet':'', 'r3_mmet':'', 'r1_hmet':'', 'r3_hmet':''}
@@ -112,16 +113,16 @@ irow = 0
 for ibin in range(nbins):
     tmp = bins[ibin].split("_")
     ireg = tmp[0].replace("r","R")
-    imet = tmp[1].replace("lmet","$200<p_{T}^{\text{miss}}\\leq350$ GeV")
-    imet = imet.replace("mmet","$350<p_{T}^{\text{miss}}\\leq500$ GeV")
-    imet = imet.replace("hmet","$p_{T}^{\text{miss}}> 500$ GeV")
+    imet = tmp[1].replace("lmet","$200<p_{\\rm T}^{\\text{miss}}\\leq350$ GeV")
+    imet = imet.replace("mmet","$350<p_{\\rm T}^{\\text{miss}}\\leq500$ GeV")
+    imet = imet.replace("hmet","$p_{\\rm T}^{\\text{miss}}> 500$ GeV")
     inb,inj = '',''
     if ireg=='R2' or ireg=='R4':
-        inb = tmp[2].replace("lnb","1b").replace("mnb","2b").replace("hnb","$\\geq$ 3b")
+        inb = tmp[2].replace("lnb","$N_{b} = 1$").replace("mnb","$N_{b} = 2$").replace("hnb","$N_{b} \\geq 3$")
         if "hmet" in bins[ibin]:
-            inj = tmp[3].replace("lnj"," 6--7j").replace("hnj","$\\geq$ 8j")
+            inj = tmp[3].replace("lnj"," $6\\leq N_{jets} \\leq 7$").replace("hnj","$N_{jets} \\geq 8$")
         else:
-            inj = tmp[3].replace("lnj"," 7j").replace("hnj","$\\geq$ 8j")
+            inj = tmp[3].replace("lnj"," $N_{jets} = 7$").replace("hnj","$N_{jets} \\geq 8$")
     
     itab = ibin/42
     if (irow%14==0):
@@ -144,16 +145,19 @@ for ibin in range(nbins):
     if do_sig:
         cols.append('{0:>10.1f}'.format(sig_nc[ibin], esig_nc[ibin]))
         cols.append('{0:>10.1f}'.format(sig_c[ibin], esig_c[ibin]))
-    cols.append('{0:>20}'.format('${0:.1f} \\pm {1:.1f}$'.format(bkg_pre[ibin], ebkg_pre[ibin])))
-    if ireg=="R4": 
-        cols.append('{0:>7.1f}'.format(pull_pre[ibin]))
-    else: 
-        cols.append('')
+    if (ireg=="R4"):
+        cols.append('{0:>20}'.format('${0:.1f} \\pm {1:.1f}$'.format(bkg_pre[ibin], ebkg_pre[ibin])))
+    else:
+        cols.append('{0:>20}'.format('${0:.0f} \\pm {1:.1f}$'.format(bkg_pre[ibin], ebkg_pre[ibin])))
+    # if ireg=="R4": 
+    #     cols.append('{0:>7.1f}'.format(pull_pre[ibin]))
+    # else: 
+    #     cols.append('')
     cols.append('{0:>20}'.format('${0:.1f} \\pm {1:.1f}$'.format(bkg_post[ibin], ebkg_post[ibin])))
-    if ireg=="R4": 
-        cols.append('{0:>7.1f}'.format(pull_post[ibin]))
-    else: 
-        cols.append('')
+    # if ireg=="R4": 
+    #     cols.append('{0:>7.1f}'.format(pull_post[ibin]))
+    # else: 
+    #     cols.append('')
     cols.append('{0:>10.0f}'.format(data[ibin]))
     tab[itab].write('&'.join(cols)+'\\\\\n')
 
@@ -293,7 +297,8 @@ cmslabel = TLatex()
 cmslabel.SetTextSize(0.06)
 cmslabel.SetNDC(kTRUE)
 cmslabel.SetTextAlign(11)
-cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS}") # #scale[0.8]{#font[42]{Preliminary}}")
+cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS}")
+# cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}")
 cmslabel.SetTextAlign(31)
 cmslabel.DrawLatex(1-top.GetRightMargin()-0.005, 0.92,"#font[42]{137 fb^{-1} (13 TeV)}")
 
@@ -303,13 +308,13 @@ binlabel.SetTextSize(0.05)
 binlabel.SetTextAlign(21)
 binlabel.DrawLatex(10, 1000,"Low M#lower[-0.1]{_{J}}")
 binlabel.DrawLatex(28, 1000,"High M#lower[-0.1]{_{J}}")
-binlabel.SetTextSize(0.045)
+binlabel.SetTextSize(0.04)
 ptmiss = "p#lower[-0.1]{_{T}}#kern[-0.25]{#scale[1.15]{#lower[0.2]{^{miss}}}}";
 
 for i in range(2):
-    binlabel.DrawLatex(4+i*18, 350,"#font[52]{200 < "+ptmiss+"#leq 350}")
-    binlabel.DrawLatex(10+i*18, 350,"#font[52]{350 < "+ptmiss+"#leq 500}")
-    binlabel.DrawLatex(16+i*18, 350,"#font[52]{"+ptmiss+"#geq 500}")
+    binlabel.DrawLatex(4+i*18, 350,"#font[52]{200 < "+ptmiss+"#leq 350 GeV}")
+    binlabel.DrawLatex(10+i*18, 350,"#font[52]{350 < "+ptmiss+"#leq 500 GeV}")
+    binlabel.DrawLatex(16+i*18, 350,"#font[52]{"+ptmiss+"#geq 500 GeV}")
 
 binlabel.SetTextSize(0.045)
 for i in range(6):

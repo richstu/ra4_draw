@@ -106,7 +106,13 @@ int main(int argc, char *argv[]){
     _tmp = mass_pts_str.substr(start, found-start);
     mass_pts.push_back(make_pair(_tmp.substr(0,_tmp.find("_")), _tmp.substr(_tmp.find("_")+1)));
     cout<<"Adding mass point: mgluino = "<<mass_pts.back().first<<" mlsp = "<<mass_pts.back().second<<endl;
-  } 
+  } else if (model=="T2tt") {
+    mass_pts.push_back(make_pair("1","175"));
+    for (int ilsp(25); ilsp < 701; ilsp +=25) {
+      mass_pts.push_back(make_pair(to_string(ilsp+175),to_string(ilsp)));
+    }
+  }
+
 
   // --------------------------------------
   //            Processes
@@ -170,14 +176,19 @@ int main(int argc, char *argv[]){
   for (auto &imass: mass_pts) {
     set<string> sig_files;
     for (auto &yr: years) {
-      sig_files.insert(foldersig[yr]+"*mGluino-"+imass.first+"_mLSP-"+imass.second+"_*.root");
-      if (xoption=="t2tt"){ // will be scaled to 137 ifb in wgt_run2 
-        string stop_mass = imass.second == "1" ? "175": RoundNumber(atoi(imass.second.c_str()) + 175,0).Data();
-        sig_files.insert(foldersig_t2tt[yr] +"*mStop-"+stop_mass+"_mLSP-"+imass.second+"_*.root");
-        if (debug) cout<<"Adding "<<foldersig_t2tt[yr]<<"*mStop-"+stop_mass+"_mLSP-"+imass.second+"_*.root"<<endl;
-      }
+      sig_files.insert(foldersig_t2tt[yr]+"*mGluino-"+imass.first+"_mLSP-"+imass.second+"_*.root");
+      // int ilsp = imass.second == "1" ? 0 : atoi(imass.second.c_str());
+      // if (xoption=="t2ttee"){ // will be scaled to 137 ifb in wgt_run2 
+      //   sig_files.insert(foldersig_t2tt[yr] +"*mGluino-"+RoundNumber(ilsp + 175,0).Data()+"_mLSP-"+imass.second+"_*.root");
+      // } else if (xoption=="t2ttp25"){
+      //   ilsp +=25;
+      //   sig_files.insert(foldersig_t2tt[yr] +"*mGluino-"+RoundNumber(ilsp + 175,0).Data()+"_mLSP-"+RoundNumber(ilsp,0).Data()+"_*.root");
+      // } else if (xoption=="t2ttm25"){
+      //   ilsp -=25;
+      //   sig_files.insert(foldersig_t2tt[yr] +"*mGluino-"+RoundNumber(ilsp + 175,0).Data()+"_mLSP-"+RoundNumber(ilsp,0).Data()+"_*.root");
+      // }
     }
-    
+    for (auto &isig: sig_files) cout<<"Adding "<<isig<<endl;
     sig_procs.push_back(Process::MakeShared<Baby_full>(model, Process::Type::signal, kBlack,
       sig_files, filters));
   }

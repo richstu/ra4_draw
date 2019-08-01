@@ -26,7 +26,7 @@
 using namespace std;
 
 namespace{
-  int num_smooth_ = 4; // Number of times to smooth TH2D
+  int num_smooth_ = 0; // Number of times to smooth TH2D
   string filename_ = "txt/t1tttt_limit_scan.txt";
   string tag = "";
   string model_ = "T1tttt";
@@ -449,20 +449,43 @@ TGraph DrawContours(TGraph2D &g2, int color, int style, double width,
   }
   if(l == nullptr) return graph;
   int max_points = -1;
+  vector<TGraph*> g;
   for(int i = 0; i < l->GetSize(); ++i){
-    TGraph *g = static_cast<TGraph*>(l->At(i));
-    Style(g, color, style, width);
-    if(g == nullptr) continue;
-    int n_points = g->GetN();
+    g.push_back(static_cast<TGraph*>(l->At(i)));
+    Style(g[i], color, style, width);
+    if(g[i] == nullptr) continue;
+    int n_points = g[i]->GetN();
     if(n_points > max_points){
-      if(n_smooth>0) FixGraph(*g);
-      graph = *g;
+      if(n_smooth>0) FixGraph(*(g[i]));
+      TGraph* old_graph = static_cast<TGraph*>(graph.Clone());
+      if (i>0) ReverseGraph(*(g[i]));
+      graph = *(joinGraphs(old_graph, g[i]));
+      graph.RemovePoint(graph.GetN()-1);
       max_points = n_points;
     }
-    g->Draw("L same");
+    g[i]->Draw("L same");
   }
 
   graph.SetTitle(g2.GetTitle());
+  return graph;
+}
+
+TGraph* joinGraphs(TGraph *graph1, TGraph *graph2){
+  TGraph *graph = new TGraph;
+  double mglu, mlsp;
+  for(int point(0); point < graph1->GetN(); point++) {
+    graph1->GetPoint(point, mglu, mlsp);
+    graph->SetPoint(graph->GetN(), mglu, mlsp);
+  } // Points in graph1
+  for(int point(0); point < graph2->GetN(); point++) {
+    graph2->GetPoint(point, mglu, mlsp);
+    graph->SetPoint(graph->GetN(), mglu, mlsp);
+  } // Points in graph1
+  graph1->GetPoint(0, mglu, mlsp);
+  graph->SetPoint(graph->GetN(), mglu, mlsp);
+  TString gname = graph1->GetName(); gname += graph2->GetName();
+  graph->SetName(gname);
+
   return graph;
 }
 

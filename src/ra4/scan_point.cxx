@@ -39,6 +39,7 @@ int main(int argc, char *argv[]){
   string model = "T1tttt";
   if(Contains(datacard, "T5tttt")) model = "T5tttt";
   if(Contains(datacard, "TChiHH")) model = "TChiHH";
+  if(Contains(datacard, "T2tt")) model = "T2tt";
 
   //// Parsing the gluino and LSP masses
   int mglu, mlsp;
@@ -46,6 +47,7 @@ int main(int argc, char *argv[]){
   double xsec, xsec_unc;
   if(model=="T1tttt" || model=="T5tttt") xsec::signalCrossSection(mglu, xsec, xsec_unc);
   else if(model == "TChiHH") xsec::higgsinoCrossSection(mglu, xsec, xsec_unc);
+  else if(model == "T2tt") xsec::stopCrossSection(mglu, xsec, xsec_unc);
   string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
  
   ostringstream command;

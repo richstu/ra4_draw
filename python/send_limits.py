@@ -6,7 +6,7 @@ import string
 import time
 
 model = "T5tttt"
-do_t2tt = False
+do_t2tt = True
 mass_pts_job = 15
 
 # dir used to collect gluino - LSP masses to run on 

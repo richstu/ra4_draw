@@ -52,6 +52,7 @@ void Style(TGraph *c, int color, int style);
 TGraph DrawContours(TGraph2D &g2, int color, int style, double width,
             int n_smooth, double val = 1.);
 
+TGraph* joinGraphs(TGraph *graph1, TGraph *graph2);
 void FixGraph(TGraph &graph);
 void ReverseGraph(TGraph &graph);
 

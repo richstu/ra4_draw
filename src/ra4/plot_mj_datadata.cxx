@@ -151,7 +151,7 @@ int main(){
   string style = "Preliminary";
   // if(paper) style = "PRLPaper";
   PlotOpt log_lumi("txt/plot_styles.txt", style);
-  log_lumi.Title(TitleType::data)
+  log_lumi.Title(TitleType::preliminary)
     .Bottom(BottomType::ratio)
     .YAxis(YAxisType::log)
     .Stack(StackType::data_norm)

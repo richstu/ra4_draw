@@ -100,6 +100,7 @@ string execute(const string &cmd){
 
 string CodeToPlainText(string code){
   ReplaceAll(code, " ", "");
+  ReplaceAll(code, "stitch_met&&", "");
   ReplaceAll(code, "run<=276811", "RunsBD");
   ReplaceAll(code, "run>=276831&&run<=278801", "RunsEF1");
   ReplaceAll(code, "run>=278802&&run<=280385", "RunsF2G");
@@ -155,6 +156,7 @@ string CodeToPlainText(string code){
 
 string CodeToRootTex(string code){
   ReplaceAll(code, " ", "");
+  ReplaceAll(code, "stitch_met&&", "");
   ReplaceAll(code, "run<=276811", "Runs B-D");
   ReplaceAll(code, "run>=276831&&run<=278801", "Runs E-F1");
   ReplaceAll(code, "run>=278802&&run<=280385", "Runs F2-G");
@@ -164,13 +166,13 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "&&1", "");
   ReplaceAll(code, "weight", "w");
   ReplaceAll(code, "nbt<=1&&nbm==2","TM+MM");
-  ReplaceAll(code, "nbdm==0","0b");
-  ReplaceAll(code, "nbdm==1","1b");
-  ReplaceAll(code, "nbdt==2&&nbdm==2","2b");
-  ReplaceAll(code, "nbdt>=2&&nbdm==3&&nbdl==3","3b");
-  ReplaceAll(code, "nbdt>=2&&nbdm>=3&&nbdl>=4","4b");
-  ReplaceAll(code, "nbdt>=2&&nbdm>=3","#geq3b");
-  ReplaceAll(code, "nbdt>=2","#geq2b");
+  // ReplaceAll(code, "nbdm==0","0b");
+  // ReplaceAll(code, "nbdm==1","1b");
+  // ReplaceAll(code, "nbdt==2&&nbdm==2","2b");
+  // ReplaceAll(code, "nbdt>=2&&nbdm==3&&nbdl==3","3b");
+  // ReplaceAll(code, "nbdt>=2&&nbdm>=3&&nbdl>=4","4b");
+  // ReplaceAll(code, "nbdt>=2&&nbdm>=3","#geq3b");
+  // ReplaceAll(code, "nbdt>=2","#geq2b");
   ReplaceAll(code, "higd_am>100&&higd_am<=140&&higd_dm<=40","HIG");
   ReplaceAll(code, "(higd_am<=100||(higd_am>140&&higd_am<=200))&&higd_dm<=40","SBD");
   ReplaceAll(code, "higd_dm","#Deltam");
@@ -194,26 +196,25 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>350&&met<=500", "350<met#leq 500");
   ReplaceAll(code, "met>400&&met<=500", "400<met#leq 500");
   ReplaceAll(code, "met>200&&met<=500", "200<met#leq 500");
-  ReplaceAll(code, "njets>=4&&njets<=5", "4-5j");
-  ReplaceAll(code, "njets>=5&&njets<=7", "5-7j");
-  ReplaceAll(code, "njets>=5&&njets<=6", "5-6j");
-  ReplaceAll(code, "njets>=6&&njets<=8", "6-8j");
-  ReplaceAll(code, "njets>=6&&njets<=7", "6-7j");
-  ReplaceAll(code, "njets==5", "5j");
-  ReplaceAll(code, "njets==6", "6j");
-  ReplaceAll(code, "njets==7", "7j");
-  ReplaceAll(code, "njets>=5", "#geq5j");
-  ReplaceAll(code, "njets>=6", "#geq6j");
-  ReplaceAll(code, "njets>=7", "#geq7j");
-  ReplaceAll(code, "njets>=8", "#geq8j");
-  ReplaceAll(code, "nbd>=1", "#geq1b");
-  ReplaceAll(code, "nbd==1", "1b");
-  ReplaceAll(code, "nbd==2", "2b");
-  ReplaceAll(code, "nbd>=3", "#geq3b");
-  ReplaceAll(code, "nbdm==1", "1b");
-  ReplaceAll(code, "nbdm==2", "2b");
-  ReplaceAll(code, "nbdm>=3", "#geq3b");
-  ReplaceAll(code, "nbdm>=1", "#geq1b");
+  // ReplaceAll(code, "njets>=4&&njets<=5", "4-5j");
+  // ReplaceAll(code, "njets>=5&&njets<=7", "5-7j");
+  ReplaceAll(code, "njets>=5&&njets<=6", "5#leq N_{jets}#leq 6j");
+  ReplaceAll(code, "njets>=6&&njets<=7", "6#leq N_{jets}#leq 7j");
+  // ReplaceAll(code, "njets==5", "5j");
+  // ReplaceAll(code, "njets==6", "6j");
+  // ReplaceAll(code, "njets==7", "7j");
+  // ReplaceAll(code, "njets>=5", "#geq5j");
+  // ReplaceAll(code, "njets>=6", "#geq6j");
+  // ReplaceAll(code, "njets>=7", "#geq7j");
+  // ReplaceAll(code, "njets>=8", "#geq8j");
+  // ReplaceAll(code, "nbd>=1", "#geq1b");
+  // ReplaceAll(code, "nbd==1", "1b");
+  // ReplaceAll(code, "nbd==2", "2b");
+  // ReplaceAll(code, "nbd>=3", "#geq3b");
+  // ReplaceAll(code, "nbdm==1", "1b");
+  // ReplaceAll(code, "nbdm==2", "2b");
+  // ReplaceAll(code, "nbdm>=3", "#geq3b");
+  // ReplaceAll(code, "nbdm>=1", "#geq1b");
 
   ReplaceAll(code, "1==1", "Full Sample");
   ReplaceAll(code, "el_tks_chg*lep_charge<0", "OS");
@@ -322,9 +323,9 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "mt", "m_{T}");
   ReplaceAll(code, "ntks_chg==0", " ITV");
   ReplaceAll(code, "nbm_moriond","N_{b}");
+  ReplaceAll(code, "nbdm","N_{b}");
   ReplaceAll(code, "nbm","N_{b}");
   ReplaceAll(code, "nbd","N_{b}");
-  ReplaceAll(code, "nbdm","N_{b}");
   ReplaceAll(code, "nbl","N_{b,l}");
   ReplaceAll(code, "mj14", " M_{J}");
   ReplaceAll(code, "mj", " M_{J}");
