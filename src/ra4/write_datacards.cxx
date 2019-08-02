@@ -27,13 +27,13 @@ using namespace std;
 namespace {
   bool unblind = false;
   bool debug = false;
-  bool do_t2tt = false;
   int year = 0;
   string model = "T1tttt";
   string xoption = "nom";
   string outfolder = getenv("PWD");
   string mass_pts_str = "";
   enum SysType {kConst, kWeight, kSmear, kCorr, kMetSwap, kPU};
+  bool do_reco_gen_met_avg = true;
   bool do_syst = true;
   float lumi = 1.; // should not be changed, actual lumi assigned by the weight
 }
@@ -84,8 +84,8 @@ int main(int argc, char *argv[]){
 
   if (do_syst) {
     cout<<"INFO:: Systematics are ON. Make sure to run on appropriate babies, i.e. unskimmed or skim_sys_abcd!!"<<endl;
+    if(!do_reco_gen_met_avg) cout<<"INFO:: Running without reco-gen MET averaging for signal!!"<<endl;
   }
-  gSystem->mkdir(outfolder.c_str(), kTRUE);
 
 
   // -----------------------------------------------------------
@@ -106,7 +106,13 @@ int main(int argc, char *argv[]){
     _tmp = mass_pts_str.substr(start, found-start);
     mass_pts.push_back(make_pair(_tmp.substr(0,_tmp.find("_")), _tmp.substr(_tmp.find("_")+1)));
     cout<<"Adding mass point: mgluino = "<<mass_pts.back().first<<" mlsp = "<<mass_pts.back().second<<endl;
-  } 
+  } else if (model=="T2tt") {
+    mass_pts.push_back(make_pair("1","175"));
+    for (int ilsp(25); ilsp < 701; ilsp +=25) {
+      mass_pts.push_back(make_pair(to_string(ilsp+175),to_string(ilsp)));
+    }
+  }
+
 
   // --------------------------------------
   //            Processes
@@ -114,23 +120,27 @@ int main(int argc, char *argv[]){
   TString baseline("st>500 && met>200 && mj14>250 && njets>=6 && nbdm>=1 && nleps==1 && nveto==0");
   NamedFunc filters = Functions::hem_veto && Functions::pass_run2;
   NamedFunc nom_wgt = Functions::wgt_run2 * Functions::eff_trig_run2; 
+  NamedFunc nom_wgt_nosf = Functions::wgt_run2_nosf * Functions::eff_trig_run2; 
 
   set<int> years;
   if (year==0) years = {2016, 2017, 2018};
   else years = {year};
 
-  map<int, string> foldermc, folderdata, foldersig;
+  map<int, string> foldermc, folderdata, foldersig, foldersig_t2tt;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_abcd/";
-  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/"+model+"/skim_sys_abcd/";
   folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_07_16/"+model+"/skim_sys_abcd/";
+  foldersig_t2tt[2016] = bfolder+"/cms2r0/babymaker/babies/2019_07_16/T2tt/skim_sys_abcd/";
 
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_abcd/";
-  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_05_17/"+model+"/skim_sys_abcd/";
   folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_07_17/"+model+"/skim_sys_abcd/";
+  foldersig_t2tt[2017] = bfolder+"/cms2r0/babymaker/babies/2019_07_17/T2tt/skim_sys_abcd/";
 
   foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_abcd/";
-  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_05_18/"+model+"/skim_sys_abcd/";
   folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_07_18/"+model+"/skim_sys_abcd/";
+  foldersig_t2tt[2018] = bfolder+"/cms2r0/babymaker/babies/2019_07_18/T2tt/skim_sys_abcd/";
 
   // Filling all other processes
   vector<string> vnames_other = {
@@ -166,16 +176,19 @@ int main(int argc, char *argv[]){
   for (auto &imass: mass_pts) {
     set<string> sig_files;
     for (auto &yr: years) {
-      sig_files.insert(foldersig[yr]+"*mGluino-"+imass.first+"_mLSP-"+imass.second+"_*.root");
-      if (do_t2tt && yr==2018){ // will be scaled to 137 ifb in wgt_run2 
-        string folder_ = foldersig[yr];
-        ReplaceAll(folder_,"T5tttt","T2tt");
-        string stop_mass = imass.second == "1" ? "175": RoundNumber(atoi(imass.second.c_str()) + 175,0).Data();
-        sig_files.insert(folder_ +"*mStop-"+stop_mass+"_mLSP-"+imass.second+"_*.root");
-        cout<<folder_ +"*mStop-"+stop_mass+"_mLSP-"+imass.second+"_*.root"<<endl;
-      }
+      sig_files.insert(foldersig_t2tt[yr]+"*mGluino-"+imass.first+"_mLSP-"+imass.second+"_*.root");
+      // int ilsp = imass.second == "1" ? 0 : atoi(imass.second.c_str());
+      // if (xoption=="t2ttee"){ // will be scaled to 137 ifb in wgt_run2 
+      //   sig_files.insert(foldersig_t2tt[yr] +"*mGluino-"+RoundNumber(ilsp + 175,0).Data()+"_mLSP-"+imass.second+"_*.root");
+      // } else if (xoption=="t2ttp25"){
+      //   ilsp +=25;
+      //   sig_files.insert(foldersig_t2tt[yr] +"*mGluino-"+RoundNumber(ilsp + 175,0).Data()+"_mLSP-"+RoundNumber(ilsp,0).Data()+"_*.root");
+      // } else if (xoption=="t2ttm25"){
+      //   ilsp -=25;
+      //   sig_files.insert(foldersig_t2tt[yr] +"*mGluino-"+RoundNumber(ilsp + 175,0).Data()+"_mLSP-"+RoundNumber(ilsp,0).Data()+"_*.root");
+      // }
     }
-    
+    for (auto &isig: sig_files) cout<<"Adding "<<isig<<endl;
     sig_procs.push_back(Process::MakeShared<Baby_full>(model, Process::Type::signal, kBlack,
       sig_files, filters));
   }
@@ -286,40 +299,40 @@ int main(int argc, char *argv[]){
   // order as they will appear in latex table
   // *Nominal must stay in the first spot!!* (will be skipped in table)
   v_sys.push_back(sysdef("Nominal", "nominal", kWeight)); 
-  v_sys.back().v_wgts.push_back("1.");
+  v_sys.back().v_wgts.push_back("w_lep*w_btag_deep*w_isr*w_pu*w_fs_lep");
 
   v_sys.push_back(sysdef("Gen vs reco MET FS", "fs_genmet",kMetSwap));
 
   if (do_syst) {
     v_sys.push_back(sysdef("Lepton efficiency", "lepeff", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_lep["+to_string(i)+"]/w_lep");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_lep["+to_string(i)+"]*w_btag_deep*w_isr*w_pu*w_fs_lep");
     v_sys.push_back(sysdef("Lepton efficiency FS", "fs_lepeff", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_lep["+to_string(i)+"]/w_fs_lep");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_lep["+to_string(i)+"]*w_lep*w_btag_deep*w_isr*w_pu");
     v_sys.push_back(sysdef("Trigger efficiency", "trig", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_trig["+to_string(i)+"]/eff_trig"); 
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_trig["+to_string(i)+"]*w_lep*w_btag_deep*w_isr*w_pu*w_fs_lep"); 
     v_sys.push_back(sysdef("B-tag efficiency", "bctag", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_bctag_deep["+to_string(i)+"]/w_btag_deep");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_bctag_deep["+to_string(i)+"]*w_lep*w_isr*w_pu*w_fs_lep");
     v_sys.push_back(sysdef("B-tag efficiency FS", "fs_bctag", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_bctag_deep["+to_string(i)+"]/w_btag_deep");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_bctag_deep["+to_string(i)+"]*w_lep*w_isr*w_pu*w_fs_lep");
     v_sys.push_back(sysdef("Mistag efficiency", "udsgtag", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_udsgtag_deep["+to_string(i)+"]/w_btag_deep");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_udsgtag_deep["+to_string(i)+"]*w_lep*w_isr*w_pu*w_fs_lep");
     v_sys.push_back(sysdef("Mistag efficiency FS", "fs_udsgtag",kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_udsgtag_deep["+to_string(i)+"]/w_btag_deep");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_udsgtag_deep["+to_string(i)+"]*w_lep*w_isr*w_pu*w_fs_lep");
     v_sys.push_back(sysdef("Jet energy corrections", "jec", kCorr));
     v_sys.back().shift_index = 1; // JEC Up index in sys_met, etc.
-    // v_sys.push_back(sysdef("QCD scales", "murf",kWeight));
-    // for (size_t i = 0; i<2; ++i) {
-    //   v_sys.back().v_wgts.push_back("sys_mur["+to_string(i)+"]");
-    //   v_sys.back().v_wgts.push_back("sys_muf["+to_string(i)+"]");
-    //   v_sys.back().v_wgts.push_back("sys_murf["+to_string(i)+"]");
-    //   v_sys.back().v_wgts.push_back("sys_murf["+to_string(i+2)+"]");
-    // }
+    v_sys.push_back(sysdef("QCD scales", "murf",kWeight));
+    for (size_t i = 0; i<2; ++i) {
+      v_sys.back().v_wgts.push_back("sys_mur["+to_string(i)+"]*w_lep*w_btag_deep*w_isr*w_pu*w_fs_lep");
+      v_sys.back().v_wgts.push_back("sys_muf["+to_string(i)+"]*w_lep*w_btag_deep*w_isr*w_pu*w_fs_lep");
+      v_sys.back().v_wgts.push_back("sys_murf["+to_string(i)+"]*w_lep*w_btag_deep*w_isr*w_pu*w_fs_lep");
+      v_sys.back().v_wgts.push_back("sys_murf["+to_string(i+2)+"]*w_lep*w_btag_deep*w_isr*w_pu*w_fs_lep");
+    }
     v_sys.push_back(sysdef("ISR", "isr", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_isr["+to_string(i)+"]/w_isr");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_isr["+to_string(i)+"]*w_lep*w_btag_deep*w_pu*w_fs_lep");
     v_sys.push_back(sysdef("Jet ID FS", "jetid", kConst));
     v_sys.back().v_wgts.push_back("0.01");
     v_sys.push_back(sysdef("Pileup", "pu", kWeight));
-    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_pu["+to_string(i)+"]/w_pu");
+    for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_pu["+to_string(i)+"]*w_lep*w_btag_deep*w_isr*w_fs_lep");
     v_sys.push_back(sysdef("Luminosity", "lumi", kConst));
     v_sys.back().v_wgts.push_back("0.025");
   } 
@@ -351,7 +364,7 @@ int main(int argc, char *argv[]){
     } else if (sys.sys_type == kWeight) {
       for (auto &bin: vbins) {
         for (auto &wgt: sys.v_wgts) {
-          cuts.emplace_back(TableRow("", baseline+"&&"+bin.cut,0,0,nom_wgt * wgt));
+          cuts.emplace_back(TableRow("", baseline+"&&"+bin.cut,0,0, nom_wgt_nosf * wgt));
         }
       }
     } else if (sys.sys_type == kCorr || sys.sys_type == kSmear) {
@@ -458,8 +471,12 @@ int main(int argc, char *argv[]){
       if (sys.sys_type == kMetSwap) {
         for (size_t ibin = 0; ibin<nbins; ++ibin) {
           GammaParams tmp_gps;
-          tmp_gps.SetYieldAndUncertainty(0.5*(sig_params[isig][sys.ind + ibin].Yield()+sig_params[isig][ibin].Yield()),
-                        max(sig_params[isig][sys.ind + ibin].Uncertainty(), sig_params[isig][ibin].Uncertainty()));
+          if (do_reco_gen_met_avg) {
+            tmp_gps.SetYieldAndUncertainty(0.5*(sig_params[isig][sys.ind + ibin].Yield()+sig_params[isig][ibin].Yield()),
+              max(sig_params[isig][sys.ind + ibin].Uncertainty(), sig_params[isig][ibin].Uncertainty()));
+          } else {
+            tmp_gps.SetYieldAndUncertainty(sig_params[isig][ibin].Yield(),sig_params[isig][ibin].Uncertainty());
+          }
           nom_met_avg.push_back(tmp_gps);
         }
       }
@@ -780,8 +797,9 @@ int main(int argc, char *argv[]){
           double unc = fabs(up)>fabs(dn) ? fabs(up) : fabs(dn);
           unc = (up>0 ? 1:-1)*unc + 1.;
 
-          if (std::isnan(unc) || std::isinf(unc)) {
-            cout <<" Found bad unc. -> "<<left<<setw(10)<<sys.tag <<left<<setw(10)<<vbins[ibin].tag
+          if (std::isnan(unc) || std::isinf(unc) || fabs(unc)>2) {
+            if (debug) cout <<" Found bad unc. -> "<<left<<setw(10)<<sys.tag 
+                 <<left<<setw(10)<<vbins[ibin].tag
                  <<" "<<right<<setprecision(0)<<setw(25)<<sig_params[isig][ibin].NEffective() 
                  <<" "<<setprecision(5)<<setw(15)<<sig_params[isig][ibin].Yield() 
                  <<" "<<setprecision(10)<<setw(15)<<sig_params[isig][ibin].Weight()<<endl;  
@@ -926,10 +944,10 @@ void GetOptions(int argc, char *argv[]){
       {"xoption", required_argument, 0, 'x'},
       {"mass_pts", required_argument, 0, 'p'},
       {"no_syst", no_argument, 0, 0},
-      {"do_t2tt", no_argument, 0, 0},
       {"unblind", no_argument, 0, 'u'},
       {"year", no_argument, 0, 'y'},
       {"debug", no_argument, 0, 'd'},
+      {"reco_met", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -951,8 +969,8 @@ void GetOptions(int argc, char *argv[]){
       optname = long_options[option_index].name;
       if(optname == "no_syst"){
         do_syst = false;
-      } else if(optname == "do_t2tt"){
-        do_t2tt = true;
+      } else if(optname == "reco_met"){
+        do_reco_gen_met_avg = false;
       } else {
         printf("Bad option! Found option name %s\n", optname.c_str());
       }

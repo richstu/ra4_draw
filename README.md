@@ -44,28 +44,32 @@ Plots showing that CRs mimic behavior of SRs:
 
 Generate a specific datacard, or wihtout signal uncertainties for the results plot:
 
-    ./compile.py && ./run/ra4/write_datacards.exe -p 2100_100 -y 0 -u
-    ./compile.py && ./run/ra4/write_datacards.exe -p 2100_100 -y 0 -u --no_syst
+    ./compile.py && ./run/ra4/write_datacards.exe -p 2100_100,1900_1250 -y 0 -u
 
 Getting the detailed signal systematics tables:
 
-    ./python/sig_sys_table.py systable_lowmj.tex sys_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.txt sys_SMS-T1tttt_mGluino-1900_mLSP-1250_0_nom.txt --lowmj
-    ./python/sig_sys_table.py systable_highmj.tex sys_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.txt sys_SMS-T1tttt_mGluino-1900_mLSP-1250_0_nom.txt
+    ./python/sig_sys_table.py systable.tex sys_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.txt sys_SMS-T1tttt_mGluino-1900_mLSP-1250_0_nom.txt
 
 Get limits, this also generates the datacards for the full scan:
     
     ./python/send_limits.py
 
+Limit plot using the concatenated text files from previous step:
+
+    ./compile.py &&  ./run/ra4/limit_scan.exe -t new -f limits_t5tttt.txt -s 1 &&  ./run/ra4/limit_scan.exe -t new -f limits_t1tttt.txt -s 1 && ./run/ra4/plot_t5tttt_prl.exe 
+
 To perform the fit without the signal region observations, start by creating a workspace in order to create the masking variables:
 
-    text2workspace.py datacard_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.txt --channel-masks
-    text2workspace.py datacard_SMS-T1tttt_mGluino-1900_mLSP-1250_0_nom.txt --channel-masks
+    text2workspace.py datacard_SMS-T1tttt_mGluino-2100_mLSP-100_0_none.txt --channel-masks
+    text2workspace.py datacard_SMS-T1tttt_mGluino-1900_mLSP-1250_0_nom.txt
 
 The resulting workspace can be examined using [dump_workspace.cxx](src/ra4/dump_workspace.cxx). Then, to do the fit with masked R4s:
 
-    combine datacard_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.root -M FitDiagnostics --forceRecreateNLL --saveWorkspace --saveWithUncertainties --saveOverall --setParameters=mask_r4_lmet_lnb_lnj_lmj=1,mask_r4_lmet_lnb_lnj_hmj=1,mask_r4_lmet_lnb_hnj_lmj=1,mask_r4_lmet_lnb_hnj_hmj=1,mask_r4_lmet_mnb_lnj_lmj=1,mask_r4_lmet_mnb_lnj_hmj=1,mask_r4_lmet_mnb_hnj_lmj=1,mask_r4_lmet_mnb_hnj_hmj=1,mask_r4_lmet_hnb_lnj_lmj=1,mask_r4_lmet_hnb_lnj_hmj=1,mask_r4_lmet_hnb_hnj_lmj=1,mask_r4_lmet_hnb_hnj_hmj=1,mask_r4_mmet_lnb_lnj_lmj=1,mask_r4_mmet_lnb_lnj_hmj=1,mask_r4_mmet_lnb_hnj_lmj=1,mask_r4_mmet_lnb_hnj_hmj=1,mask_r4_mmet_mnb_lnj_lmj=1,mask_r4_mmet_mnb_lnj_hmj=1,mask_r4_mmet_mnb_hnj_lmj=1,mask_r4_mmet_mnb_hnj_hmj=1,mask_r4_mmet_hnb_lnj_lmj=1,mask_r4_mmet_hnb_lnj_hmj=1,mask_r4_mmet_hnb_hnj_lmj=1,mask_r4_mmet_hnb_hnj_hmj=1,mask_r4_hmet_lnb_lnj_lmj=1,mask_r4_hmet_lnb_lnj_hmj=1,mask_r4_hmet_lnb_hnj_lmj=1,mask_r4_hmet_lnb_hnj_hmj=1,mask_r4_hmet_mnb_lnj_lmj=1,mask_r4_hmet_mnb_lnj_hmj=1,mask_r4_hmet_mnb_hnj_lmj=1,mask_r4_hmet_mnb_hnj_hmj=1,mask_r4_hmet_hnb_lnj_lmj=1,mask_r4_hmet_hnb_lnj_hmj=1,mask_r4_hmet_hnb_hnj_lmj=1,mask_r4_hmet_hnb_hnj_hmj=1 --name=_nor4_2100
+    ./compile.py && ./run/ra4/write_datacards.exe -p 2100_100,1900_1250 -y 0 -u --no_syst
 
-    combine datacard_SMS-T1tttt_mGluino-2100_mLSP-100_0_nom.root -M FitDiagnostics --forceRecreateNLL --saveWorkspace --saveWithUncertainties --saveOverall --name=_r4_2100
+    combine datacard_SMS-T1tttt_mGluino-2100_mLSP-100_0_none.root -M FitDiagnostics --forceRecreateNLL --saveWorkspace --saveWithUncertainties --saveOverall --setParameters=mask_r4_lmet_lnb_lnj_lmj=1,mask_r4_lmet_lnb_lnj_hmj=1,mask_r4_lmet_lnb_hnj_lmj=1,mask_r4_lmet_lnb_hnj_hmj=1,mask_r4_lmet_mnb_lnj_lmj=1,mask_r4_lmet_mnb_lnj_hmj=1,mask_r4_lmet_mnb_hnj_lmj=1,mask_r4_lmet_mnb_hnj_hmj=1,mask_r4_lmet_hnb_lnj_lmj=1,mask_r4_lmet_hnb_lnj_hmj=1,mask_r4_lmet_hnb_hnj_lmj=1,mask_r4_lmet_hnb_hnj_hmj=1,mask_r4_mmet_lnb_lnj_lmj=1,mask_r4_mmet_lnb_lnj_hmj=1,mask_r4_mmet_lnb_hnj_lmj=1,mask_r4_mmet_lnb_hnj_hmj=1,mask_r4_mmet_mnb_lnj_lmj=1,mask_r4_mmet_mnb_lnj_hmj=1,mask_r4_mmet_mnb_hnj_lmj=1,mask_r4_mmet_mnb_hnj_hmj=1,mask_r4_mmet_hnb_lnj_lmj=1,mask_r4_mmet_hnb_lnj_hmj=1,mask_r4_mmet_hnb_hnj_lmj=1,mask_r4_mmet_hnb_hnj_hmj=1,mask_r4_hmet_lnb_lnj_lmj=1,mask_r4_hmet_lnb_lnj_hmj=1,mask_r4_hmet_lnb_hnj_lmj=1,mask_r4_hmet_lnb_hnj_hmj=1,mask_r4_hmet_mnb_lnj_lmj=1,mask_r4_hmet_mnb_lnj_hmj=1,mask_r4_hmet_mnb_hnj_lmj=1,mask_r4_hmet_mnb_hnj_hmj=1,mask_r4_hmet_hnb_lnj_lmj=1,mask_r4_hmet_hnb_lnj_hmj=1,mask_r4_hmet_hnb_hnj_lmj=1,mask_r4_hmet_hnb_hnj_hmj=1 --numToysForShapes 10000 --name=_nor4_2100
+
+    combine datacard_SMS-T1tttt_mGluino-2100_mLSP-100_0_none.root -M FitDiagnostics --forceRecreateNLL --saveWorkspace --saveWithUncertainties --saveOverall --numToysForShapes 10000 --name=_r4_2100
 
     combine datacard_SMS-T1tttt_mGluino-1900_mLSP-1250_0_nom.root -M FitDiagnostics --forceRecreateNLL --saveWorkspace --saveWithUncertainties --saveOverall --name=_r4_1900
 

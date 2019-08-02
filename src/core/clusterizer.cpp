@@ -14,8 +14,11 @@ using namespace Clustering;
 namespace{
   mt19937_64 InitializePRNG(){
     array<int, 128> sd;
-    random_device r;
-    generate_n(sd.begin(), sd.size(), ref(r));
+    // random_device r;
+    // generate_n(sd.begin(), sd.size(), ref(r));
+    for (int a = 0; a < sd.size(); a++) {
+      sd[a] = a;
+    }
     seed_seq ss(begin(sd), end(sd));
     return mt19937_64(ss);
   }

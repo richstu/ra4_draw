@@ -36,6 +36,7 @@ namespace Functions{
   extern const NamedFunc adj_mt;
   extern const NamedFunc pass_run2;
   extern const NamedFunc wgt_run2;
+  extern const NamedFunc wgt_run2_nosf;
   extern const NamedFunc mht_ratio;
   extern const NamedFunc fake_met;
   extern const NamedFunc trig_run2;

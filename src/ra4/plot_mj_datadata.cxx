@@ -48,6 +48,15 @@ int main(){
   NamedFunc filters = Functions::hem_veto && Functions::pass_run2;
 
   NamedFunc kappa_wgt("kappa_wgt", [](const Baby &b) -> NamedFunc::ScalarType{
+    int nbdm_ = 0;
+    if (b.SampleType()==2016 && b.type()>=100e3) {
+      for(size_t ijet = 0; ijet < b.jets_pt()->size(); ++ijet){
+        if(!Functions::IsGoodJet(b,ijet)) continue;
+        if(b.jets_csvd()->at(ijet) > 0.6324) nbdm_++;
+      } // Loop over je
+    } else {
+      nbdm_ = b.nbdm();
+    }
     if (b.met()>200 && b.met()<=350) {
       if (b.mt()>140) {
         return 1.;
@@ -55,12 +64,12 @@ int main(){
         if (b.mj14()<=400) {
           return 1.;
         } else if (b.mj14()>400 && b.mj14()<=500) {
-          if (b.nbdm()==1)         return (b.njets()==7 ? 1.05 : 0.84);
-          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.03 : 0.96);
+          if (nbdm_==1)         return (b.njets()==7 ? 1.05 : 0.84);
+          else if (nbdm_==2)    return (b.njets()==7 ? 1.03 : 0.96);
           else                     return (b.njets()==7 ? 1.32 : 1.04);
         } else {
-          if (b.nbdm()==1)         return (b.njets()==7 ? 1.32 : 1.22);
-          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.33 : 1.23);
+          if (nbdm_==1)         return (b.njets()==7 ? 1.32 : 1.22);
+          else if (nbdm_==2)    return (b.njets()==7 ? 1.33 : 1.23);
           else                     return (b.njets()==7 ? 1.48 : 1.33);
         }
       } 
@@ -71,12 +80,12 @@ int main(){
         if (b.mj14()<=450) {
           return 1.;
         } else if (b.mj14()>450 && b.mj14()<=650) {
-          if (b.nbdm()==1)         return (b.njets()==7 ? 1.04 : 0.94);
-          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.11 : 0.84);
+          if (nbdm_==1)         return (b.njets()==7 ? 1.04 : 0.94);
+          else if (nbdm_==2)    return (b.njets()==7 ? 1.11 : 0.84);
           else                     return (b.njets()==7 ? 1.35 : 1.25);
         } else {
-          if (b.nbdm()==1)         return (b.njets()==7 ? 1.59 : 1.26);
-          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.24 : 1.00);
+          if (nbdm_==1)         return (b.njets()==7 ? 1.59 : 1.26);
+          else if (nbdm_==2)    return (b.njets()==7 ? 1.24 : 1.00);
           else                     return (b.njets()==7 ? 1.29 : 1.56);
         }
       } 
@@ -87,12 +96,12 @@ int main(){
         if (b.mj14()<=500) {
           return 1.;
         } else if (b.mj14()>500 && b.mj14()<=800) {
-          if (b.nbdm()==1)         return (b.njets()==7 ? 0.92 : 0.80);
-          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.02 : 0.96);
+          if (nbdm_==1)         return (b.njets()==7 ? 0.92 : 0.80);
+          else if (nbdm_==2)    return (b.njets()==7 ? 1.02 : 0.96);
           else                     return (b.njets()==7 ? 0.93 : 1.30);
         } else {
-          if (b.nbdm()==1)         return (b.njets()==7 ? 1.17 : 1.00);
-          else if (b.nbdm()==2)    return (b.njets()==7 ? 1.27 : 0.69);
+          if (nbdm_==1)         return (b.njets()==7 ? 1.17 : 1.00);
+          else if (nbdm_==2)    return (b.njets()==7 ? 1.27 : 0.69);
           else                     return (b.njets()==7 ? 1.45 : 2.69);
         } 
       } 
@@ -105,13 +114,13 @@ int main(){
   set<int> years = {2016, 2017, 2018};
 
   map<int, string> foldermc, folderdata, foldersig;
-  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_05_16/T1tttt/skim_sys_abcd/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_07_16/T1tttt/unskimmed/";
   folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
 
-  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_05_17/T1tttt/skim_sys_abcd/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_07_17/T1tttt/unskimmed/";
   folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
 
-  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_05_18/T1tttt/skim_sys_abcd/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_07_18/T1tttt/unskimmed/";
   folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
 
   set<string> data_files, sig_nc_files, sig_c_files;
@@ -142,7 +151,7 @@ int main(){
   string style = "Preliminary";
   // if(paper) style = "PRLPaper";
   PlotOpt log_lumi("txt/plot_styles.txt", style);
-  log_lumi.Title(TitleType::data)
+  log_lumi.Title(TitleType::preliminary)
     .Bottom(BottomType::ratio)
     .YAxis(YAxisType::log)
     .Stack(StackType::data_norm)
