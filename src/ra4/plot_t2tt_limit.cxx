@@ -165,7 +165,8 @@ int main(int argc, char *argv[]){
 
   //// Drawing CMS labels and line at 1
 
-  double ppSize = 0.055, ppY = 1-opts.TopMargin()-0.03, ppY2 = 1-opts.TopMargin()-0.11;
+  double ppSize = 0.055;
+  //double ppY = 1-opts.TopMargin()-0.03, ppY2 = 1-opts.TopMargin()-0.11;
   double legSize = 0.044;
 
   linXsec.DrawLine(minh, 1, maxh, 1);

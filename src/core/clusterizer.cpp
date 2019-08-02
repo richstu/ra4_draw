@@ -16,7 +16,7 @@ namespace{
     array<int, 128> sd;
     // random_device r;
     // generate_n(sd.begin(), sd.size(), ref(r));
-    for (int a = 0; a < sd.size(); a++) {
+    for (unsigned a = 0; a < sd.size(); a++) {
       sd[a] = a;
     }
     seed_seq ss(begin(sd), end(sd));
