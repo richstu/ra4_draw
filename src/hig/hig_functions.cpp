@@ -235,7 +235,7 @@ const NamedFunc trig_hig("trig_hig", [](const Baby &b) -> NamedFunc::ScalarType{
   });
   
 //// Efficiency of the MET[100||110||120] triggers in all 36.2 ifb
-const NamedFunc err_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc err_higtrig("err_higtrig", [](const Baby &b) -> NamedFunc::ScalarType{
     float errup, errdown; // Stat uncertainty. Not used, but for reference
     float uncert = 0., met = b.met(), ht = b.ht();
     errup=0;errdown=0;

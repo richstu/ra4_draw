@@ -58,7 +58,7 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > procs;
   for (unsigned isig(0); isig<sigm.size(); isig++)
     procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-      sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, "1"));
+      sig_colors[isig], {bfolder + foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, "1"));
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::simulation_preliminary)
