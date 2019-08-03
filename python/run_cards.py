@@ -25,7 +25,9 @@ if __name__ == "__main__":
 
   dataCardPaths = glob.glob(args.inputDirectory+'/*.txt')
 
-  os.system("./compile.py")
+  exitCode = os.system("./compile.py")
+  if (exitCode): sys.exit()
+
   for datacardPath in dataCardPaths:
     print ("Processes " + datacardPath)
     cmd = "./run/hig/scan_point.exe --cards -f "+datacardPath + " >> " + args.outputFile
