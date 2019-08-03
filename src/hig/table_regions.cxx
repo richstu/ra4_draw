@@ -31,6 +31,7 @@ namespace{
   float lumi = 35.9;
   bool doSignal = true;
   bool csv = false;
+  bool showData = false;
 }
 
 int main(int argc, char *argv[]){
@@ -75,7 +76,7 @@ int main(int argc, char *argv[]){
 
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, 1,
                   {folderdata+"*root"}, Higfuncs::trig_hig>0. && "pass");
-  procs.push_back(data);
+  if (showData) procs.push_back(data);
 
   if (doSignal) {
     vector<string> sigm({"225","400", "700"});
@@ -184,18 +185,26 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"no_signal", no_argument, 0, 'n'},    
+      {"luminosity", requried_argument, 0, 'l'},    
+      {"showData", no_argument, 0, 'd'},    
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s:n", long_options, &option_index);
+    opt = getopt_long(argc, argv, "nl:d", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
     switch(opt){
     case 'n':
       doSignal = false;
+      break;
+    case 'l':
+      lumi = atof(optarg);
+      break;
+    case 'd':
+      showData = true;
       break;
     case 0:
       // optname = long_options[option_index].name;
