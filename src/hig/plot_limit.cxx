@@ -27,7 +27,9 @@ namespace{
   TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+"_paper.txt";
   TString model = "TChiHH";
   TString datestamp = "";
+  bool drawData = false;
   bool do_paper = true;
+  bool saveRoot = false;
 
   PlotOpt opts("txt/plot_styles.txt", "Std1D");
   const double hh4b_bf = 0.5824*0.5824;
@@ -164,7 +166,7 @@ int main(int argc, char *argv[]){
   grexp.Draw("same"); 
   TGraph grobs(vmx.size(), &(vmx[0]), &(vobs[0]));
   grobs.SetLineWidth(3); 
-  grobs.Draw("same"); 
+  if (drawData) grobs.Draw("same"); 
   TGraph grxsecup(vmx.size(), &(vmx[0]), &(vxsecup[0]));
   grxsecup.SetLineWidth(1); grxsecup.SetLineStyle(2); grxsecup.SetLineColor(thcolor); 
   grxsecup.Draw("same"); 
@@ -196,7 +198,7 @@ int main(int argc, char *argv[]){
   leg.AddEntry(&linXsec, "NLO+NLL theory #kern[+0.2]{#pm} s.d.", "l");
   leg.AddEntry(&grobs, " ", "n");
   leg.AddEntry(&grobs, " ", "n");
-  leg.AddEntry(&grobs, "Observed", "l");
+  if (drawData) leg.AddEntry(&grobs, "Observed", "l");
   leg.AddEntry(&grexp1, "68% expected");
   leg.AddEntry(&grexp2, "95% expected");
   leg.Draw();
@@ -215,7 +217,6 @@ int main(int argc, char *argv[]){
   label.SetTextFont(132);
   label.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.70, ppChiChi);
   label.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.643, mChis);
-
 
 
   histo.Draw("axis same");
@@ -278,7 +279,7 @@ int main(int argc, char *argv[]){
   gexp.Draw("same"); 
   TGraph gobs(vmx.size(), &(vmx[0]), &(vobs[0]));
   gobs.SetLineWidth(3); 
-  gobs.Draw("same"); 
+  if (drawData) gobs.Draw("same"); 
   TGraph gxsec(vmx.size(), &(vmx[0]), &(vxsec[0]));
   gxsec.SetLineWidth(thwidth); gxsec.SetLineColor(thcolor); gxsec.SetLineStyle(1);
   gxsec.Draw("same");
@@ -323,19 +324,22 @@ int main(int argc, char *argv[]){
   can.SaveAs(pname);
 
   // Saving root file
-  pname = "CMS"; if(!do_paper) pname += "-PAS";
-  pname += "-SUS-16-044_Figure_9.root";
-  TFile file2(pname, "recreate");
-  file2.cd();
-  gexp2.Write("ExpLimit_2Sigma");
-  gexp1.Write("ExpLimit_1Sigma");
-  gexp.Write("ExpLimit");
-  gobs.Write("ObsLimit");
-  gxsec.Write("Xsec");
-  gxsecup.Write("XsecUp");
-  gxsecdown.Write("XsecDown");
-  file2.Close();
-  cout<<"Saved graphs in "<<pname<<endl<<endl;
+  if (saveRoot)
+  {
+    pname = "CMS"; if(!do_paper) pname += "-PAS";
+    pname += "-SUS-16-044_Figure_9.root";
+    TFile file2(pname, "recreate");
+    file2.cd();
+    gexp2.Write("ExpLimit_2Sigma");
+    gexp1.Write("ExpLimit_1Sigma");
+    gexp.Write("ExpLimit");
+    if (drawData) gobs.Write("ObsLimit");
+    gxsec.Write("Xsec");
+    gxsecup.Write("XsecUp");
+    gxsecdown.Write("XsecDown");
+    file2.Close();
+    cout<<"Saved graphs in "<<pname<<endl<<endl;
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -404,13 +408,16 @@ int main(int argc, char *argv[]){
   can.SaveAs(pname);
 
   // Saving root file
-  pname = "CMS"; if(!do_paper) pname += "-PAS";
-  pname += "-SUS-16-044_AuxFigure_4_ObsSignificance.root";
-  TFile file4(pname, "recreate");
-  file4.cd();
-  gobssig.Write("ObsSignificance");
-  file4.Close();
-  cout<<"Saved graphs in "<<pname<<endl<<endl;
+  if (saveRoot)
+  {
+    pname = "CMS"; if(!do_paper) pname += "-PAS";
+    pname += "-SUS-16-044_AuxFigure_4_ObsSignificance.root";
+    TFile file4(pname, "recreate");
+    file4.cd();
+    gobssig.Write("ObsSignificance");
+    file4.Close();
+    cout<<"Saved graphs in "<<pname<<endl<<endl;
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -484,12 +491,15 @@ void GetOptions(int argc, char *argv[]){
       {"model", required_argument, 0, 'm'},
       {"file", required_argument, 0, 'f'},
       {"datestamp", required_argument, 0, 'd'},
+      {"luminosityLabel", required_argument, 0, 'l'},
+      {"drawData", no_argument, 0, 'o'},
+      {"saveRoot", no_argument, 0, 'r'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:m:d:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:m:d:l:o:r", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -502,6 +512,15 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'd':
       datestamp = optarg;
+      break;
+    case 'l':
+      lumi = CodeToPlainText(optarg);
+      break;
+    case 'o':
+      drawData = true;
+      break;
+    case 'r':
+      saveRoot = true;
       break;
     case 0:
       optname = long_options[option_index].name;
