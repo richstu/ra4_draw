@@ -30,6 +30,7 @@ void GetOptions(int argc, char *argv[]);
 namespace{
   string sample_name = "tt";
   bool paper = false;
+  float luminosity = 35.9;
 }
 
 const NamedFunc fakeb_fromw("fakeb_fromw",[](const Baby &b) -> NamedFunc::ScalarType{
@@ -264,7 +265,7 @@ int main(int argc, char *argv[]){
 
 
   pm.min_print_ = true;
-  pm.MakePlots(35.9);
+  pm.MakePlots(luminosity);
 
   time(&endtime);
   cout<<endl<<"Making plots took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
@@ -274,18 +275,22 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"sample", required_argument, 0, 's'},    
+      {"luminosity", required_argument, 0, 'l'},    
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "s:l:", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
     switch(opt){
     case 's':
       sample_name = optarg;
+      break;
+    case 'l':
+      luminosity = atof(optarg);
       break;
     case 0:
       break;
