@@ -185,7 +185,7 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"no_signal", no_argument, 0, 'n'},    
-      {"luminosity", requried_argument, 0, 'l'},    
+      {"luminosity", required_argument, 0, 'l'},    
       {"showData", no_argument, 0, 'd'},    
       {0, 0, 0, 0}
     };
