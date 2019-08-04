@@ -21,6 +21,7 @@
 #include "core/plot_opt.hpp"
 #include "core/functions.hpp"
 #include "hig/hig_functions.hpp"
+#include "hig/hig_utilities.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -32,6 +33,7 @@ namespace{
   bool doSignal = true;
   bool csv = false;
   bool showData = false;
+  string mass_points_string = "225_1,400_1,700_1";
 }
 
 int main(int argc, char *argv[]){
@@ -79,7 +81,11 @@ int main(int argc, char *argv[]){
   if (showData) procs.push_back(data);
 
   if (doSignal) {
-    vector<string> sigm({"225","400", "700"});
+    vector<pair<string, string> > massPoints;
+    HigUtilities::parseMassPoints(mass_points_string, massPoints);
+    vector<string> sigm(massPoints.size());
+    for(unsigned iMass=0; iMass<massPoints.size(); ++iMass) sigm[iMass] = massPoints[iMass].first;
+    //vector<string> sigm({"225","400", "700"});
     for (unsigned isig(0); isig<sigm.size(); isig++)
       procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", 
         Process::Type::signal, 1, {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, "pass_goodv&&pass_ecaldeadcell&&pass_hbhe&&pass_hbheiso&&pass_fsmet"));
@@ -187,6 +193,7 @@ void GetOptions(int argc, char *argv[]){
       {"no_signal", no_argument, 0, 'n'},    
       {"luminosity", required_argument, 0, 'l'},    
       {"showData", no_argument, 0, 'd'},    
+      {"mass_points", required_argument, 0, 'p'},
       {0, 0, 0, 0}
     };
 
@@ -205,6 +212,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'd':
       showData = true;
+      break;
+    case 'p': 
+      mass_points_string = optarg; 
       break;
     case 0:
       // optname = long_options[option_index].name;
