@@ -21,6 +21,7 @@
 #include "core/plot_opt.hpp"
 #include "core/functions.hpp"
 #include "hig/hig_functions.hpp"
+#include "hig/hig_utilities.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -31,6 +32,7 @@ namespace{
   string sample_name = "tt";
   bool paper = false;
   float luminosity = 35.9;
+  string mass_points_string = "225_1,400_1,700_1";
 }
 
 const NamedFunc fakeb_fromw("fakeb_fromw",[](const Baby &b) -> NamedFunc::ScalarType{
@@ -160,8 +162,19 @@ int main(int argc, char *argv[]){
   procs_hig.push_back(Process::MakeShared<Baby_full>("Other",      
     Process::Type::background, kGreen-2,           attach_folder(folderhigmc,mctags["other"]),   base_func&&"stitch"));      
 
-  vector<string> sig2m = {"225","400","700"}; 
-  vector<int> sig2_colors = {kGreen, kRed, kCyan}; // need sigm.size() >= sig_colors.size()
+  vector<pair<string, string> > massPoints;
+  HigUtilities::parseMassPoints(mass_points_string, massPoints);
+  vector<string> sig2m(massPoints.size());
+  vector<int> sig2_colors(massPoints.size()); // need sigm.size() >= sig_colors.size()
+  vector<int> sig2_colors_ref = {kGreen, kRed, kCyan, kOrange}; 
+  for(unsigned iMass=0; iMass<massPoints.size(); ++iMass)
+  {
+    sig2m[iMass] = massPoints[iMass].first;
+    if(iMass<sig2_colors_ref.size()) sig2_colors[iMass] = sig2_colors_ref[iMass];
+  }
+
+  //vector<string> sig2m = {"225","400","700"}; 
+  //vector<int> sig2_colors = {kGreen, kRed, kCyan}; // need sigm.size() >= sig_colors.size()
   for (unsigned isig(0); isig<sig2m.size(); isig++){
     procs_hig.push_back(Process::MakeShared<Baby_full>("TChiHH("+sig2m[isig]+",1)", Process::Type::signal, 
 			sig2_colors[isig], {foldersig+"*TChiHH_mGluino-"+sig2m[isig]+"*.root"}, base_func));
@@ -276,12 +289,13 @@ void GetOptions(int argc, char *argv[]){
     static struct option long_options[] = {
       {"sample", required_argument, 0, 's'},    
       {"luminosity", required_argument, 0, 'l'},    
+      {"mass_points", required_argument, 0, 'p'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s:l:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "s:l:p:", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
@@ -291,6 +305,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'l':
       luminosity = atof(optarg);
+      break;
+    case 'p': 
+      mass_points_string = optarg; 
       break;
     case 0:
       break;
