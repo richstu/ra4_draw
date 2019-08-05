@@ -132,7 +132,10 @@ int main(int argc, char *argv[])
   for (auto & process : sampleProcesses["signal"])
   {
     cout<<process->name_<<endl;
-    TString outPath = outFolder+"/datacard_SMS-TChiHH"+process->name_+"_"+years_string+".txt";
+    string model;
+    int mGluino=0, mLSP=0;
+    HigUtilities::getInfoFromProcessName(process->name_, model, mGluino, mLSP);
+    TString outPath = outFolder+"/datacard-"+HigUtilities::setProcessNameLong(model, mGluino, mLSP)+"_"+years_string+".txt";
     cout<<"open "<<outPath<<endl;
     ofstream cardFile(outPath);
     HigWriteDataCards::writeDataCardHeader(sampleBins,cardFile);
@@ -156,42 +159,6 @@ int main(int argc, char *argv[])
 }
 
 namespace HigWriteDataCards{
-  void GetOptions(int argc, char *argv[])
-  {
-    string blah;
-    while(true){
-      static struct option long_options[] = 
-      {
-        {"output_folder", required_argument, 0, 'o'},
-        {"mass_points", required_argument, 0, 'p'},
-        {"years", required_argument, 0, 'y'},
-        {"luminosity", required_argument, 0, 'l'},
-        {0, 0, 0, 0}
-      };
-  
-      char opt = -1;
-      int option_index;
-      opt = getopt_long(argc, argv, "o:p:y:l:", long_options, &option_index);
-      if( opt == -1) break;
-  
-      string optname;
-      switch(opt)
-      {
-        case 'o': outFolder = optarg; break;
-        case 'p': mass_points_string = optarg; break;
-        case 'y': years_string = optarg; break;
-        case 'l': luminosity = atof(optarg); break;
-        case 0:
-          optname = long_options[option_index].name;
-          printf("Bad option! Found option name %s\n", optname.c_str());
-          break;
-        default: 
-          printf("Bad option! getopt_long returned character code 0%o\n", opt); 
-          break;
-      }
-    }
-  }
-
   void writeDataCardHeader(vector<pair<string, string> > sampleBins, ofstream & cardFile)
   {
     cardFile<<"imax "<<sampleBins.size()<<"  number of channels\n";
@@ -367,4 +334,41 @@ namespace HigWriteDataCards{
   {
     for(auto & item : row) item = value;
   }
+
+  void GetOptions(int argc, char *argv[])
+  {
+    string blah;
+    while(true){
+      static struct option long_options[] = 
+      {
+        {"output_folder", required_argument, 0, 'o'},
+        {"mass_points", required_argument, 0, 'p'},
+        {"years", required_argument, 0, 'y'},
+        {"luminosity", required_argument, 0, 'l'},
+        {0, 0, 0, 0}
+      };
+  
+      char opt = -1;
+      int option_index;
+      opt = getopt_long(argc, argv, "o:p:y:l:", long_options, &option_index);
+      if( opt == -1) break;
+  
+      string optname;
+      switch(opt)
+      {
+        case 'o': outFolder = optarg; break;
+        case 'p': mass_points_string = optarg; break;
+        case 'y': years_string = optarg; break;
+        case 'l': luminosity = atof(optarg); break;
+        case 0:
+          optname = long_options[option_index].name;
+          printf("Bad option! Found option name %s\n", optname.c_str());
+          break;
+        default: 
+          printf("Bad option! getopt_long returned character code 0%o\n", opt); 
+          break;
+      }
+    }
+  }
+
 }
