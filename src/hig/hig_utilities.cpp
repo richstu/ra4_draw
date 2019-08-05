@@ -294,7 +294,7 @@ namespace HigUtilities {
     {
       cutRows.labels.push_back(tag +"_" + binCut.first);
       cutRows.tableRows.push_back(TableRow("", baseline&&binCut.second,0,0,weight));
-      cout<<cutRows.labels.back()<<" "<<cutRows.tableRows.back().cut_.Name()<<endl;
+      //cout<<cutRows.labels.back()<<" "<<cutRows.tableRows.back().cut_.Name()<<endl;
     }
   }
   
@@ -304,7 +304,7 @@ namespace HigUtilities {
     {
       cutRows.labels.push_back(tag +"_" + binCut.first);
       cutRows.tableRows.push_back(TableRow("", replaceFunc(baseline+"&&"+binCut.second),0,0,weight));
-      cout<<cutRows.labels.back()<<" "<<cutRows.tableRows.back().cut_.Name()<<endl;
+      //cout<<cutRows.labels.back()<<" "<<cutRows.tableRows.back().cut_.Name()<<endl;
     }
   }
   
@@ -316,7 +316,7 @@ namespace HigUtilities {
       cutRows.tableRows.push_back(TableRow("", replaceFunc(baseline+"&&"+binCut.second,1),0,0,weight));
       cutRows.labels.push_back(tag +"_down_" + binCut.first);
       cutRows.tableRows.push_back(TableRow("", replaceFunc(baseline+"&&"+binCut.second,2),0,0,weight));
-      cout<<cutRows.labels.back()<<" "<<cutRows.tableRows.back().cut_.Name()<<endl;
+      //cout<<cutRows.labels.back()<<" "<<cutRows.tableRows.back().cut_.Name()<<endl;
     }
   }
   
@@ -346,7 +346,7 @@ namespace HigUtilities {
       mYields.insert(pair<string, pair<GammaParams, TableRow> > (label, yieldData));
   }
   
-  void fillDataYields(PlotMaker & pm, RowInformation & dataRow, map<string, pair<GammaParams, TableRow> > & mYields)
+  void fillDataYields(PlotMaker & pm, RowInformation & dataRow, map<string, pair<GammaParams, TableRow> > & mYields, bool verbose)
   {
     Table * yieldTable;
     yieldTable = static_cast<Table*>(pm.Figures()[dataRow.tableIndex].get());
@@ -355,12 +355,12 @@ namespace HigUtilities {
     {
       string const & label = dataRow.labels[ipar];
       addToMapYields(label, yields[ipar], dataRow.tableRows[ipar], mYields);
-      cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
+      if (verbose) cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
       //cout<<label<<": "<<mYields.at(label).first.Yield()<<" "<<mYields.at(label).second.cut_.Name()<<" "<<mYields.at(label).second.weight_.Name()<<endl;
     }
   }
   
-  void fillMcYields(PlotMaker & pm, float luminosity, RowInformation & mcRow, map<string, pair<GammaParams, TableRow> > & mYields)
+  void fillMcYields(PlotMaker & pm, float luminosity, RowInformation & mcRow, map<string, pair<GammaParams, TableRow> > & mYields, bool verbose)
   {
     Table * yieldTable;
     yieldTable = static_cast<Table*>(pm.Figures()[mcRow.tableIndex].get());
@@ -369,12 +369,12 @@ namespace HigUtilities {
     {
       string const & label = mcRow.labels[ipar];
       addToMapYields(label, yields[ipar], mcRow.tableRows[ipar], mYields);
-      cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
+      if (verbose) cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
       //cout<<label<<": "<<mYields.at(label).first.Yield()<<" "<<mYields.at(label).second.cut_.Name()<<" "<<mYields.at(label).second.weight_.Name()<<endl;
     }
   }
   
-  void fillSignalYieldsProcesses(PlotMaker & pm, float luminosity, vector<shared_ptr<Process> > & signalProcesses, RowInformation & signalRow, map<string, pair<GammaParams, TableRow> > & mYields)
+  void fillSignalYieldsProcesses(PlotMaker & pm, float luminosity, vector<shared_ptr<Process> > & signalProcesses, RowInformation & signalRow, map<string, pair<GammaParams, TableRow> > & mYields, bool verbose)
   {
     Table * yieldTable;
     yieldTable = static_cast<Table*>(pm.Figures()[signalRow.tableIndex].get());
@@ -385,13 +385,13 @@ namespace HigUtilities {
       {
         string const & label = process->name_ + "_" +signalRow.labels[ipar];
         addToMapYields(label, yields[ipar], signalRow.tableRows[ipar], mYields);
-        cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
+        if (verbose) cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
         //cout<<label<<": "<<mYields.at(label).first.Yield()<<" "<<mYields.at(label).second.cut_.Name()<<" "<<mYields.at(label).second.weight_.Name()<<endl;
       }
     }
   }
   
-  void fillAverageGenMetYields(vector<shared_ptr<Process> > & processes, vector<pair<string, string> > sampleBins, string const & signalTag, string const & signalGenMetTag, string const & signalAverageGenMetTag, map<string, pair<GammaParams, TableRow> > & mYields)
+  void fillAverageGenMetYields(vector<shared_ptr<Process> > & processes, vector<pair<string, string> > sampleBins, string const & signalTag, string const & signalGenMetTag, string const & signalAverageGenMetTag, map<string, pair<GammaParams, TableRow> > & mYields, bool verbose)
   {
     for (auto & process : processes)
     {
@@ -408,7 +408,7 @@ namespace HigUtilities {
         average.SetYieldAndUncertainty(averageValue,averageError);
         TableRow blank("0.5("+yieldLabel+"+"+genMetYieldLabel+")");
         addToMapYields(processName+"_"+signalAverageGenMetTag+"_"+bin.first, average, blank, mYields);
-        cout<<processName+"_"+signalAverageGenMetTag+"_"+bin.first<<" "<<averageValue<<" "<<averageError<<endl;
+        if (verbose) cout<<processName+"_"+signalAverageGenMetTag+"_"+bin.first<<" "<<averageValue<<" "<<averageError<<endl;
       }
     }
   }

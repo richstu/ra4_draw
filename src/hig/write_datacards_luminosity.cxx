@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
   HigUtilities::fillMcYields(pm, luminosity, cutTable["mc"], mYields);
   // Luminosity used for scaling
   HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields);
-  HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields);
+  HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields, true);
 
   for (auto & process : sampleProcesses["signal"])
   {

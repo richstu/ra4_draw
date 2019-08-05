@@ -65,10 +65,10 @@ namespace HigUtilities {
   void makePlots(std::map<std::string, RowInformation > & cutTable, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses, float luminosity, PlotMaker & pm);
 
   void addToMapYields(std::string const & label, GammaParams & yield, TableRow & yieldMeta, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields);
-  void fillDataYields(PlotMaker & pm, RowInformation & dataRow, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields);
-  void fillMcYields(PlotMaker & pm, float luminosity, RowInformation & mcRow, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields);
-  void fillSignalYieldsProcesses(PlotMaker & pm, float luminosity, std::vector<std::shared_ptr<Process> > & signalProcesses, RowInformation & signalRow, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields);
-  void fillAverageGenMetYields(std::vector<std::shared_ptr<Process> > & sampleProcesses, std::vector<std::pair<std::string, std::string> > sampleBins, std::string const & signalTag, std::string const & signalGenMetTag, std::string const & signalAverageGenMetTag, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields);
+  void fillDataYields(PlotMaker & pm, RowInformation & dataRow, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, bool verbose=false);
+  void fillMcYields(PlotMaker & pm, float luminosity, RowInformation & mcRow, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, bool verbose=false);
+  void fillSignalYieldsProcesses(PlotMaker & pm, float luminosity, std::vector<std::shared_ptr<Process> > & signalProcesses, RowInformation & signalRow, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, bool verbose=false);
+  void fillAverageGenMetYields(std::vector<std::shared_ptr<Process> > & sampleProcesses, std::vector<std::pair<std::string, std::string> > sampleBins, std::string const & signalTag, std::string const & signalGenMetTag, std::string const & signalAverageGenMetTag, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, bool verbose=false);
 
 }
 #endif
