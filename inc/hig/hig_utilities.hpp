@@ -45,6 +45,10 @@ namespace HigUtilities {
   // Example: "2016,2017" => {2016,2017}
   void parseYears(std::string years_string, std::set<int> & years);
 
+  std::string setProcessName(std::string const & model, int const & mGluino, int const & mLSP);
+  std::string setProcessNameLong(std::string const & model, int const & mGluino, int const & mLSP);
+  void getInfoFromProcessName(std::string const & processName, std::string & model, int & mGluino, int & mLSP);
+
   // sampleBins = { {label, cut} }
   void setABCDBins(std::map<std::string, std::string> xBins, std::map<std::string, std::string> yBins, std::map<std::string, std::vector<std::pair<std::string, std::string> > > dimensionBins, std::vector<std::pair<std::string, std::string> > & sampleBins);
   void combineDimensionBins(std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins);

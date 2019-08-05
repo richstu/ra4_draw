@@ -149,6 +149,26 @@ namespace HigUtilities {
     }
   }
 
+  std::string setProcessName(std::string const & model, int const & mGluino, int const & mLSP)
+  {
+    return model+"_"+to_string(mGluino)+"_"+to_string(mLSP);
+  }
+
+  std::string setProcessNameLong(std::string const & model, int const & mGluino, int const & mLSP)
+  {
+    // Tune is added for utilites::parseMasses
+    return model+"_mGluino-"+to_string(mGluino)+"_mLSP-"+to_string(mLSP)+"_Tune";
+  }
+
+  void getInfoFromProcessName(std::string const & processName, std::string & model, int & mGluino, int & mLSP)
+  {
+    vector<string> names;
+    stringToVectorString(processName, names, "_");
+    model = names[0];
+    mGluino = atoi(names[1].c_str());
+    mLSP = atoi(names[2].c_str());
+  }
+
   void setABCDBins(map<string, string> xBins, map<string, string> yBins, map<string, vector<pair<string, string> > > dimensionBins, vector<pair<string, string> > & sampleBins)
   {
     // Combine dimensions to one list of dimensions.
@@ -256,7 +276,7 @@ namespace HigUtilities {
     {
      for (auto year : years)
      {
-       signalPaths["TChiHH_"+massPoint.first+"_"+massPoint.second+""].insert(samplePaths["signal_"+to_string(year)]+"*mGluino-"+massPoint.first+"_mLSP-"+massPoint.second+"_*.root");
+       signalPaths[HigUtilities::setProcessName("TChiHH",atoi(massPoint.first.c_str()),atoi(massPoint.second.c_str()))].insert(samplePaths["signal_"+to_string(year)]+"*mGluino-"+massPoint.first+"_mLSP-"+massPoint.second+"_*.root");
        cout<<"Adding "<<samplePaths["signal_"+to_string(year)]+"*mGluino-"+massPoint.first+"_mLSP-"+massPoint.second+"_*.root"<<endl;
      }
     }
