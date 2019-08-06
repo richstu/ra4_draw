@@ -30,6 +30,7 @@ namespace{
   bool drawData = false;
   bool do_paper = true;
   bool saveRoot = false;
+  string outputFileTag = "";
 
   PlotOpt opts("txt/plot_styles.txt", "Std1D");
   const double hh4b_bf = 0.5824*0.5824;
@@ -222,6 +223,7 @@ int main(int argc, char *argv[]){
   histo.Draw("axis same");
   TString basename = "plots/higgsino_limits_lumi"+lumi;
   if(datestamp != "") basename += "_"+datestamp;
+  if(outputFileTag != "") basename += "_"+outputFileTag;
   basename += ".pdf";
   TString pname = basename;
   can.SaveAs(pname);
@@ -494,12 +496,13 @@ void GetOptions(int argc, char *argv[]){
       {"luminosityLabel", required_argument, 0, 'l'},
       {"drawData", no_argument, 0, 'o'},
       {"saveRoot", no_argument, 0, 'r'},
+      {"outputFileTag", required_argument, 0, 't'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:m:d:l:o:r", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:m:d:l:o:rt:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -521,6 +524,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'r':
       saveRoot = true;
+      break;
+    case 't':
+      outputFileTag = optarg;
       break;
     case 0:
       optname = long_options[option_index].name;
