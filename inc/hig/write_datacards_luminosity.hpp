@@ -11,7 +11,6 @@
 #include "core/table_row.hpp"
 
 namespace HigWriteDataCards {
-  void GetOptions(int argc, char *argv[]);
   void writeDataCardHeader(std::vector<std::pair<std::string, std::string> > sampleBins, std::ofstream & cardFile);
   void setDataCardObserved(std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::string const & dataTag, std::vector<std::vector<std::string> > & tableValues);
   void setDataCardSignalBackground(std::string const & processName, std::string const & signalAverageGenMetTag, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::vector<std::vector<std::string> > & tableValues);
@@ -19,8 +18,11 @@ namespace HigWriteDataCards {
   // Counts number of "sig" to find tags for equations. Uses "bkg" tag. Relies on "xname_yname_dimensionname" tag 
   int countSubstring(const std::string& str, const std::string& sub);
   void setDataCardBackground(std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::string const & mcTag, std::vector<std::vector<std::string> > & tableValues);
-  void writeTableValues(std::vector<std::vector<std::string> > & tableValues, std::ofstream & cardFile);
+  void writeTableValues(std::vector<std::vector<std::string> > & tableValues, std::ofstream & cardFile, bool alignLeft=false);
   void setRow(std::vector<std::string> & row, std::string const & value);
+  // dimensionFile should be in "dimensioName dimensionCut" format
+  void readDimensionFile(std::string const & dimensionFilePath, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins);
+  void GetOptions(int argc, char *argv[]);
 }
 
 #endif

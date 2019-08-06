@@ -36,6 +36,8 @@ namespace
   string years_string = "2016";
   //float luminosity = 137.;
   float luminosity = 35.9;
+  string dimensionFilePath = "";
+  bool use_data = true;
 }
 
 int main(int argc, char *argv[])
@@ -92,12 +94,30 @@ int main(int argc, char *argv[])
   yBins["sig1"] = "nbdt>=2&&nbdm==3&&nbdl==3";
   yBins["sig2"] = "nbdt>=2&&nbdm>=3&&nbdl>=4";
   map<string, vector<pair<string, string> > > dimensionBins;
-  dimensionBins["met"].push_back({"met0", "met>150&&met<=200"});
-  dimensionBins["met"].push_back({"met1", "met>200&&met<=300"});
-  dimensionBins["met"].push_back({"met2", "met>300&&met<=450"});
-  dimensionBins["met"].push_back({"met3", "met>450"});
-  //dimensionBins["drmax"].push_back({"drmaxL", "higd_drmax<=1.5"});
-  //dimensionBins["drmax"].push_back({"drmaxH", "higd_drmax>1.5"});
+  if (dimensionFilePath=="")
+  {
+    dimensionBins["met"].push_back({"met0", "met>150&&met<=200"});
+    dimensionBins["met"].push_back({"met1", "met>200&&met<=300"});
+    dimensionBins["met"].push_back({"met2", "met>300&&met<=450"});
+    dimensionBins["met"].push_back({"met3", "met>450"});
+    //dimensionBins["drmax"].push_back({"drmaxL", "higd_drmax<=1.5"});
+    //dimensionBins["drmax"].push_back({"drmaxH", "higd_drmax>1.5"});
+  } 
+  else 
+  {
+    HigWriteDataCards::readDimensionFile(dimensionFilePath, dimensionBins);
+    for (auto & dimension : dimensionBins)
+    {
+      cout<<"dimension bins"<<endl;
+      cout<<dimension.first<<endl;
+      for (auto & entry : dimension.second)
+      {
+        cout<<" "<<entry.first<<" "<<entry.second<<endl;
+      }
+    }
+  }
+
+
   // sampleBins = { {label, cut} }
   vector<pair<string, string> > sampleBins;
   HigUtilities::setABCDBins(xBins, yBins, dimensionBins, sampleBins);
@@ -141,13 +161,14 @@ int main(int argc, char *argv[])
     HigWriteDataCards::writeDataCardHeader(sampleBins,cardFile);
 
     vector<vector<string> > tableValues;
-    HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "data", tableValues);
+    if (use_data) HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "data", tableValues);
+    else HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "mc", tableValues);
     HigWriteDataCards::setDataCardSignalBackground(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
     HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
     HigWriteDataCards::writeTableValues(tableValues,cardFile);
     tableValues.clear();
     HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "mc", tableValues);
-    HigWriteDataCards::writeTableValues(tableValues,cardFile);
+    HigWriteDataCards::writeTableValues(tableValues,cardFile, true);
     tableValues.clear();
     //writeDataCardClosure()
     //writeDataCardUncertainties()
@@ -159,6 +180,22 @@ int main(int argc, char *argv[])
 }
 
 namespace HigWriteDataCards{
+  void readDimensionFile(std::string const & dimensionFilePath, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins)
+  {
+    map<string, int> dimensionIndex;
+    ifstream dimensionFile(dimensionFilePath.c_str());
+    if (dimensionFile.is_open())
+    {
+      string dimension, dimensionCut;
+      while (dimensionFile >> dimension >> dimensionCut)
+      {
+        dimensionBins[dimension].push_back(std::make_pair(dimension+to_string(dimensionIndex[dimension]), dimensionCut));
+        dimensionIndex[dimension]++;
+      }
+      dimensionFile.close();
+    }
+  }
+
   void writeDataCardHeader(vector<pair<string, string> > sampleBins, ofstream & cardFile)
   {
     cardFile<<"imax "<<sampleBins.size()<<"  number of channels\n";
@@ -279,7 +316,12 @@ namespace HigWriteDataCards{
       row[1] = "rateParam";
       row[2] = sampleBins[rBin].first;
       row[3] = "bkg";
-      if (countSubstring(sampleBins[rBin].first,"sig") != 2) row[4] = to_string(mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield());
+      if (countSubstring(sampleBins[rBin].first,"sig") != 2) 
+      {
+        row[4] = to_string(mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield());
+        // Infinity defined in https://root.cern.ch/doc/master/RooNumber_8cxx_source.html
+        row[5] = "[0,1.0e30]";
+      }
       else 
       {
         row[4] = "(@0*@1/@2)";
@@ -307,7 +349,7 @@ namespace HigWriteDataCards{
   
   }
   
-  void writeTableValues(vector<vector<string> > & tableValues, ofstream & cardFile)
+  void writeTableValues(vector<vector<string> > & tableValues, ofstream & cardFile, bool alignLeft)
   {
     // Set space values
     vector<unsigned> xSpace(tableValues.back().size());
@@ -324,7 +366,8 @@ namespace HigWriteDataCards{
     {
       for (unsigned xIndex = 0; xIndex < tableValues[yIndex].size(); ++xIndex)
       {
-        cardFile << setw(xSpace[xIndex]) << tableValues[yIndex][xIndex] << " ";
+        if (alignLeft) cardFile << setw(xSpace[xIndex]) << std::left << tableValues[yIndex][xIndex] << " ";
+        else cardFile << setw(xSpace[xIndex]) << tableValues[yIndex][xIndex] << " ";
       }
       cardFile<<endl;
     }
@@ -345,12 +388,14 @@ namespace HigWriteDataCards{
         {"mass_points", required_argument, 0, 'p'},
         {"years", required_argument, 0, 'y'},
         {"luminosity", required_argument, 0, 'l'},
+        {"dimension", required_argument, 0, 'd'},
+        {"no_data", no_argument, 0, 'n'},
         {0, 0, 0, 0}
       };
   
       char opt = -1;
       int option_index;
-      opt = getopt_long(argc, argv, "o:p:y:l:", long_options, &option_index);
+      opt = getopt_long(argc, argv, "o:p:y:l:d:n", long_options, &option_index);
       if( opt == -1) break;
   
       string optname;
@@ -360,6 +405,17 @@ namespace HigWriteDataCards{
         case 'p': mass_points_string = optarg; break;
         case 'y': years_string = optarg; break;
         case 'l': luminosity = atof(optarg); break;
+        case 'd': 
+          dimensionFilePath = optarg; 
+          if (!FileExists(dimensionFilePath)) 
+          {
+            cout<<"[Error] No file caled "<<dimensionFilePath<<endl;
+            exit(EXIT_FAILURE);
+          }
+          break;
+        case 'n':
+          use_data = false;
+          break;
         case 0:
           optname = long_options[option_index].name;
           printf("Bad option! Found option name %s\n", optname.c_str());
