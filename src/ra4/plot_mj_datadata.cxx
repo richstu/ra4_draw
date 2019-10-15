@@ -130,9 +130,9 @@ int main(){
     sig_c_files.insert(foldersig[yr]+"*mGluino-1900_mLSP-1250_*.root");
   }
 
-  auto data_highmt = Process::MakeShared<Baby_full>(" Data, "+mt+" > 140 GeV", Process::Type::data, kBlack,
+  auto data_highmt = Process::MakeShared<Baby_full>(" High-"+mt+" data", Process::Type::data, kBlack,
     data_files, baseline && filters && Functions::trig_run2 && "mt>140");
-  auto data_lowmt = Process::MakeShared<Baby_full>(" Weighted data, "+mt+" #leq 140 GeV", Process::Type::background, kAzure+10,
+  auto data_lowmt = Process::MakeShared<Baby_full>(" Weighted low-"+mt+" data", Process::Type::background, kAzure+10,
     data_files, baseline && filters && Functions::trig_run2 && "mt<=140");
   data_lowmt->SetFillColor(kWhite);
   data_lowmt->SetLineColor(kAzure+10);
@@ -148,10 +148,9 @@ int main(){
 
   vector<shared_ptr<Process> > data1l_procs = {data_highmt,data_lowmt,t1tttt,t1ttttc};
 
-  string style = "Preliminary";
-  // if(paper) style = "PRLPaper";
+  string style = "CMSPaper";
   PlotOpt log_lumi("txt/plot_styles.txt", style);
-  log_lumi.Title(TitleType::preliminary)
+  log_lumi.Title(TitleType::data)
     .Bottom(BottomType::ratio)
     .YAxis(YAxisType::log)
     .Stack(StackType::data_norm)

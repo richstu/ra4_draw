@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
   map<int, string> foldermc;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_stdnj5/";
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_stdnj5/";
-  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_01_18/mc/merged_mcbase_stdnj5/"; 
+  foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_stdnj5/"; 
 
   set<string> vnames_all = { "_TTJets_*Lept", "_WJetsToLNu_HT","_ST_","_TTW","_TTZ", 
   "_DYJetsToLL_M-50_HT","_ZJet","_ttH", "_TTGJets","_TTTT","_WH_HToBB","_ZH_HToBB","_WWTo",
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
   }
 
   string baseline = "pass && stitch_met && mj14>250 && st>500 && met>100 && njets>=5";
-  NamedFunc baselinef = baseline && Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
+  NamedFunc baselinef = baseline && Functions::pass_run2 && Functions::hem_veto && "st<10000 && pass_ra2_badmu && met/met_calo<5";
 
   NamedFunc multNeu = "(type==5000 || type==13000 || type==15000 || type==16000)";
   NamedFunc multNeu2l = "(ntruleps>=2 || (ntruleps<=1&&(type==5000 || type==13000 || type==15000 || type==16000)))";
@@ -110,9 +110,6 @@ int main(int argc, char *argv[]){
 
   procs["cats"] = vector<shared_ptr<Process> >();
   procs["cats"].push_back(Process::MakeShared<Baby_full>
-    ("#geq2#nu^{prompt}", bkg, kCyan-3,
-    allfiles, baselinef && multNeu2l));
-  procs["cats"].push_back(Process::MakeShared<Baby_full>
     ("#leq1#kern[.1]{#nu^{pr.}}, well-meas.", bkg, kAzure-7, 
     allfiles, baselinef && "mt<=140 && ntruleps<=1 && mt_tru<=140" && !multNeu));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
@@ -124,6 +121,9 @@ int main(int argc, char *argv[]){
   procs["cats"].push_back(Process::MakeShared<Baby_full>
     ("#leq1#kern[.1]{#nu^{pr.}}, off-shell W", bkg, kOrange, 
     allfiles, baselinef && "ntruleps<=1 && mt_tru>140" && !multNeu && offshellw>0.));
+  procs["cats"].push_back(Process::MakeShared<Baby_full>
+    ("#geq2#nu^{prompt}", bkg, kCyan-3,
+    allfiles, baselinef && multNeu2l));
 
   PlotMaker pm;
   string smfile = "slide_pies_"+tag+".tex";
@@ -156,12 +156,11 @@ int main(int argc, char *argv[]){
   vector<string> njcuts;
   if (Contains(tag, "1l")) {
     if (Contains(tag, "nj")) {
-      njcuts.push_back("njets==5");
-      njcuts.push_back("njets==6");
+      njcuts.push_back("njets>=5 && njets==6");
       njcuts.push_back("njets==7");
       njcuts.push_back("njets>=8");
     } else {
-      njcuts.push_back("njets>=5");
+      njcuts.push_back("njets>=7");
     }
   } else if (Contains(tag, "2l")) {
       njcuts.push_back("njets==6");
@@ -174,8 +173,6 @@ int main(int argc, char *argv[]){
   NamedFunc w = Functions::wgt_run2 * Functions::eff_trig_run2;
   
   string regcuts = "nleps==1 && nveto==0 && nbdm>=1";
-  if (Contains(tag, "2l")) regcuts = "nleps==2 && nbdm<=1";
-  if (Contains(tag, "veto")) regcuts = "nleps==1 && nveto==1 && nbdm==1";
 
   //// nleps = 1      
   vector<TableRow> table_cuts_1l;
@@ -189,7 +186,7 @@ int main(int argc, char *argv[]){
   }
   for(auto &ipr: procs){
     string label = "1l_abcd_"+ipr.first;
-    pm.Push<Table>(label, table_cuts_1l, ipr.second, false, true, true, false);
+    pm.Push<Table>(label, table_cuts_1l, ipr.second, false, false, true, false, false);
     
     vector<string> col_labels = {""};
     for (auto &imet:metcuts) col_labels.push_back("$"+CodeToLatex(imet)+"$");
@@ -204,41 +201,59 @@ int main(int argc, char *argv[]){
 
 
   // 2L CR pie charts
-  // map<string, string> cuts_2lveto, njcuts_2lveto;
-  
-  // cuts_2lveto["2l"] = "nleps==2 && nbdm<=1";
-  // njcuts_2lveto["2l"] = {"njets==6", "njets>=7"};
+  // vector<string> cuts = {"met>200 && met<=350 && ((nleps==2 && nbdm<=1 && njets==6) || (mt>140 && nleps==1 && nveto==1 && nbdm>=1 && njets==7))",
+  // "met>200 && met<=350 && ((nleps==2 && nbdm<=1 && njets>=7) || (mt>140 && nleps==1 && nveto==1 && nbdm>=1 && njets>=8))",
+  // "met>350 && met<=500 && ((nleps==2 && nbdm<=1 && njets==6) || (mt>140 && nleps==1 && nveto==1 && nbdm>=1 && njets==7))",
+  // "met>350 && met<=500 && ((nleps==2 && nbdm<=1 && njets>=7) || (mt>140 && nleps==1 && nveto==1 && nbdm>=1 && njets>=8))",
+  // "met>500 && ((nleps==2 && nbdm<=1 && njets>=5 && njets<=6) || (mt>140 && nleps==1 && nveto==1 && nbdm>=1 && njets>=6 && njets<=7))",
+  // "met>500 && ((nleps==2 && nbdm<=1 && njets>=7) || (mt>140 && nleps==1 && nveto==1 && nbdm>=1 && njets>=8))"};
 
-  // cuts_2lveto["veto"] = "mt>140 && nleps==1 && nveto==1 && nbdm==1";
-  // njcuts_2lveto["veto"] = {"njets==7", "njets>=8"};
-  
   // vector<TableRow> table_cuts_2l;
   // vector<string> pnames_2l;
-  // if (Contains(tag, "2l")) {
-  //   for(auto &icr: {"2l","veto"}){ 
-  //     for (unsigned imet(0); imet<metcuts.size(); imet++) {
-  //       for(unsigned inj(0); inj<njcuts_2lveto[icr].size(); inj++){ 
-  //         string cuts = cuts_2lveto[icr]+"&&"+njcuts_2lveto[icr][inj];
-  //         if (imet==(metcuts.size()-1)) cuts = cuts_2lveto[icr]+"&&"+njcuts_2lveto[icr][inj];
-  //         table_cuts_2l.push_back(TableRow("", cuts,1,1,w));  
-  //         pnames_2l.push_back("pie_XXX_"+CodeToPlainText(cuts)+"_perc_lumi"+ToString(RoundNumber(1,0)));  
-  //       }
-  //     }
 
-  //     for(auto &ipr: procs){
-  //       string label = "m2lveto_"+ipr.first;
-  //       pm.Push<Table>(label, table_cuts_2l, ipr.second, false, true, true, true);
-
-  //       vector<string> col_labels = {"CR"};
-  //       for (auto &imet:metcuts) col_labels.push_back("$"+CodeToLatex(imet)+"$");
-  //       vector<string> row_labels = {"Low $N_{jets}$", "High $N_{jets}$"};
-  //       // for (auto &icr:cuts_2lveto) row_labels.push_back("$"+CodeToLatex(icr)+"$");
-  //       sm.AddSlideWithReplace("XXX", label, pnames_2l, njcuts_2lveto[0].size(), 
-  //                              "$2\\ell$ control region", 
-  //                              col_labels, row_labels);
-  //     }
-  //   }
+  // for (auto &icut: cuts) {
+  //   table_cuts_2l.push_back(TableRow("", icut,1,1,w));  
+  //   pnames_2l.push_back("pie_XXX_"+CodeToPlainText(icut)+"_perc_lumi"+ToString(RoundNumber(1,0)));  
   // }
+
+  // for(auto &ipr: procs){
+  //   string label = "m2lveto_"+ipr.first;
+  //   pm.Push<Table>(label, table_cuts_2l, ipr.second, false, false, true, false, false);
+
+  //   vector<string> col_labels = {"CR"};
+  //   for (auto &imet:metcuts) col_labels.push_back("$"+CodeToLatex(imet)+"$");
+  //   vector<string> row_labels = {"Low $N_{jets}$", "High $N_{jets}$"};
+  //   // for (auto &icr:cuts_2lveto) row_labels.push_back("$"+CodeToLatex(icr)+"$");
+  //   sm.AddSlideWithReplace("XXX", label, pnames_2l, 3, 
+  //                          "$2\\ell$ control region", 
+  //                          col_labels, row_labels);
+  // }
+
+  // vector<string> cuts = {"met>200 && met<=350 && ((nleps==2 && nbdm<=1 && njets>=6) || (mt>140 && nleps==1 && nveto==1 && nbdm>=1 && njets>=7))",
+  // "met>350 && met<=500 && ((nleps==2 && nbdm<=1 && njets>=6) || (mt>140 && nleps==1 && nveto==1 && nbdm>=1 && njets>=7))",
+  // "met>500 && ((nleps==2 && nbdm<=1 && njets>=5) || (mt>140 && nleps==1 && nveto==1 && nbdm>=1 && njets>=6))"};
+
+  // vector<TableRow> table_cuts_2l;
+  // vector<string> pnames_2l;
+
+  // for (auto &icut: cuts) {
+  //   table_cuts_2l.push_back(TableRow("", icut,1,1,w));  
+  //   pnames_2l.push_back("pie_XXX_"+CodeToPlainText(icut)+"_perc_lumi"+ToString(RoundNumber(1,0)));  
+  // }
+
+  // for(auto &ipr: procs){
+  //   string label = "m2lveto_"+ipr.first;
+  //   pm.Push<Table>(label, table_cuts_2l, ipr.second, false, true, true, false, false);
+
+  //   vector<string> col_labels = {"CR"};
+  //   for (auto &imet:metcuts) col_labels.push_back("$"+CodeToLatex(imet)+"$");
+  //   vector<string> row_labels = {""};
+  //   // for (auto &icr:cuts_2lveto) row_labels.push_back("$"+CodeToLatex(icr)+"$");
+  //   sm.AddSlideWithReplace("XXX", label, pnames_2l, 3, 
+  //                          "$2\\ell$ control region", 
+  //                          col_labels, row_labels);
+  // }
+
   pm.min_print_ = true;
   pm.MakePlots(1);
   sm.Close();

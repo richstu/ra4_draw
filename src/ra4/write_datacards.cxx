@@ -129,17 +129,17 @@ int main(int argc, char *argv[]){
   map<int, string> foldermc, folderdata, foldersig, foldersig_t2tt;
   foldermc[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/mc/merged_mcbase_abcd/";
   folderdata[2016] = bfolder+"/cms2r0/babymaker/babies/2019_01_11/data/merged_database_standard/";
-  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_07_16/"+model+"/skim_sys_abcd/";
+  foldersig[2016] = bfolder+"/cms2r0/babymaker/babies/2019_07_16/"+model+"/unskimmed/";
   foldersig_t2tt[2016] = bfolder+"/cms2r0/babymaker/babies/2019_07_16/T2tt/skim_sys_abcd/";
 
   foldermc[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/mc/merged_mcbase_abcd/";
   folderdata[2017] = bfolder+"/cms2r0/babymaker/babies/2018_12_17/data/merged_database_stdnj5/";
-  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_07_17/"+model+"/skim_sys_abcd/";
+  foldersig[2017] = bfolder+"/cms2r0/babymaker/babies/2019_07_17/"+model+"/unskimmed/";
   foldersig_t2tt[2017] = bfolder+"/cms2r0/babymaker/babies/2019_07_17/T2tt/skim_sys_abcd/";
 
   foldermc[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/mc/merged_mcbase_abcd/";
   folderdata[2018] = bfolder+"/cms2r0/babymaker/babies/2019_03_30/data/merged_database_standard/";
-  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_07_18/"+model+"/skim_sys_abcd/";
+  foldersig[2018] = bfolder+"/cms2r0/babymaker/babies/2019_07_18/"+model+"/unskimmed/";
   foldersig_t2tt[2018] = bfolder+"/cms2r0/babymaker/babies/2019_07_18/T2tt/skim_sys_abcd/";
 
   // Filling all other processes
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]){
   for (auto &imass: mass_pts) {
     set<string> sig_files;
     for (auto &yr: years) {
-      sig_files.insert(foldersig_t2tt[yr]+"*mGluino-"+imass.first+"_mLSP-"+imass.second+"_*.root");
+      sig_files.insert(foldersig[yr]+"*mGluino-"+imass.first+"_mLSP-"+imass.second+"_*.root");
       // int ilsp = imass.second == "1" ? 0 : atoi(imass.second.c_str());
       // if (xoption=="t2ttee"){ // will be scaled to 137 ifb in wgt_run2 
       //   sig_files.insert(foldersig_t2tt[yr] +"*mGluino-"+RoundNumber(ilsp + 175,0).Data()+"_mLSP-"+imass.second+"_*.root");
@@ -807,7 +807,7 @@ int main(int argc, char *argv[]){
           } 
           if (unc<0) unc = 0.;
           fsys<<"    " <<left<<setw(25)<<vbins[ibin].tag 
-              <<" "<<right<<setw(10)<<Form("%.2f",unc-1) <<endl;
+              <<" "<<right<<setw(10)<<Form("%.0f/%.0f",dn*100,up*100) <<endl;
           fcard<<setw(wbin)<<Form("%.2f",unc)<<setw(wbin)<<"-";
         } // loop over bins
         fcard<<endl;

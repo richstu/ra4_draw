@@ -27,8 +27,8 @@ namespace{
   //double cmsH = 0.075;
   bool do_tev = false;
   double cmsH = 0.03;
-  float legLineH = 0.058;
-  float legTextSize = 0.0425;
+  float legLineH = 0.055;
+  float legTextSize = 0.04;
   float fillTransparency = 0.5;
 
   TString lsp = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
@@ -83,11 +83,10 @@ int main(){
   for(size_t imodel(0); imodel < models.size(); imodel++){
     model_limits mod(models[imodel]);
 
-    float lMargin(0.11), tMargin(0.08), rMargin(0.145), bMargin(0.11);
-    int canW = 800, canH = 600;
+    float lMargin(0.13), tMargin(0.08), rMargin(0.16), bMargin(0.11);
+    int canW = 800, canH = 700;
     TCanvas can("canvas","", canW, canH);
     if (mod.model == "T5tttt") {
-      lMargin = 0.12;
       rMargin = 0.05;
     }
     setCanvas(can, lMargin, tMargin, rMargin, bMargin);
@@ -110,7 +109,7 @@ int main(){
     getModelParams(mod.model, Xmin, Xmax, Ymin, Ymax, glu_lsp);
 
     TH2D hbase = baseHistogram(Xmin, Xmax, Ymin, Ymax);
-    hbase.GetYaxis()->SetTitleOffset(1.2);
+    hbase.GetYaxis()->SetTitleOffset(1.45);
     hbase.GetYaxis()->SetTitleSize(0.045);
     hbase.GetYaxis()->SetLabelSize(0.039);
 
@@ -164,17 +163,17 @@ int main(){
       }
 
       dummy.SetMinimum(1e-1);
-      dummy.GetYaxis()->SetTitleOffset(1.2);
+      dummy.GetYaxis()->SetTitleOffset(1.45);
       dummy.GetYaxis()->SetTitleSize(0.045);
       dummy.GetYaxis()->SetLabelSize(0.039);
 
-      dummy.GetXaxis()->SetTitleOffset(1.1);
+      dummy.GetXaxis()->SetTitleOffset(1.05);
       dummy.GetXaxis()->SetTitleSize(0.045);
       dummy.GetXaxis()->SetLabelSize(0.039);
 
       dummy.GetZaxis()->SetLabelSize(0.04);
       dummy.GetZaxis()->SetTitleSize(0.05);
-      dummy.GetZaxis()->SetTitleOffset(0.88);
+      dummy.GetZaxis()->SetTitleOffset(1);
       dummy.GetZaxis()->SetTitle("Upper limit (95% CL) on #sigma("+t1tttt_s+") [fb]");
       dummy.DrawCopy("colz");
     }
@@ -228,26 +227,41 @@ int main(){
     // Drawing legends
     float legEntries = 4;
     if (mod.model=="T1tttt") legEntries = 2.5;
-    legX = lMargin+0.005; legY = 1-tMargin-0.01;
-    legW = 0.23; 
+    legX = mod.model=="T1tttt" ? lMargin+0.01 : lMargin+0.04; 
+    legY = mod.model=="T1tttt" ? 1-tMargin-0.01: 1-tMargin-0.04;
+    legW = mod.model=="T1tttt" ? 0.23 : 0.5; 
     legH = legLineH * legEntries;
-    TLegend limleg(legX, legY-legH, legX+legW, legY);
-    limleg.SetX1NDC(legX); limleg.SetX2NDC(legX+legW); // So that GetX1NDC works in getLegendBoxes
-    limleg.SetY1NDC(legY-legH); limleg.SetY2NDC(legY); // So that GetX1NDC works in getLegendBoxes
-    limleg.SetTextSize(legTextSize); limleg.SetFillColor(0); 
-    limleg.SetFillStyle(0); limleg.SetBorderSize(0);
+    TLegend* limleg[2];
 
-    Ymax = Ymax+yext-600;
-    float bheight = (Ymax-Ymin)*legH/(1-tMargin-bMargin)*1.11;
-    TBox box;
-    Xmin += (Xmax-Xmin)*0.001;
-    Xmax -= (Xmax-Xmin)*0.001;
-    box.SetFillColor(0); box.SetFillStyle(1001);
-    box.SetLineColor(1); box.SetLineWidth(2); box.SetLineStyle(1);
-    box.DrawBox(Xmin, Ymax-bheight, Xmax, Ymax);
-    box.SetFillColor(0); box.SetFillStyle(0);
-    box.SetLineColor(1); box.SetLineWidth(2); box.SetLineStyle(1);
-    box.DrawBox(Xmin, Ymax-bheight, Xmax, Ymax);
+    if (mod.model=="T1tttt") {
+      limleg[0] = new TLegend(legX, legY-legH, legX+legW, legY);
+      limleg[0]->SetX1NDC(legX); limleg[0]->SetX2NDC(legX+legW); // So that GetX1NDC works in getLegendBoxes
+      limleg[0]->SetY1NDC(legY-legH); limleg[0]->SetY2NDC(legY); // So that GetX1NDC works in getLegendBoxes
+      limleg[0]->SetTextSize(legTextSize); limleg[0]->SetFillColor(0); 
+      limleg[0]->SetFillStyle(0); limleg[0]->SetBorderSize(0);
+    } else {
+      limleg[0] = new TLegend(legX, legY-legH/2, legX+legW, legY);
+      limleg[1] = new TLegend(legX, legY-legH, legX+legW, legY-legH/2);
+      for (unsigned ileg(0); ileg<2; ileg++) {
+        limleg[ileg]->SetNColumns(2);
+        limleg[ileg]->SetTextSize(legTextSize); limleg[ileg]->SetFillColor(0); 
+        limleg[ileg]->SetFillStyle(0); limleg[ileg]->SetBorderSize(0);
+      }
+    }
+
+    Ymax = Ymax+yext-400;
+    if (mod.model=="T1tttt") {
+      float bheight = (Ymax-Ymin)*legH/(1-tMargin-bMargin)*1.17;
+      TBox box;
+      Xmin += (Xmax-Xmin)*0.001;
+      Xmax -= (Xmax-Xmin)*0.001;
+      box.SetFillColor(0); box.SetFillStyle(1001);
+      box.SetLineColor(1); box.SetLineWidth(2); box.SetLineStyle(1);
+      box.DrawBox(Xmin, Ymax-bheight, Xmax, Ymax);
+      box.SetFillColor(0); box.SetFillStyle(0);
+      box.SetLineColor(1); box.SetLineWidth(2); box.SetLineStyle(1);
+      box.DrawBox(Xmin, Ymax-bheight, Xmax, Ymax);
+    }
     
     // Plotting the lines on top of the fills
     for(size_t file(0); file < ncurves; file++){
@@ -267,17 +281,20 @@ int main(){
     
     for(size_t file(0); file < ncurves; file++){
       if(!mod.labels[file].Contains("175") && mod.model!="T5tttt") {
-      	limleg.AddEntry(exp[file]->GetName(), "Expected ("+mod.labels[file]+") #pm s.d._{experiment}", "l");
-      	limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+") #pm s.d._{theory}", "l");
+      	limleg[0]->AddEntry(exp[file]->GetName(), "Expected ("+mod.labels[file]+") #pm s.d._{experiment}", "l");
+      	limleg[0]->AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+") #pm s.d._{theory}", "l");
       } else {
-        limleg.AddEntry(exp[file]->GetName(), "Expected ("+mod.labels[file]+")", "l");
-        limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+")", "l");
+        limleg[file]->SetHeader("Model: "+ mod.labels[file]);
+        limleg[file]->AddEntry(exp[file]->GetName(), "Expected", "l");
+        limleg[file]->AddEntry(obs[file]->GetName(), "Observed", "l");
       }
     }
-    limleg.Draw();
+    limleg[0]->Draw();
+    if(mod.model!="T1tttt") limleg[1]->Draw();
+
 
     vector<vector<float> > boxes;
-    getLegendBoxes(limleg, boxes);
+    getLegendBoxes(*limleg[0], boxes);
     int ibox = 0;
     TLine line; TLatex label; 
     // T2tt exclusion
@@ -320,8 +337,9 @@ int main(){
       pline2.Draw();
 
       // label.SetNDC();  
-      label.SetTextAlign(12); label.SetTextFont(72); label.SetTextColor(kGray+2); label.SetTextSize(0.043);
-      label.DrawLatex(900, 450, "Direct stop pair production excluded");
+      label.SetTextAlign(21); label.SetTextFont(72); label.SetTextColor(kGray+2); label.SetTextSize(0.043);
+      label.DrawLatex(1400, 400, "Direct stop pair production");
+      label.DrawLatex(1400, 250, "excluded");
     }
 
     legY = 1-legY-legH-0.02-0.1; legH = 0.07;
@@ -468,7 +486,7 @@ void reverseGraph(TGraph *graph){
 void getModelParams(TString model, float &Xmin, float &Xmax, float &Ymin, float &Ymax, float &glu_lsp){
   if(model == "T1tttt" || model == "T5tttt" || model == "T2tt"){
     Xmin = 800; Xmax = 2600.;
-    Ymin = 0;   Ymax = 2200;
+    Ymin = 0;   Ymax = 2000;
     glu_lsp = 225;
   }
   if(model == "T1bbbb"){

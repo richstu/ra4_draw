@@ -198,10 +198,11 @@ void Hist2D::MakeOnePlot(const string &subdir){
 
   vector<TLine> lines = GetLines();
   vector<shared_ptr<TLatex> > labels = GetLabels(bkg_is_hist);
-  TLegend legend(this_opt_.LeftMargin(), 1.-this_opt_.TopMargin(),
+  TLegend legend(bkg_is_hist ? this_opt_.LeftMargin() : this_opt_.LeftMargin()-0.05, 1.-this_opt_.TopMargin(),
                  bkg_is_hist ? 1.-this_opt_.RightMargin() : 1.-0.05, 1.);
   legend.SetNColumns(datas_.size() + signals_.size() + (bkg_is_hist ? 0 : backgrounds_.size()));
   legend.SetBorderSize(0);
+  legend.SetTextSize(0.05);
   legend.SetFillStyle(4000);
   
   TH2D bkg_hist = GetBkgHist(bkg_is_hist);
@@ -215,13 +216,13 @@ void Hist2D::MakeOnePlot(const string &subdir){
   for(size_t i = 0; i < datas_.size(); ++i){
     AddEntry(legend, *datas_.at(i), data_graphs.at(i));
   }
-  for(size_t i = 0; i < signals_.size(); ++i){
-    AddEntry(legend, *signals_.at(i), sig_graphs.at(i));
-  }
   if(!bkg_is_hist){
     for(size_t i = 0; i < backgrounds_.size(); ++i){
       AddEntry(legend, *backgrounds_.at(i), bkg_graphs.at(i));
     }
+  }
+  for(size_t i = 0; i < signals_.size(); ++i){
+    AddEntry(legend, *signals_.at(i), sig_graphs.at(i));
   }
 
   bkg_hist.Draw("axis");

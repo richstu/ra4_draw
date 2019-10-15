@@ -84,7 +84,7 @@ namespace HigUtilities {
   const NamedFunc weight_2016("weight_2016", [](const Baby &b) -> NamedFunc::ScalarType{
     // Data
     if (b.type()<1000 && b.type()>0) return 1.;
-    else return b.weight()/b.w_btag()*b.w_bhig_deep();
+    else return b.weight()/b.w_btag_deep()*b.w_bhig_deep();
   });
 
   TString nom2genmet(TString ibin){

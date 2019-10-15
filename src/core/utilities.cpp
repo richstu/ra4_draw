@@ -198,8 +198,8 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>200&&met<=500", "200<met#leq 500");
   // ReplaceAll(code, "njets>=4&&njets<=5", "4-5j");
   // ReplaceAll(code, "njets>=5&&njets<=7", "5-7j");
-  ReplaceAll(code, "njets>=5&&njets<=6", "5#leq N_{jets}#leq 6j");
-  ReplaceAll(code, "njets>=6&&njets<=7", "6#leq N_{jets}#leq 7j");
+  ReplaceAll(code, "njets>=5&&njets<=6", "5#leq N_{jets}#leq 6");
+  ReplaceAll(code, "njets>=6&&njets<=7", "6#leq N_{jets}#leq 7");
   // ReplaceAll(code, "njets==5", "5j");
   // ReplaceAll(code, "njets==6", "6j");
   // ReplaceAll(code, "njets==7", "7j");

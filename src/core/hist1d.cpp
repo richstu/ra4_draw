@@ -41,6 +41,7 @@
 #include "TStyle.h"
 #include "TGraphAsymmErrors.h"
 #include "TMath.h"
+#include "TBox.h"
 #include "TLegendEntry.h"
 
 #include "core/utilities.hpp"
@@ -88,6 +89,14 @@ namespace{
         }
       }
     }
+
+    // What can I say...
+    // TBox box;
+    // box.SetFillColorAlpha(kAzure+10,0.1);
+    // box.DrawBox(99.5, 243, 131.5, 251.7);
+    // box.DrawBox(99.5, 34.1, 131.5, 35.3);
+    // box.DrawBox(99.5, 16.81, 131.5, 17.39);
+    // box.Draw();
   }
 
   /*!\brief Erases x-axis title and labels from plot

@@ -90,7 +90,9 @@ int main(int argc, char *argv[]){
   auto other = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     other_files, baseline && filters && "stitch_met");
 
-  auto t1tttt = Process::MakeShared<Baby_full>("T1tttt(2100,100)", Process::Type::signal, colors("t1tttt"),
+  string lsp = "{#lower[-0.1]{#tilde{#chi}}#lower[0.2]{#scale[0.95]{^{0}}}#kern[-1.3]{#scale[0.95]{_{1}}}}";
+  string t1t_label = "#scale[0.95]{#tilde{g}#kern[0.2]{#tilde{g}}, #tilde{g}#rightarrowt#kern[0.18]{#bar{t}}#kern[0.18]"+lsp;
+  auto t1tttt = Process::MakeShared<Baby_full>(t1t_label+" (2100,100)}", Process::Type::signal, colors("t1tttt"),
     sig_files, baseline && filters);
   t1tttt->SetMarkerStyle(21);
   t1tttt->SetMarkerSize(0.9);

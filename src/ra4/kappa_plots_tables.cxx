@@ -401,7 +401,7 @@ int main(int argc, char *argv[]){
       doVBincuts = true;
       vbincuts = vector<vector<TString>>{nbnj_lowmet, nbnj_lowmet, nbnj_higmet};
       caption = "Signal search regions";
-      abcd_title = "Signal region";
+      abcd_title = "Signal regions";
       firstSigBin = 0;
       if(method.Contains("met100")) {
         metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
@@ -467,7 +467,7 @@ int main(int argc, char *argv[]){
       if (cleanup) {
         metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
         vbincuts = vector<vector<TString>>{{c_lownj_lowmet, c_hignj},{"njets>=7"}, {"njets>=6"}};
-        abcd_title = "Dilepton control region"; 
+        abcd_title = "Dilepton CS"; 
       }
       if(method.Contains("metbins")) {
         metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
@@ -498,7 +498,7 @@ int main(int argc, char *argv[]){
         metcuts = vector<TString>{c_lowmet, c_midmet};
         vbincuts = vector<vector<TString>>{{c_lownb+"&&"+c_njcr, c_midnb+"&&"+c_njcr, c_hignb+"&&"+c_njcr},
                                          {"nbdm>=1 &&"+c_njcr}};
-        abcd_title = "Single-lepton, 5-6j control region"; 
+        abcd_title = "Single-lepton, 5-6j CS"; 
       }
       if(method.Contains("metbins")) {
         metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
@@ -954,16 +954,21 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   histo.SetYTitle(ytitle);
   histo.SetTitleOffset(0.8,"y");
   histo.SetTitleSize(0.06,"y");
+  histo.SetLabelSize(0.053,"y");
+  histo.GetXaxis()->SetTickLength(0);
   histo.Draw();
 
   //// Filling vx, vy vectors with kappa coordinates. Each nb cut is stored in a TGraphAsymmetricErrors
   int bin = 0;
+  vector<TString> binlabels;
   vector<vector<double> > vx(ind_bcuts.size()), vexh(ind_bcuts.size()), vexl(ind_bcuts.size());
   vector<vector<double> > vy(ind_bcuts.size()), veyh(ind_bcuts.size()), veyl(ind_bcuts.size());
   for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
     for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
       bin++;
-      histo.GetXaxis()->SetBinLabel(bin, CodeToRootTex(k_ordered[iplane][ibin][0].cut.Data()).c_str());
+      binlabels.push_back(CodeToRootTex(k_ordered[iplane][ibin][0].cut.Data()).c_str());
+      histo.GetXaxis()->SetBinLabel(bin, "");
+      histo.SetBinContent(bin, -100);
       // xval is the x position of the first marker in the group
       double xval = bin, nbs = k_ordered[iplane][ibin].size(), minxb = 0.15, binw = 0;
       // If there is more than one point in the group, it starts minxb to the left of the center of the bin
@@ -993,13 +998,25 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
 
-    TString metlabel = CodeToRootTex(abcd.planecuts[iplane].Data()).c_str();
-    metlabel +=" GeV";
-    label.SetTextSize(0.037);
+    // TString metlabel = CodeToRootTex(abcd.planecuts[iplane].Data()).c_str();
+    // metlabel +=" GeV";
+    // label.SetTextSize(0.037);
+    // if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, metlabel);
+    // else if(kappas.size()<5) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.26, metlabel);
+    // else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.25, metlabel);
+
+    TString metlabel = abcd.planecuts[iplane];
+    metlabel.ReplaceAll("&&","-").ReplaceAll("met","").ReplaceAll("<=","").ReplaceAll(">","");
+    label.SetTextSize(0.05);
     if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, metlabel);
-    else if(kappas.size()<5) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.26, metlabel);
-    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.25, metlabel);
+    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.05, metlabel);
+    label.SetTextSize(0.055);
+    label.DrawLatex(3.5, -0.27, "p_{T}^{miss} [GeV]");
   } // Loop over plane cuts
+  label.SetTextSize(0.045);
+  for (size_t ibl(0); ibl<binlabels.size(); ibl++){
+    label.DrawLatex(ibl+1, 0.4, " "+binlabels[ibl]);
+  }
 
   //// Drawing legend and TGraphs
   double legX(opts.LeftMargin()+0.04), legY(1-opts.TopMargin()-0.04), legSingle = 0.05;
@@ -1036,14 +1053,14 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
     cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,
                     "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}");
   cmslabel.SetTextAlign(31);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#scale[0.9]{#font[42]{13 TeV}}");
 
   cmslabel.SetTextAlign(11);
   TString title = "#font[52]{"+abcd.title+"}";
-  cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.05, title);
-  if (abcd.method.Contains("lowmj")) title = "Low M#lower[-0.1]{_{J}}";
-  if (abcd.method.Contains("highmj")) title = "High M#lower[-0.1]{_{J}}";
-  cmslabel.DrawLatex(opts.LeftMargin()+0.5, 1-opts.TopMargin()+0.015, "#font[52]{"+title+"}");
+  // cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.05, title);
+  if (abcd.method.Contains("lowmj")) title = abcd.title + " (Low M#lower[-0.1]{_{J}})";
+  if (abcd.method.Contains("highmj")) title = abcd.title + " (High M#lower[-0.1]{_{J}})";
+  cmslabel.DrawLatex(opts.LeftMargin()+0.35, 1-opts.TopMargin()+0.016, "#font[52]{#scale[0.8]{"+title+"}}");
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
@@ -1068,7 +1085,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   //// Setting plot style
   PlotOpt opts("txt/plot_styles.txt", "Kappa");
-  if(label_up) opts.BottomMargin(0.11);
+  opts.BottomMargin(0.17);
   opts.CanvasWidth(1400);
   if (cleanup) {
     opts.CanvasWidth(900);
@@ -1185,8 +1202,10 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
 
   float minx = 0.5, maxx = nbins+0.5, miny = 0;
-  if (mm_scen=="data") maxy = 2.75;
-  else if (maxy> 4) maxy = 4;
+  if (mm_scen=="data") {
+    if (abcd.method.Contains("56j")) maxy=3;
+    else maxy = 2.5;
+  } else if (maxy> 4) maxy = 4;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
@@ -1197,11 +1216,12 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   if(abcd.method.Contains("lowmj")) ytitle += "#lower[-0.1]{_{A}}";
   if(abcd.method.Contains("highmj")) ytitle += "#lower[-0.1]{_{B}}";
   if(mm_scen!="data") ytitle += " (Scen. = "+mm_scen+")";
-  histo.SetTitleOffset(0.9,"y");
-  histo.SetTitleSize(0.06,"y");
+  histo.SetTitleOffset(0.7,"y");
+  histo.SetTitleSize(0.073,"y");
   histo.SetYTitle(ytitle);
   histo.GetXaxis()->SetLabelSize(0.055);
-  histo.GetYaxis()->SetLabelSize(0.05);
+  histo.GetYaxis()->SetLabelSize(0.06);
+  histo.GetXaxis()->SetTickLength(0);
   histo.Draw();
 
   //// Filling vx, vy vectors with kappa coordinates. Each nb cut is stored in a TGraphAsymmetricErrors
@@ -1216,14 +1236,15 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   vector<vector<double> > vy_kmd2(ind_bcuts.size()), veyh_kmd2(ind_bcuts.size()), veyl_kmd2(ind_bcuts.size());
   vector<vector<double> > vx_kmd3(ind_bcuts.size()), vexh_kmd3(ind_bcuts.size()), vexl_kmd3(ind_bcuts.size());
   vector<vector<double> > vy_kmd3(ind_bcuts.size()), veyh_kmd3(ind_bcuts.size()), veyl_kmd3(ind_bcuts.size());
+
+  vector<TString> binlabels;
   for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
     for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
       bin++;
       TString ilabel = k_ordered[iplane][ibin][0].cut;
       ilabel.ReplaceAll(" ","").ReplaceAll("&&njets>=5&&njets<=6","");
-      histo.GetXaxis()->SetBinLabel(bin, CodeToRootTex(ilabel.Data()).c_str());
-      histo.GetXaxis()->SetLabelSize(0.055);
-      histo.GetYaxis()->SetLabelSize(0.055);
+      binlabels.push_back(CodeToRootTex(ilabel.Data()).c_str());
+      histo.GetXaxis()->SetBinLabel(bin, ""); //
       // xval is the x position of the first marker in the group
       double xval = bin, nbs = k_ordered[iplane][ibin].size(), minxb = 0.15, binw = 0;
       // If there is more than one point in the group, it starts minxb to the left of the center of the bin
@@ -1287,8 +1308,8 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
              if(abcd.signalplanes[iplane])
               klab.SetTextColor(cSignal);
             else klab.SetTextColor(1);
-            klab.SetTextSize(0.04);
-            if (data_kappas) klab.DrawLatex(xval, 0.95*maxy, text);
+            klab.SetTextSize(0.045);
+            if (data_kappas) klab.DrawLatex(xval, 0.96*maxy, text);
 	      //// Printing stat uncertainty of kappa_mm/kappa
             float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
             float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
@@ -1301,7 +1322,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
               text = "#sigma_{st} = "+RoundNumber(ekmdUp*100,0, kap)+"%";
             else
               text = "#sigma_{st} = "+RoundNumber(ekmdDown*100,0, kap)+"%";
-            klab.SetTextSize(0.04);
+            klab.SetTextSize(0.045);
             klab.DrawLatex(xval, 0.88*maxy, text);
 	    } // If unblind || not signal bin
 
@@ -1315,20 +1336,32 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     line.SetLineStyle(2); line.SetLineWidth(2);
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
-    TString metlabel = CodeToRootTex(abcd.planecuts[iplane].Data()) + " GeV";
-    label.SetTextSize(0.037);
+    // TString metlabel = CodeToRootTex(abcd.planecuts[iplane].Data()) + " GeV";
+    TString metlabel = abcd.planecuts[iplane];
+    metlabel.ReplaceAll("&&","-").ReplaceAll("met","").ReplaceAll("<=","").ReplaceAll(">","");
+    label.SetTextSize(0.06);
     if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, metlabel);
-    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.10*maxy, metlabel);
+    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.02*maxy, metlabel);
+    label.SetTextSize(0.067);
+    if (abcd.title.Contains("Dilepton")) 
+      label.DrawLatex(2.5, miny-0.27, "p_{T}^{miss} [GeV]");
+    else
+      label.DrawLatex(2.5, miny-0.3, "p_{T}^{miss} [GeV]");
+
+    label.SetTextSize(0.06);
+    for (size_t ibl(0); ibl<binlabels.size(); ibl++){
+      label.DrawLatex(ibl+1, 0.55, binlabels[ibl]);
+    }
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
   double legX(opts.LeftMargin()+0.007), legY(1-0.035), legSingle = 0.05;
-  legX = 0.35;
+  legX = 0.15;
   if (mm_scen!="data") legX = 0.2;
   if(label_up) legY = 0.9;
-  double legW = 0.45, legH = legSingle*(ind_bcuts.size()+1)/2;
+  double legW = 0.25, legH = legSingle*(ind_bcuts.size()+1)/2;
   if(ind_bcuts.size()>3) legH = legSingle*((ind_bcuts.size()+1)/2);
-  TLegend leg(legX, legY-legH, legX+legW, legY);
+  TLegend leg(legX, legY-legH-0.23, legX+legW, legY-0.23);
   leg.SetTextSize(opts.LegendEntryHeight()*1.15); leg.SetFillColor(0);
   leg.SetFillStyle(0); leg.SetBorderSize(0);
   leg.SetTextFont(42);
@@ -1381,7 +1414,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     leg.AddEntry(&graph[indb], "MC", "p");
     TString data_s = (mm_scen=="data"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
 
-    leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1} (13 TeV)", "p");
+    leg.AddEntry(&graph_mm[indb], data_s, "p");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
   } // Loop over TGraphs
@@ -1403,14 +1436,18 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     if(only_mc) cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
     else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsPrel);
   }
-  //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
+  cmslabel.SetTextSize(0.055);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.25, 1-opts.TopMargin()+0.015,"#font[42]{"+lumi_s+" fb^{-1} (13 TeV)}");
   cmslabel.SetTextSize(0.053);
   TString title = "#font[52]{"+abcd.title+"}";
-  cmslabel.DrawLatex(opts.LeftMargin()+0.04, opts.BottomMargin()+0.05, title);
-  if (abcd.method.Contains("lowmj")) title = "Low M#lower[-0.1]{_{J}}";
-  if (abcd.method.Contains("highmj")) title = "High M#lower[-0.1]{_{J}}";
-  cmslabel.SetTextAlign(31);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, legY-legH+0.01, "#font[52]{"+title+"}");
+  // cmslabel.DrawLatex(opts.LeftMargin()+0.04, opts.BottomMargin()+0.05, title);
+  if (abcd.method.Contains("lowmj")) title = abcd.title+" (Low M#lower[-0.1]{_{J}})";
+  if (abcd.method.Contains("highmj")) title = abcd.title+" (High M#lower[-0.1]{_{J}})";
+  cmslabel.SetTextAlign(11);
+  if (title.Contains("Dilepton")) 
+    cmslabel.DrawLatex(0.3, legY-legH+0.01, "#font[52]{"+title+"}");
+  else
+    cmslabel.DrawLatex(0.24, legY-legH+0.01, "#font[52]{"+title+"}");
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);

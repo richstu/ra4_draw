@@ -56,7 +56,7 @@ Get limits, this also generates the datacards for the full scan:
 
 Limit plot using the concatenated text files from previous step:
 
-    ./compile.py &&  ./run/ra4/limit_scan.exe -t new -f limits_t5tttt.txt -s 1 &&  ./run/ra4/limit_scan.exe -t new -f limits_t1tttt.txt -s 1 && ./run/ra4/plot_t5tttt_prl.exe 
+    ./compile.py &&  ./run/ra4/limit_scan.exe -t nom -f txt/limits/limits_t5tttt_run2.txt -s 0 &&  ./run/ra4/limit_scan.exe -t nom -f txt/limits/limits_t1tttt_run2.txt -s 0 && ./run/ra4/plot_t5tttt_prl.exe 
 
 To perform the fit without the signal region observations, start by creating a workspace in order to create the masking variables:
 
